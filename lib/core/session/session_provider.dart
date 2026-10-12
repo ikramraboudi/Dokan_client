@@ -1,14 +1,48 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Gestionnaire d'état de la session utilisateur (authentification et profil).
+/// Il maintient la distinction fondamentale entre un Visiteur anonyme (`isGuest`)
+/// et un Client authentifié (`isAuthenticated`). Il gère également le mécanisme
+/// de reprise automatique d'une action protégée en attente (`pendingProtectedAction`).
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/session/` (Gestion d'État Transverse / Session).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par :
+///   * `AuthRequiredDialog` pour mémoriser l'action en attente.
+///   * `LoginScreen` et `RegisterScreen` pour valider la connexion.
+///   * `ProfileScreen` pour afficher les données client ou la déconnexion.
+///   * `FavoritesScreen` et `CartScreen` pour adapter leur comportement.
+/// - Dépend de :
+///   * `package:flutter_riverpod` pour `StateNotifier`.
+///   * `data/models/user_summary.dart` pour le modèle de profil client.
+/// ============================================================================
+library;
+
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/user_summary.dart';
 
-/// ============================================================
-///  SOUKNA — ÉTAT DE SESSION (VISITEUR VS CLIENT CONNECTÉ)
-/// ============================================================
+
+/// ÉTAT IMMUABLE DE LA SESSION (SessionState)
+///
+/// MOT TECHNIQUE - Immutabilité :
+/// Les propriétés d'un objet immuable ne peuvent pas être modifiées après création.
+/// Toute modification produit une nouvelle instance via la méthode `copyWith`.
+
 class SessionState {
+  /// Profil de l'utilisateur connecté, ou `null` si la personne est un visiteur.
   final UserSummary? user;
+
+  /// Indique si une requête de connexion ou déconnexion est en cours.
   final bool isLoading;
+
+  /// Message d'erreur éventuel survenu lors d'une tentative d'authentification.
   final String? authError;
+
+  /// Action protégée mise en mémoire lorsqu'un visiteur a tenté une action restreinte
+  /// (ex: ajouter un article précis aux favoris avant de se connecter).
   final VoidCallback? pendingProtectedAction;
 
   const SessionState({
@@ -18,9 +52,14 @@ class SessionState {
     this.pendingProtectedAction,
   });
 
+  /// Indique si l'utilisateur est un simple visiteur non connecté.
   bool get isGuest => user == null;
+
+  /// Indique si l'utilisateur est un client formellement authentifié.
   bool get isAuthenticated => user != null;
 
+  /// MOT TECHNIQUE - copyWith :
+  /// Produit une nouvelle copie de l'état en remplaçant uniquement les valeurs fournies.
   SessionState copyWith({
     UserSummary? Function()? user,
     bool? isLoading,
@@ -38,10 +77,24 @@ class SessionState {
   }
 }
 
+
+/// NOTIFIER DE SESSION (SessionNotifier)
+///
+/// MOT TECHNIQUE - StateNotifier :
+/// Classe Riverpod propriétaire de la variable `state`. Elle expose des méthodes
+/// pour modifier l'état de façon contrôlée et notifier tous les widgets écouteurs.
+
 class SessionNotifier extends StateNotifier<SessionState> {
   SessionNotifier() : super(const SessionState());
 
-  /// Bascule en mode client connecté
+
+  /// SCÉNARIO MÉTIER : CONNEXION RÉUSSIE ET REPRISE D'ACTION
+  /// 1) L'utilisateur valide ses identifiants avec succès.
+  /// 2) Le profil `user` est enregistré dans l'état de session.
+  /// 3) Si une action protégée était en attente (ex: ajout de favori initié en mode invité),
+  ///    cette action est exécutée immédiatement UNE SEULE FOIS.
+  /// 4) `pendingProtectedAction` est remis à null pour empêcher tout double déclenchement.
+
   void loginSuccess(UserSummary user) {
     final pending = state.pendingProtectedAction;
     state = state.copyWith(
@@ -57,27 +110,32 @@ class SessionNotifier extends StateNotifier<SessionState> {
     }
   }
 
-  /// Déconnexion : nettoie les informations personnelles et bascule en visiteur
+  /// Déconnexion du client : réinitialise la session à l'état visiteur anonyme.
   void logout() {
     state = const SessionState();
   }
 
-  /// Définit une action protégée à exécuter après connexion réussie
+  /// Mémorise une action protégée lorsqu'un visiteur clique sur une fonctionnalité restreinte.
   void setPendingAction(VoidCallback? action) {
     state = state.copyWith(pendingProtectedAction: () => action);
   }
 
-  /// Déclenche l'état de chargement
+  /// Active ou désactive le spinner de chargement lors de l'authentification.
   void setLoading(bool loading) {
     state = state.copyWith(isLoading: loading);
   }
 
-  /// Enregistre une erreur d'authentification
+  /// Enregistre un message d'erreur d'authentification.
   void setAuthError(String? error) {
     state = state.copyWith(authError: () => error);
   }
 
-  /// Simulation d'une session expirée sans perte du panier
+
+  /// SCÉNARIO DE TEST : SIMULATION DE SESSION EXPIRÉE
+  /// Permet de tester le comportement de l'application lorsque le jeton expire :
+  /// le client repasse en mode visiteur avec un message d'avertissement,
+  /// MAIS le contenu de son panier d'achat reste préservé en mémoire !
+  
   void simulateSessionExpired() {
     state = state.copyWith(
       user: () => null,
@@ -86,6 +144,7 @@ class SessionNotifier extends StateNotifier<SessionState> {
   }
 }
 
+/// Provider global de session accessible via `ref.watch(sessionProvider)`.
 final sessionProvider =
     StateNotifierProvider<SessionNotifier, SessionState>((ref) {
   return SessionNotifier();

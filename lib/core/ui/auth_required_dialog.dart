@@ -1,3 +1,27 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Feuille modale / Dialogue d'invitation à l'authentification (`AuthRequiredDialog`).
+/// Affiché chaque fois qu'un visiteur non connecté tente d'exécuter une action
+/// réservée aux clients (ex: ajouter un favori, finaliser une commande).
+///
+/// COMPORTEMENTS CLÉS :
+/// 1) Mémorise l'action souhaitée via `pendingAction` pour la rejouer après connexion.
+/// 2) Empêche l'empilement multiple de dialogues grâce à un verrou statique `_isShowing`.
+/// 3) Offre des boutons distincts : "Se connecter", "Créer un compte", "Continuer la visite".
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/ui/` (Dialogue Modal d'Autorisation).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par :
+///   * `HomeScreen`, `CatalogScreen`, `SearchScreen`, `ProductDetailScreen` (clic favori visiteur).
+///   * `CartScreen` (clic bouton commander pour un visiteur).
+/// - Dépend de :
+///   * `core/session/session_provider.dart` pour enregistrer l'action en attente.
+///   * `core/navigation/routes.dart` pour la redirection vers `/login` ou `/register`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,10 +30,7 @@ import '../session/session_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 
-/// ============================================================
-///  SOUKNA — DIALOGUE / MODAL D'ACTION PROTÉGÉE (CONNEXION REQUISE)
-///  Empêche l'empilement multiple avec _isShowing
-/// ============================================================
+/// Dialogue modal surgissant invitant le visiteur à s'authentifier.
 class AuthRequiredDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -22,9 +43,18 @@ class AuthRequiredDialog extends StatelessWidget {
     this.onContinueVisiting,
   });
 
+  /// Verrou de sécurité empêchant l'ouverture simultanée de plusieurs dialogues
+  /// si l'utilisateur appuie de manière répétée et frénétique.
   static bool _isShowing = false;
 
-  /// Affiche l'invite modale unique avec enregistrement optionnel de l'action en attente
+  /// FONCTIONNALITÉ STATIQUE : AFFICHER LA MODALE
+  ///
+  /// PARAMÈTRES :
+  /// - [context] : Contexte de navigation.
+  /// - [ref] : Référence Riverpod pour enregistrer l'action protégée.
+  /// - [title] : Titre du dialogue (par défaut "Connexion requise").
+  /// - [message] : Raison claire expliquant pourquoi l'authentification est nécessaire.
+  /// - [pendingAction] : Fonction de rappel à exécuter automatiquement après connexion.
   static Future<void> show(
     BuildContext context,
     WidgetRef ref, {
@@ -32,14 +62,18 @@ class AuthRequiredDialog extends StatelessWidget {
     required String message,
     VoidCallback? pendingAction,
   }) async {
+    // Si un dialogue est déjà ouvert, ignore la nouvelle demande (anti-cumul)
     if (_isShowing) return;
     _isShowing = true;
 
+    // Enregistre l'action souhaitée dans le SessionNotifier
     if (pendingAction != null) {
       ref.read(sessionProvider.notifier).setPendingAction(pendingAction);
     }
 
     try {
+      // MOT TECHNIQUE - showModalBottomSheet :
+      // Ouvre une feuille modale glissant depuis le bas de l'écran avec coins supérieurs arrondis.
       await showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
@@ -50,6 +84,7 @@ class AuthRequiredDialog extends StatelessWidget {
         ),
       );
     } finally {
+      // Libère le verrou lors de la fermeture de la feuille
       _isShowing = false;
     }
   }
@@ -66,7 +101,7 @@ class AuthRequiredDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Indicateur supérieur
+            // --- Barre de préhension supérieure (Handle) ---
             Center(
               child: Container(
                 width: 40,
@@ -79,7 +114,7 @@ class AuthRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.space20),
 
-            // Icône
+            // --- Icône de cadenas teinté dans un cercle ---
             Center(
               child: Container(
                 width: 68,
@@ -97,7 +132,7 @@ class AuthRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.space16),
 
-            // Titre
+            // --- Titre ---
             Text(
               title,
               textAlign: TextAlign.center,
@@ -105,7 +140,7 @@ class AuthRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.space8),
 
-            // Message explicatif
+            // --- Message explicatif ---
             Text(
               message,
               textAlign: TextAlign.center,
@@ -115,7 +150,7 @@ class AuthRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.space24),
 
-            // Bouton Se connecter
+            // --- Bouton d'action principal : Se connecter ---
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
@@ -125,7 +160,7 @@ class AuthRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.space12),
 
-            // Bouton Créer un compte
+            // --- Bouton secondaire : Créer un compte ---
             OutlinedButton(
               onPressed: () {
                 Navigator.of(context).pop();
@@ -135,7 +170,7 @@ class AuthRequiredDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppDimens.space8),
 
-            // Action secondaire : Continuer la visite
+            // --- Action neutre : Poursuivre en tant que simple visiteur ---
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();

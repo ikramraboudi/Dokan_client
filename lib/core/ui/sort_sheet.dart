@@ -1,10 +1,23 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Feuille modale glissante de sélection du critère de tri (`SortSheet`).
+/// Propose 5 modes de classement (Pertinence, Prix croissant, Prix décroissant,
+/// Nouveautés, Popularité) et renvoie la clé sélectionnée au catalogue.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/ui/` (Feuille Modale de Tri).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par : `lib/feature/catalog/catalog_screen.dart` lors du clic sur "Trier".
+/// - Dépend de : `core/theme/app_colors.dart` et `core/theme/app_dimens.dart`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 
-/// ============================================================
-///  SOUKNA — FEUILLE DE TRI (SORTSHEET)
-/// ============================================================
+/// Feuille modale surgissant du bas pour ordonner les articles du catalogue.
 class SortSheet extends StatefulWidget {
   final String currentSort;
   final ValueChanged<String> onSelected;
@@ -15,6 +28,7 @@ class SortSheet extends StatefulWidget {
     required this.onSelected,
   });
 
+  /// Liste des critères de tri disponibles avec leurs libellés en français.
   static const List<Map<String, String>> options = [
     {'key': 'relevance', 'label': 'Pertinence'},
     {'key': 'price_asc', 'label': 'Prix croissant'},
@@ -23,6 +37,7 @@ class SortSheet extends StatefulWidget {
     {'key': 'popularity', 'label': 'Popularité'},
   ];
 
+  /// Méthode d'ouverture statique retournant le critère choisi dans un Future.
   static Future<String?> show(BuildContext context, String currentSort) {
     return showModalBottomSheet<String>(
       context: context,
@@ -72,7 +87,7 @@ class _SortSheetState extends State<SortSheet> {
             ),
             const SizedBox(height: AppDimens.space16),
 
-            // Titre
+            // En-tête avec titre et bouton fermer
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -91,7 +106,7 @@ class _SortSheetState extends State<SortSheet> {
             const Divider(color: AppColors.divider),
             const SizedBox(height: AppDimens.space8),
 
-            // Liste des options
+            // Liste des boutons radio personnalisés
             ...SortSheet.options.map((option) {
               final isSelected = _selectedSort == option['key'];
 
@@ -126,7 +141,7 @@ class _SortSheetState extends State<SortSheet> {
 
             const SizedBox(height: AppDimens.space16),
 
-            // Bouton Appliquer
+            // Bouton de confirmation
             ElevatedButton(
               onPressed: () => widget.onSelected(_selectedSort),
               child: const Text('Appliquer le tri'),

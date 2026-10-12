@@ -40,11 +40,9 @@ final popularProductsProvider = FutureProvider<List<ProductUiModel>>((ref) async
   return repo.getPopularProducts();
 });
 
-/// ============================================================
-///  SOUKNA — ÉCRAN D'ACCUEIL COMPLET (ÉTAPE 2)
+///  Dokan — ÉCRAN D'ACCUEIL COMPLET
 ///  Utilise un SingleChildScrollView unique pour un défilement
 ///  vertical fluide sans conflit de geste.
-/// ============================================================
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -174,7 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
                 child: Semantics(
-                  label: 'Rechercher un produit ou une catégorie sur Soukna',
+                  label: 'Rechercher un produit ou une catégorie sur Dokan',
                   button: true,
                   child: InkWell(
                     onTap: () => context.push(AppRoutes.search),
@@ -196,7 +194,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                           SizedBox(width: AppDimens.space12),
                           Text(
-                            'Rechercher sur Soukna...',
+                            'Rechercher sur Dokan...',
                             style: TextStyle(
                               color: AppColors.textHint,
                               fontSize: 14,

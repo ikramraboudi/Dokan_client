@@ -8,9 +8,8 @@ import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
 import '../../data/mock/mock_auth_repository.dart';
 
-/// ============================================================
-///  SOUKNA — ÉCRAN D'INSCRIPTION (ÉTAPE 4)
-/// ============================================================
+
+///  Dokan — ÉCRAN D'INSCRIPTION
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -105,7 +104,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Créer un compte Soukna',
+                  'Créer un compte Dokan',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
@@ -195,7 +194,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   activeColor: AppColors.primary,
                   controlAffinity: ListTileControlAffinity.leading,
                   title: const Text(
-                    'J\'accepte les conditions générales d\'utilisation et la politique de confidentialité de Soukna.',
+                    'J\'accepte les conditions générales d\'utilisation et la politique de confidentialité de Dokan.',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,

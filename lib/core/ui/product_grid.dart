@@ -1,3 +1,30 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Grille de produits responsive avec détection de défilement pour la pagination
+/// infinie simulée (`ProductGrid`).
+///
+/// COMPORTEMENTS CLÉS :
+/// 1) Calcule dynamiquement le nombre de colonnes via `LayoutBuilder` (2 sur téléphone,
+///    3 sur tablette ou écran large > 700 dp).
+/// 2) Utilise `CustomScrollView` et `SliverGrid` pour un recyclage mémoire performant.
+/// 3) Détecte automatiquement l'approche du bas de page (à 200 dp de la fin) et appelle
+///    `onLoadMore` pour charger la page suivante de produits.
+/// 4) Affiche un indicateur de chargement en bas de grille pendant les requêtes.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/ui/` (Grille de Produits Responsive).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par :
+///   * `CatalogScreen` (catalogue complet et résultats filtrés).
+///   * `SearchScreen` (résultats de recherche textuelle).
+///   * `FavoritesScreen` (grille des articles favoris du client).
+/// - Dépend de :
+///   * `product_card.dart` pour le rendu de chaque cellule.
+///   * `loading_state.dart` et `empty_state.dart`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import '../../data/models/product_ui_model.dart';
 import '../theme/app_colors.dart';
@@ -6,9 +33,7 @@ import 'empty_state.dart';
 import 'loading_state.dart';
 import 'product_card.dart';
 
-/// ============================================================
-///  SOUKNA — GRILLE DE PRODUITS RESPONSIVE AVEC PAGINATION SIMULÉE
-/// ============================================================
+/// Grille de produits adaptative et scrollable.
 class ProductGrid extends StatefulWidget {
   final List<ProductUiModel> products;
   final bool isLoading;
@@ -48,12 +73,14 @@ class _ProductGridState extends State<ProductGrid> {
   @override
   void initState() {
     super.initState();
+    // Utilise le ScrollController fourni par le parent ou en crée un nouveau
     if (widget.scrollController != null) {
       _controller = widget.scrollController!;
     } else {
       _controller = ScrollController();
       _internalController = true;
     }
+    // Écoute les mouvements de défilement pour déclencher la pagination
     _controller.addListener(_onScroll);
   }
 
@@ -66,6 +93,10 @@ class _ProductGridState extends State<ProductGrid> {
     super.dispose();
   }
 
+  /// SCÉNARIO MÉTIER : PAGINATION AUTOMATIQUE AU DÉFILEMENT
+  /// Lorsque la position de l'utilisateur atteint la fin de la zone de défilement
+  /// (avec une marge d'anticipation de 200 dp), et s'il reste des articles à charger,
+  /// la fonction `onLoadMore` est invoquée pour récupérer le lot suivant.
   void _onScroll() {
     if (_controller.position.pixels >= _controller.position.maxScrollExtent - 200) {
       if (!widget.isLoading && !widget.isLoadingMore && widget.hasMore) {
@@ -76,10 +107,11 @@ class _ProductGridState extends State<ProductGrid> {
 
   @override
   Widget build(BuildContext context) {
+    // --- État de chargement initial : grille de shimmer squelette ---
     if (widget.isLoading && widget.products.isEmpty) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          final crossAxisCount = constraints.maxWidth > 700 ? 3 : 2;
+          final crossAxisCount = constraints.maxWidth > 700 ? 3 : 2;//(tablette ou mode paysage), on passe de 2 à 3 colonnes
           return ShimmerLoading(
             child: GridView.builder(
               padding: const EdgeInsets.all(AppDimens.space16),
@@ -131,6 +163,7 @@ class _ProductGridState extends State<ProductGrid> {
       );
     }
 
+    // --- État liste vide ---
     if (widget.products.isEmpty) {
       return EmptyState(
         icon: Icons.search_off_rounded,
@@ -139,14 +172,20 @@ class _ProductGridState extends State<ProductGrid> {
       );
     }
 
+    // --- Affichage de la grille de produits avec Slivers ---
     return LayoutBuilder(
       builder: (context, constraints) {
+        // MOT TECHNIQUE - LayoutBuilder :
+        // Détecte la largeur physique de l'écran pour adapter le nombre de colonnes.
         final crossAxisCount = constraints.maxWidth > 700 ? 3 : 2;
 
+        // MOT TECHNIQUE - CustomScrollView :
+        // Zone de défilement composée de tranches ("slivers") hautement optimisées.
         return CustomScrollView(
           controller: _controller,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
+            // Tranche 1 : Grille des cartes produits
             SliverPadding(
               padding: const EdgeInsets.all(AppDimens.space16),
               sliver: SliverGrid(
@@ -171,7 +210,7 @@ class _ProductGridState extends State<ProductGrid> {
               ),
             ),
 
-            // Indicateur de pagination
+            // Tranche 2 : Indicateur de pagination pendant le chargement de la suite
             if (widget.isLoadingMore)
               const SliverToBoxAdapter(
                 child: Padding(
@@ -189,6 +228,7 @@ class _ProductGridState extends State<ProductGrid> {
                 ),
               ),
 
+            // Tranche 3 : Espace inférieur de respiration pour dégager la barre d'onglets
             const SliverToBoxAdapter(
               child: SizedBox(height: AppDimens.space32),
             ),

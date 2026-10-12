@@ -11,11 +11,9 @@ import '../../core/ui/error_state.dart';
 import '../../core/ui/product_grid.dart';
 import '../../data/mock/mock_favorites_repository.dart';
 
-/// ============================================================
-///  SOUKNA — ÉCRAN FAVORIS COMPLET (ÉTAPE 5)
+///  Dokan — ÉCRAN FAVORIS COMPLET
 ///  Visiteur : protection stricte « connexion requise »
 ///  Client   : liste en temps réel avec retrait immédiat
-/// ============================================================
 class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({super.key});
 

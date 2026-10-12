@@ -7,9 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_top_bar.dart';
 
-/// ============================================================
-///  SOUKNA — ÉCRAN PROFIL (ÉTAPE 4 : VISITEUR VS CLIENT)
-/// ============================================================
+///  Dokan — ÉCRAN PROFIL ( VISITEUR VS CLIENT)
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -27,7 +25,7 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Déconnexion'),
-        content: const Text('Êtes-vous sûr de vouloir vous déconnecter de votre compte Soukna ?'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter de votre compte Dokan ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -96,7 +94,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppDimens.space24),
             Text(
-              'Bienvenue sur Soukna',
+              'Bienvenue sur Dokan',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall,
             ),

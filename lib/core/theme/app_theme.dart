@@ -1,15 +1,44 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Construction du thème global `ThemeData` (clair uniquement) pour Material 3.
+/// Ce fichier applique les règles du système de design à tous les widgets de base
+/// de Flutter (boutons, champs, barre d'onglets, cartes, dialogues) en consommant
+/// EXCLUSIVEMENT les constantes de `AppColors` et `AppDimens`.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/theme/` (Design System / ThemeData).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par : `lib/app.dart` qui l'injecte dans `MaterialApp.router`.
+/// - Dépend de :
+///   * `app_colors.dart` pour toutes les couleurs.
+///   * `app_dimens.dart` pour les tailles et rayons d'arrondis.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_dimens.dart';
 
-/// ============================================================
-///  SOUKNA — CONFIGURATION DU THÈME MATERIAL 3
-///  Construit exclusivement à partir de AppColors et AppDimens.
-/// ============================================================
+/// Fabrique du thème Material 3 de l'application Dokan.
 class AppTheme {
   AppTheme._();
 
+
+  /// FONCTIONNALITÉ :
+  /// Génère l'instance complète de `ThemeData` configurée pour le mode clair.
+  ///
+  /// CHOIX TECHNIQUE :
+  /// En configurant globalement les sous-thèmes (`elevatedButtonTheme`, `cardTheme`,
+  /// `inputDecorationTheme`), les développeurs n'ont plus besoin de redéfinir
+  /// la couleur de fond, la hauteur ou l'arrondi de chaque bouton individuel dans
+  /// leurs écrans : un simple `ElevatedButton(...)` adoptera immédiatement l'aspect
+  /// officiel de la marque Dokan.
+
   static ThemeData get lightTheme {
+    // MOT TECHNIQUE - ColorScheme :
+    // La palette sémantique Material 3 associant des rôles visuels précis
+    // (primary = action principale, surface = fond de carte, error = alerte...).
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.primary,
@@ -33,6 +62,8 @@ class AppTheme {
       scrim: AppColors.overlay,
     );
 
+    // MOT TECHNIQUE - TextTheme :
+    // La hiérarchie typographique (titres de rubriques, corps de texte, légendes).
     const textTheme = TextTheme(
       headlineLarge: TextStyle(
         fontSize: 28,
@@ -100,12 +131,14 @@ class AppTheme {
     );
 
     return ThemeData(
+      // Active les composants et les spécifications visuelles Material 3
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
       textTheme: textTheme,
 
-      // --- AppBar ---
+      // --- Barre supérieure (AppBar) ---
+      // Fond blanc uni sans ombre agressive, titre centré et texte contrasté
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
@@ -124,7 +157,8 @@ class AppTheme {
         ),
       ),
 
-      // --- Bouton Principal (ElevatedButton) ---
+      // --- Bouton Principal Plein (ElevatedButton) ---
+      // Hauteur standardisée de 52 dp, coins arrondis à 14 dp et désactivation gérée
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -145,7 +179,7 @@ class AppTheme {
         ),
       ),
 
-      // --- Bouton Secondaire (OutlinedButton) ---
+      // --- Bouton Secondaire Contour (OutlinedButton) ---
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primary,
@@ -162,7 +196,7 @@ class AppTheme {
         ),
       ),
 
-      // --- Bouton Texte (TextButton) ---
+      // --- Bouton Lien Texte (TextButton) ---
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
@@ -177,6 +211,7 @@ class AppTheme {
       ),
 
       // --- Champs de formulaire (InputDecoration) ---
+      // Bords arrondis, fond blanc, bordure d'accentuation teal en cas de focus
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
@@ -214,7 +249,7 @@ class AppTheme {
         ),
       ),
 
-      // --- Cartes ---
+      // --- Cartes de présentation (CardThemeData) ---
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
@@ -225,7 +260,7 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
 
-      // --- Chips ---
+      // --- Puces et pastilles (ChipThemeData) ---
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceAlt,
         selectedColor: AppColors.primarySoft,
@@ -250,7 +285,9 @@ class AppTheme {
         ),
       ),
 
-      // --- Barre de navigation inférieure ---
+      // --- Barre de navigation inférieure (NavigationBarThemeData) ---
+      // MOT TECHNIQUE - WidgetStateProperty :
+      // Définit le style dynamique selon l'état de l'onglet (sélectionné ou non).
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surface,
         elevation: 8,
@@ -278,7 +315,7 @@ class AppTheme {
         }),
       ),
 
-      // --- SnackBar ---
+      // --- Notifications temporaires (SnackBar) ---
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.textPrimary,
         contentTextStyle: const TextStyle(
@@ -291,7 +328,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
 
-      // --- BottomSheet ---
+      // --- Feuilles modales surgissant du bas (BottomSheetThemeData) ---
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.surface,
@@ -302,7 +339,7 @@ class AppTheme {
         ),
       ),
 
-      // --- Dialog ---
+      // --- Boîtes de dialogue modales (DialogThemeData) ---
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.surface,
@@ -321,7 +358,7 @@ class AppTheme {
         ),
       ),
 
-      // --- Divider ---
+      // --- Séparateurs de liste (DividerThemeData) ---
       dividerTheme: const DividerThemeData(
         color: AppColors.divider,
         thickness: 1,

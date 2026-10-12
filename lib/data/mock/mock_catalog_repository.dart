@@ -1,20 +1,45 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Implémentation simulée du catalogue de produits et des catégories (`MockCatalogRepository`).
+///
+/// CONTENU DU JEU D'ESSAI :
+/// - 7 catégories thématiques avec icônes distinctes.
+/// - 35 fiches produits complètes avec photos réelles Picsum, descriptions,
+///   variantes, prix en dinars tunisiens et notes d'évaluation.
+///
+/// FONCTIONNALITÉS DE SIMULATION & TEST :
+/// - Mots-clés de recherche spéciaux :
+///   * `#error` : Déclenche volontairement une panne réseau simulée.
+///   * `#empty` : Renvoie une liste vide de résultats.
+/// - Moteur de recherche local filtrant par mot-clé, prix, catégorie, stock et tri.
+/// - Pagination simulée (lot de 6 à 10 articles par page).
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `data/mock/` (Source de Données Catalogue Simulée).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Injecté par : `catalogRepositoryProvider`.
+/// - Consommé par : `HomeScreen`, `CatalogScreen`, `SearchScreen`, `ProductDetailScreen`.
+/// - Dépend de : `data/repositories/catalog_repository.dart`, `category_ui_model.dart`, `product_ui_model.dart`.
+/// ============================================================================
+// DONNÉES FICTIVES
+// TODO API : Brancher sur les endpoints GET /api/categories et GET /api/products de l'API réelle.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/category_ui_model.dart';
 import '../models/product_ui_model.dart';
 import '../repositories/catalog_repository.dart';
 
-/// ============================================================
-///  SOUKNA — DONNÉES FICTIVES & MOCK DU CATALOGUE
-///  // DONNÉES FICTIVES
-///  // TODO API : à confirmer côté serveur sur totaux, codes promo et disponibilités.
-/// ============================================================
+/// Implémentation simulée du catalogue de produits Dokan.
 class MockCatalogRepository implements CatalogRepository {
-  // Latence réseau simulée (500 ms)
+  /// Latence réseau simulée (500 ms) pour tester les indicateurs de chargement (shimmer).
   final Duration latency;
 
   MockCatalogRepository({this.latency = const Duration(milliseconds: 500)});
 
+  // --- 7 Catégories de base ---
   static const List<CategoryUiModel> _baseCategories = [
     CategoryUiModel(
       id: 'cat-1',
@@ -53,6 +78,7 @@ class MockCatalogRepository implements CatalogRepository {
     ),
   ];
 
+  // --- Catalogue de 35 produits réalistes ---
   static const List<ProductUiModel> _mockProducts = [
     // --- 1. Vêtements et mode (5 produits) ---
     ProductUiModel(
@@ -60,9 +86,9 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Chemise en lin premium à manches retroussables',
       description: 'Chemise en pur lin naturel respirant. Coupe droite moderne idéale pour les journées ensoleillées avec finition col italien.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p101-1/600/600',
-        'https://picsum.photos/seed/soukna-p101-2/600/600',
-        'https://picsum.photos/seed/soukna-p101-3/600/600',
+        'https://picsum.photos/seed/Dokan-p101-1/600/600',
+        'https://picsum.photos/seed/Dokan-p101-2/600/600',
+        'https://picsum.photos/seed/Dokan-p101-3/600/600',
       ],
       price: 89.900,
       oldPrice: 119.900,
@@ -80,8 +106,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Robe longue bohème imprimée motifs floraux',
       description: 'Robe fluide et légère en voile de coton avec ceinture nouable à la taille et manches ballon délicates.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p102-1/600/600',
-        'https://picsum.photos/seed/soukna-p102-2/600/600',
+        'https://picsum.photos/seed/Dokan-p102-1/600/600',
+        'https://picsum.photos/seed/Dokan-p102-2/600/600',
       ],
       price: 135.000,
       oldPrice: 165.000,
@@ -99,8 +125,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Veste blazer casual coupe cintrée en sergé de laine',
       description: 'Veste intemporelle pour le bureau ou les sorties décontractées. Poches passepoilées et doublure satinée contrastante.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p103-1/600/600',
-        'https://picsum.photos/seed/soukna-p103-2/600/600',
+        'https://picsum.photos/seed/Dokan-p103-1/600/600',
+        'https://picsum.photos/seed/Dokan-p103-2/600/600',
       ],
       price: 185.000,
       availability: ProductAvailability.inStock,
@@ -115,8 +141,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Pantalon chino stretch confort coupe ajustée',
       description: 'Chino en coton peigné sergé avec élasthanne pour une totale liberté de mouvement toute la journée.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p104-1/600/600',
-        'https://picsum.photos/seed/soukna-p104-2/600/600',
+        'https://picsum.photos/seed/Dokan-p104-1/600/600',
+        'https://picsum.photos/seed/Dokan-p104-2/600/600',
       ],
       price: 79.500,
       availability: ProductAvailability.inStock,
@@ -130,8 +156,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Manteau en drap de laine col tailleur élégant',
       description: 'Pièce maîtresse d\'hiver confectionnée dans un tissu lourd et chaud, fermeture double boutonnage.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p105-1/600/600',
-        'https://picsum.photos/seed/soukna-p105-2/600/600',
+        'https://picsum.photos/seed/Dokan-p105-1/600/600',
+        'https://picsum.photos/seed/Dokan-p105-2/600/600',
       ],
       price: 249.000,
       oldPrice: 320.000,
@@ -149,9 +175,9 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Sneakers urbaines en cuir suédé beige et blanc',
       description: 'Baskets légères avec semelle ergonomique en caoutchouc naturel amortissant, doublure textile respirante.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p201-1/600/600',
-        'https://picsum.photos/seed/soukna-p201-2/600/600',
-        'https://picsum.photos/seed/soukna-p201-3/600/600',
+        'https://picsum.photos/seed/Dokan-p201-1/600/600',
+        'https://picsum.photos/seed/Dokan-p201-2/600/600',
+        'https://picsum.photos/seed/Dokan-p201-3/600/600',
       ],
       price: 159.000,
       oldPrice: 199.000,
@@ -169,8 +195,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Sac cabas en cuir véritable grainé avec bandoulière',
       description: 'Sac à main spacieux avec compartiment matelassé pour tablette et fermoir magnétique doré.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p202-1/600/600',
-        'https://picsum.photos/seed/soukna-p202-2/600/600',
+        'https://picsum.photos/seed/Dokan-p202-1/600/600',
+        'https://picsum.photos/seed/Dokan-p202-2/600/600',
       ],
       price: 219.000,
       availability: ProductAvailability.inStock,
@@ -185,8 +211,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Montre analogique classique cadran minimaliste et bracelet cuir',
       description: 'Mouvement à quartz japonais de précision, boîtier en acier inoxydable et verre minéral résistant.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p203-1/600/600',
-        'https://picsum.photos/seed/soukna-p203-2/600/600',
+        'https://picsum.photos/seed/Dokan-p203-1/600/600',
+        'https://picsum.photos/seed/Dokan-p203-2/600/600',
       ],
       price: 129.900,
       oldPrice: 169.900,
@@ -202,7 +228,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Mocassins souples en cuir d\'agneau cousu main',
       description: 'Chaussures citadines ultra confortables avec picots antidérapants et semelle intérieure à mémoire de forme.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p204-1/600/600',
+        'https://picsum.photos/seed/Dokan-p204-1/600/600',
       ],
       price: 110.000,
       availability: ProductAvailability.inStock,
@@ -216,7 +242,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Ceinture reversible en cuir pleine fleur avec boucle argentée',
       description: 'Double face noir/marron pour s\'adapter à toutes les tenues. Cuir traité façon tannage végétal.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p205-1/600/600',
+        'https://picsum.photos/seed/Dokan-p205-1/600/600',
       ],
       price: 49.000,
       availability: ProductAvailability.inStock,
@@ -232,8 +258,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Sérum visage hydratant à l\'acide hyaluronique pur',
       description: 'Formule concentrée repulpante aux extraits botaniques bio pour un teint lumineux dès la première semaine.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p301-1/600/600',
-        'https://picsum.photos/seed/soukna-p301-2/600/600',
+        'https://picsum.photos/seed/Dokan-p301-1/600/600',
+        'https://picsum.photos/seed/Dokan-p301-2/600/600',
       ],
       price: 45.000,
       oldPrice: 58.000,
@@ -250,7 +276,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Huile précieuse d\'argan vierge bio pressée à froid (100 ml)',
       description: 'Soin nourrissant multi-usages pour le visage, le corps et les pointes de cheveux abîmées.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p302-1/600/600',
+        'https://picsum.photos/seed/Dokan-p302-1/600/600',
       ],
       price: 36.500,
       availability: ProductAvailability.inStock,
@@ -264,7 +290,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Crème régénérante de nuit aux actifs anti-âge naturels',
       description: 'Nutrition intense et stimulation du collagène pendant le sommeil pour une peau reposée au réveil.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p303-1/600/600',
+        'https://picsum.photos/seed/Dokan-p303-1/600/600',
       ],
       price: 68.000,
       oldPrice: 85.000,
@@ -279,8 +305,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Coffret rituel parfum d\'ambre et de jasmin oriental',
       description: 'Eau de parfum 50ml accompagnée de sa brume corps et d\'un baume soyeux parfumé.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p304-1/600/600',
-        'https://picsum.photos/seed/soukna-p304-2/600/600',
+        'https://picsum.photos/seed/Dokan-p304-1/600/600',
+        'https://picsum.photos/seed/Dokan-p304-2/600/600',
       ],
       price: 115.000,
       availability: ProductAvailability.inStock,
@@ -294,7 +320,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Masque d\'argile blanche purifiant et apaisant',
       description: 'Désincruste les pores sans assécher l\'épiderme. Convient même aux peaux très sensibles.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p305-1/600/600',
+        'https://picsum.photos/seed/Dokan-p305-1/600/600',
       ],
       price: 24.900,
       availability: ProductAvailability.inStock,
@@ -309,9 +335,9 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Écouteurs sans fil True Wireless avec réduction de bruit active',
       description: 'Son haute fidélité avec transducteurs 11 mm, autonomie 30h avec boîtier et charge rapide USB-C.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p401-1/600/600',
-        'https://picsum.photos/seed/soukna-p401-2/600/600',
-        'https://picsum.photos/seed/soukna-p401-3/600/600',
+        'https://picsum.photos/seed/Dokan-p401-1/600/600',
+        'https://picsum.photos/seed/Dokan-p401-2/600/600',
+        'https://picsum.photos/seed/Dokan-p401-3/600/600',
       ],
       price: 189.000,
       oldPrice: 249.000,
@@ -329,8 +355,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Enceinte Bluetooth portable waterproof IPX7 son 360°',
       description: 'Basses profondes et clarté acoustique pour toutes vos soirées extérieures avec 14 heures de batterie.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p402-1/600/600',
-        'https://picsum.photos/seed/soukna-p402-2/600/600',
+        'https://picsum.photos/seed/Dokan-p402-1/600/600',
+        'https://picsum.photos/seed/Dokan-p402-2/600/600',
       ],
       price: 129.000,
       availability: ProductAvailability.inStock,
@@ -344,7 +370,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Montre connectée sport & santé avec suivi cardiaque SpO2',
       description: 'Écran AMOLED 1.43", plus de 80 modes sportifs et réception des notifications en temps réel.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p403-1/600/600',
+        'https://picsum.photos/seed/Dokan-p403-1/600/600',
       ],
       price: 199.000,
       oldPrice: 260.000,
@@ -360,7 +386,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Batterie externe 20 000 mAh Power Delivery 65W ultra rapide',
       description: 'Capable de recharger simultanément un ordinateur portable et deux téléphones grâce à 3 ports de sortie.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p404-1/600/600',
+        'https://picsum.photos/seed/Dokan-p404-1/600/600',
       ],
       price: 95.000,
       availability: ProductAvailability.inStock,
@@ -373,7 +399,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Support de bureau réglable en aluminium anodisé pour PC portable',
       description: 'Améliore la posture ergonomique et favorise le refroidissement avec patins silicone anti-dérapants.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p405-1/600/600',
+        'https://picsum.photos/seed/Dokan-p405-1/600/600',
       ],
       price: 52.000,
       availability: ProductAvailability.inStock,
@@ -388,8 +414,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Lampe de table design scandinave abat-jour tissu et pied céramique',
       description: 'Éclairage d\'ambiance tamisé parfait pour le salon ou le chevet avec interrupteur variateur discret.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p501-1/600/600',
-        'https://picsum.photos/seed/soukna-p501-2/600/600',
+        'https://picsum.photos/seed/Dokan-p501-1/600/600',
+        'https://picsum.photos/seed/Dokan-p501-2/600/600',
       ],
       price: 85.000,
       oldPrice: 110.000,
@@ -406,8 +432,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Tapis berbère géométrique en laine douce tissé à la main',
       description: 'Dimensions 160 x 230 cm. Motif losanges traditionnel apportant chaleur et authenticité à votre intérieur.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p502-1/600/600',
-        'https://picsum.photos/seed/soukna-p502-2/600/600',
+        'https://picsum.photos/seed/Dokan-p502-1/600/600',
+        'https://picsum.photos/seed/Dokan-p502-2/600/600',
       ],
       price: 280.000,
       availability: ProductAvailability.limitedStock,
@@ -421,7 +447,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Plaid gaufré en pur coton naturel bio certifié OEKO-TEX',
       description: 'Légèreté et moelleux pour s\'enrouler sur le canapé lors des soirées fraîches. Dimensions 150x200 cm.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p503-1/600/600',
+        'https://picsum.photos/seed/Dokan-p503-1/600/600',
       ],
       price: 49.900,
       availability: ProductAvailability.inStock,
@@ -435,7 +461,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Diffuseur d\'huiles essentielles ultrasonique en céramique mate',
       description: 'Diffusion silencieuse avec lumière d\'ambiance LED programmable et arrêt automatique de sécurité.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p504-1/600/600',
+        'https://picsum.photos/seed/Dokan-p504-1/600/600',
       ],
       price: 65.000,
       oldPrice: 80.000,
@@ -451,7 +477,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Set de 3 miroirs muraux ronds cerclage laiton doré brossé',
       description: 'Comprend 3 tailles assorties (diamètres 20, 25 et 30 cm) pour créer une composition murale lumineuse.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p505-1/600/600',
+        'https://picsum.photos/seed/Dokan-p505-1/600/600',
       ],
       price: 92.000,
       availability: ProductAvailability.outOfStock,
@@ -466,8 +492,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Tapis de yoga antidérapant haute densité en caoutchouc naturel',
       description: 'Épaisseur 6 mm pour une absorption idéale des articulations lors des postures exigeantes avec sangle de portage.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p601-1/600/600',
-        'https://picsum.photos/seed/soukna-p601-2/600/600',
+        'https://picsum.photos/seed/Dokan-p601-1/600/600',
+        'https://picsum.photos/seed/Dokan-p601-2/600/600',
       ],
       price: 69.000,
       oldPrice: 89.000,
@@ -485,7 +511,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Gourde isotherme inox 1 Litre maintien au froid 24h sans BPA',
       description: 'Double paroi isolée sous vide avec bouchon sport antifuite et anse de transport intégrée.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p602-1/600/600',
+        'https://picsum.photos/seed/Dokan-p602-1/600/600',
       ],
       price: 34.500,
       availability: ProductAvailability.inStock,
@@ -499,7 +525,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Kit de 5 bandes élastiques de résistance musculation en latex pur',
       description: '5 niveaux de tension de 5 à 30 kg avec poignées moussées, sangles chevilles et guide d\'exercices.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p603-1/600/600',
+        'https://picsum.photos/seed/Dokan-p603-1/600/600',
       ],
       price: 39.000,
       availability: ProductAvailability.inStock,
@@ -512,7 +538,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Sac de sport imperméable avec compartiment chaussures aéré',
       description: 'Volume 45L spacieux avec poche étanche pour linge humide et sangle bandoulière rembourrée.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p604-1/600/600',
+        'https://picsum.photos/seed/Dokan-p604-1/600/600',
       ],
       price: 58.000,
       oldPrice: 75.000,
@@ -528,7 +554,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Corde à sauter de vitesse réglable sur roulements à billes',
       description: 'Câble acier gainé ultraléger conçu pour l\'entraînement cardio intensif et les double unders.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p605-1/600/600',
+        'https://picsum.photos/seed/Dokan-p605-1/600/600',
       ],
       price: 22.000,
       availability: ProductAvailability.inStock,
@@ -543,8 +569,8 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Veilleuse bébé rechargeable musicale avec projection d\'étoiles',
       description: 'Lumière douce apaisante sans scintillement avec 6 mélodies relaxantes et minuterie d\'extinction auto.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p701-1/600/600',
-        'https://picsum.photos/seed/soukna-p701-2/600/600',
+        'https://picsum.photos/seed/Dokan-p701-1/600/600',
+        'https://picsum.photos/seed/Dokan-p701-2/600/600',
       ],
       price: 49.000,
       oldPrice: 65.000,
@@ -561,7 +587,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Peluche doudou renard ultra douce en coton biologique lavable',
       description: 'Compagnon câlin adapté dès la naissance avec coutures renforcées et rembourrage hypoallergénique.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p702-1/600/600',
+        'https://picsum.photos/seed/Dokan-p702-1/600/600',
       ],
       price: 32.000,
       availability: ProductAvailability.inStock,
@@ -575,7 +601,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Tour d\'empilement et formes en bois massif peintures à l\'eau',
       description: 'Jeu éducatif Montessori d\'éveil moteur et de reconnaissance des couleurs pour enfants dès 1 an.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p703-1/600/600',
+        'https://picsum.photos/seed/Dokan-p703-1/600/600',
       ],
       price: 38.000,
       availability: ProductAvailability.inStock,
@@ -588,7 +614,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Gigoteuse d\'emmaillotage 4 saisons coton doux TOG 2.5',
       description: 'Fermeture zippée bidirectionnelle sécurisée pour changer facilement bébé la nuit sans le réveiller.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p704-1/600/600',
+        'https://picsum.photos/seed/Dokan-p704-1/600/600',
       ],
       price: 54.000,
       oldPrice: 70.000,
@@ -605,7 +631,7 @@ class MockCatalogRepository implements CatalogRepository {
       name: 'Set de vaisselle d\'apprentissage bébé en silicone ventousé',
       description: 'Assiette compartimentée ventousée anti-chute, bol, bavoir récupérateur et cuillère ergonomique souple.',
       imageUrls: [
-        'https://picsum.photos/seed/soukna-p705-1/600/600',
+        'https://picsum.photos/seed/Dokan-p705-1/600/600',
       ],
       price: 42.500,
       availability: ProductAvailability.inStock,
@@ -674,7 +700,11 @@ class MockCatalogRepository implements CatalogRepository {
   }) async {
     await Future.delayed(latency);
 
-    // Mots-clés de test pour simuler les états
+    // ========================================================================
+    // MOTS-CLÉS DE DÉMONSTRATION POUR TESTER LES ÉTATS D'INTERFACE
+    // - #error : simule une rupture de connexion pour afficher ErrorState.
+    // - #empty : simule une recherche infructueuse pour afficher EmptyState.
+    // ========================================================================
     if (query.trim() == '#error') {
       throw Exception('Erreur réseau simulée');
     }
@@ -684,7 +714,7 @@ class MockCatalogRepository implements CatalogRepository {
 
     var list = List<ProductUiModel>.from(_mockProducts);
 
-    // Filtre texte
+    // Filtrage par texte saisi (nom, description ou catégorie)
     if (query.trim().isNotEmpty) {
       final q = query.trim().toLowerCase();
       list = list.where((p) {
@@ -694,14 +724,14 @@ class MockCatalogRepository implements CatalogRepository {
       }).toList();
     }
 
-    // Filtre catégorie
+    // Filtrage par nom de catégorie
     if (categoryName != null && categoryName.isNotEmpty) {
       list = list
           .where((p) => p.categoryName.toLowerCase() == categoryName.toLowerCase())
           .toList();
     }
 
-    // Filtres prix
+    // Filtrage par fourchette de prix min/max
     if (minPrice != null) {
       list = list.where((p) => p.price >= minPrice).toList();
     }
@@ -709,12 +739,12 @@ class MockCatalogRepository implements CatalogRepository {
       list = list.where((p) => p.price <= maxPrice).toList();
     }
 
-    // Filtre disponibilité
+    // Filtrage par disponibilité immédiate en stock
     if (inStockOnly == true) {
       list = list.where((p) => p.isInStock).toList();
     }
 
-    // Tri
+    // Tri des résultats
     if (sortBy != null) {
       switch (sortBy) {
         case 'price_asc':
@@ -730,12 +760,12 @@ class MockCatalogRepository implements CatalogRepository {
           list.sort((a, b) => (b.isPopular ? 1 : 0).compareTo(a.isPopular ? 1 : 0));
           break;
         default:
-          // Pertinence
+          // Pertinence par défaut
           break;
       }
     }
 
-    // Pagination
+    // Pagination par tranches (page et limit)
     final startIndex = (page - 1) * limit;
     if (startIndex >= list.length) {
       return [];
@@ -754,7 +784,7 @@ class MockCatalogRepository implements CatalogRepository {
   }
 }
 
-/// Provider d'accès au repository du catalogue
+/// Provider d'injection du service de catalogue.
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
   return MockCatalogRepository();
 });

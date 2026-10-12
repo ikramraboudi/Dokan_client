@@ -1,16 +1,42 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Modèle représentant une ligne d'article dans le panier d'achat (`CartItemUiModel`).
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `data/models/` (Modèle Panier UI).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par : `CartRepository`, `MockCartRepository`, `CartState`, `CartScreen`.
+/// - Dépend de : `product_ui_model.dart` pour `ProductAvailability`.
+/// ============================================================================
+library;
+
 import 'product_ui_model.dart';
 
-/// ============================================================
-///  SOUKNA — MODÈLE D'AFFICHAGE LIGNE DE PANIER
-/// ============================================================
+/// Ligne d'article du panier d'achat Dokan.
 class CartItemUiModel {
-  final String id; // Identifiant unique composite (productId + variant)
+  /// Identifiant unique composite (ex: 'prod_1_Taille_M').
+  final String id;
+
+  /// Identifiant de référence du produit source.
   final String productId;
+
+  /// Nom de l'article.
   final String name;
+
+  /// URL de la vignette d'illustration.
   final String imageUrl;
+
+  /// Prix unitaire d'achat.
   final double unitPrice;
+
+  /// Nombre d'exemplaires choisis.
   final int quantity;
+
+  /// Libellé de l'option ou de la taille sélectionnée (ex: 'Taille : L').
   final String? variantLabel;
+
+  /// Statut de disponibilité en stock.
   final ProductAvailability availability;
 
   const CartItemUiModel({
@@ -24,12 +50,14 @@ class CartItemUiModel {
     this.availability = ProductAvailability.inStock,
   });
 
-  /// Total pour cette ligne d'article
-  /// // TODO API : à confirmer côté serveur sur totaux
+  /// Total calculé pour cette ligne (prix unitaire × quantité).
+  // TODO API : Le montant total sera également recalculé et certifié côté backend.
   double get lineTotal => unitPrice * quantity;
 
+  /// Vrai si l'article est actuellement disponible.
   bool get isInStock => availability != ProductAvailability.outOfStock;
 
+  /// Méthode de clonage immuable.
   CartItemUiModel copyWith({
     String? id,
     String? productId,

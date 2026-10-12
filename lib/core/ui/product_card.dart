@@ -1,17 +1,50 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Carte de présentation d'un produit individuel (`ProductCard`).
+/// Affiche la photographie de l'article, ses badges d'état (promotion, stock limité,
+/// rupture), le bouton interactif cœur de favori, le nom sur 1 à 2 lignes,
+/// le prix formaté en dinars tunisiens avec son ancien prix barré, et sa note.
+///
+/// PARTICULARITÉ TECHNIQUE ERGONOMIQUE :
+/// Les prix utilisent le widget `Wrap` au lieu d'une `Row` : sur des écrans étroits
+/// (largeur de carte < 160 dp), deux prix côte à côte risquaient de déborder de 2 pixels.
+/// Le `Wrap` renvoie automatiquement le prix barré à la ligne sans lever d'erreur Flutter.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/ui/` (Composant Produit Réutilisable).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par :
+///   * `HomeScreen` (sections de défilement horizontal).
+///   * `ProductGrid` (grilles paginées du catalogue et des favoris).
+/// - Dépend de :
+///   * `data/models/product_ui_model.dart` pour les données de l'article.
+///   * `core/config/app_config.dart` pour `formatPrice()`.
+///   * `core/theme/app_colors.dart` et `core/theme/app_dimens.dart`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../../data/models/product_ui_model.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 
-/// ============================================================
-///  SOUKNA — CARTE PRODUIT RÉUTILISABLE
-/// ============================================================
+/// Carte produit réutilisable de Dokan.
 class ProductCard extends StatelessWidget {
+  /// Modèle contenant les données de l'article à représenter.
   final ProductUiModel product;
+
+  /// Action déclenchée lors de l'appui sur la carte (ouverture de la fiche détaillée).
   final VoidCallback? onTap;
+
+  /// Action déclenchée lors de l'appui sur l'icône cœur (ajout/retrait favori).
   final VoidCallback? onFavoriteTap;
+
+  /// État actuel du favori (vrai si présent dans la liste client).
   final bool isFavorite;
+
+  /// Largeur optionnelle forcée (utile dans les carrousels horizontaux de l'accueil).
   final double? width;
 
   const ProductCard({
@@ -49,9 +82,14 @@ class ProductCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // --- Image avec badges et bouton favori ---
+              // --- Image avec superposition des badges et du bouton favori ---
+              // MOT TECHNIQUE - Stack :
+              // Empile plusieurs widgets les uns sur les autres en couches z-index.
               Stack(
                 children: [
+                  // MOT TECHNIQUE - AspectRatio :
+                  // Maintient un ratio largeur/hauteur constant (ici 1.18) pour éviter
+                  // les déformations d'images quelle que soit la résolution de l'écran.
                   AspectRatio(
                     aspectRatio: 1.18,
                     child: Container(
@@ -60,6 +98,7 @@ class ProductCard extends StatelessWidget {
                           ? Image.network(
                               product.imageUrls.first,
                               fit: BoxFit.cover,
+                              // Affichage fluide d'un spinner pendant le téléchargement réseau
                               loadingBuilder: (context, child, loadingProgress) {
                                 if (loadingProgress == null) return child;
                                 return const Center(
@@ -73,6 +112,7 @@ class ProductCard extends StatelessWidget {
                                   ),
                                 );
                               },
+                              // Fallback élégant en cas d'erreur de connexion ou lien brisé
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: AppColors.primarySoft,
@@ -97,7 +137,7 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Badge de remise ou de disponibilité
+                  // Badge de remise promotionnelle ou d'état de stock
                   Positioned(
                     top: AppDimens.space8,
                     left: AppDimens.space8,
@@ -168,7 +208,7 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Bouton Cœur Favori
+                  // Bouton Cœur Favori circulaire
                   Positioned(
                     top: AppDimens.space8,
                     right: AppDimens.space8,
@@ -203,13 +243,13 @@ class ProductCard extends StatelessWidget {
                 ],
               ),
 
-              // --- Informations produit ---
+              // --- Zone des informations textuelles du produit ---
               Padding(
                 padding: const EdgeInsets.all(AppDimens.space8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Catégorie
+                    // Libellé de la catégorie
                     Text(
                       product.categoryName,
                       maxLines: 1,
@@ -221,7 +261,7 @@ class ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
 
-                    // Nom sur 1-2 lignes
+                    // Nom commercial du produit (tronqué élégamment au-delà de 2 lignes)
                     Text(
                       product.name,
                       maxLines: 2,
@@ -235,7 +275,9 @@ class ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppDimens.space4),
 
-                    // Prix et ancien prix dans un Wrap sans dépassement
+                    // MOT TECHNIQUE - Wrap :
+                    // Affiche le prix et l'ancien prix côte à côte, mais passe
+                    // automatiquement à la ligne sans planter si l'écran est trop étroit.
                     Wrap(
                       spacing: AppDimens.space4,
                       runSpacing: 2,
@@ -261,7 +303,7 @@ class ProductCard extends StatelessWidget {
                       ],
                     ),
 
-                    // Note et avis si existants
+                    // Étoiles de notation et nombre d'avis
                     if (product.rating != null) ...[
                       const SizedBox(height: 2),
                       Row(

@@ -1,3 +1,23 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Configuration principale du routeur déclaratif GoRouter.
+/// Il organise l'arbre complet des routes de l'application, configure la clé de
+/// navigation racine et met en place le découpage en 5 branches d'onglets
+/// persistants via `StatefulShellRoute`.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/navigation/` (Configuration Routeur).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par : `lib/app.dart` qui l'injecte dans `MaterialApp.router`.
+/// - Dépend de :
+///   * `package:go_router/go_router.dart`.
+///   * `main_shell.dart` pour le conteneur visuel des onglets.
+///   * `routes.dart` pour les constantes de chemins.
+///   * Tous les écrans de `feature/`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../feature/auth/forgot_password_screen.dart';
@@ -15,28 +35,35 @@ import '../../feature/splash/splash_screen.dart';
 import 'main_shell.dart';
 import 'routes.dart';
 
+/// Clé globale du navigateur racine permettant d'afficher des dialogues ou
+/// d'ouvrir des écrans plein écran par-dessus la barre de navigation inférieure.
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'rootNav');
 
-/// ============================================================
-///  SOUKNA — CONFIGURATION DU ROUTEUR GO_ROUTER
-/// ============================================================
+/// INSTANCE GLOBALE DU ROUTEUR GOROUTER
+///
+/// MOT TECHNIQUE - GoRouter :
+/// Contrôleur de navigation déclarative permettant d'associer des chemins URLs
+/// à des widgets et de gérer l'historique de manière robuste.
+
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: AppRoutes.splash,
   routes: [
-    // --- Écran de démarrage (Splash) ---
+    // --- Écran de démarrage (Splash Screen) ---
+    // Affiché en plein écran au lancement pendant 3 secondes
     GoRoute(
       path: AppRoutes.splash,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const SplashScreen(),
     ),
 
-    // --- Routes poussées par-dessus la barre de navigation ---
+    // --- Écrans secondaires empilés par-dessus la barre d'onglets (avec bouton retour) ---
     GoRoute(
       path: AppRoutes.catalog,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
+        // Extraction des paramètres d'URL (ex: /catalog?category=Mode&q=Robe)
         final category = state.uri.queryParameters['category'];
         final query = state.uri.queryParameters['q'];
         return CatalogScreen(
@@ -54,12 +81,13 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.productDetail,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
+        // Extraction du paramètre dynamique de chemin (ex: :id)
         final id = state.pathParameters['id'] ?? '';
         return ProductDetailScreen(productId: id);
       },
     ),
 
-    // --- Routes d'authentification ---
+    // --- Écrans du module d'authentification ---
     GoRoute(
       path: AppRoutes.login,
       parentNavigatorKey: _rootNavigatorKey,
@@ -76,13 +104,18 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const ForgotPasswordScreen(),
     ),
 
-    // --- Coquille avec barre de navigation inférieure persistante ---
+    // COQUILLE DE NAVIGATION PERSISTANTE À 5 ONGLETS
+    //
+    // MOT TECHNIQUE - StatefulShellRoute.indexedStack :
+    // Chaque branche (`StatefulShellBranch`) maintient sa propre pile d'écrans
+    // et sa propre position de défilement en mémoire, même lorsqu'on change d'onglet.
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
+        // MainShell affiche la barre inférieure NavigationBar avec le badge du panier
         return MainShell(navigationShell: navigationShell);
       },
       branches: [
-        // Branche 0 : Accueil
+        // Branche 0 : Onglet Accueil
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -92,7 +125,7 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
 
-        // Branche 1 : Catégories
+        // Branche 1 : Onglet Catégories
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -102,7 +135,7 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
 
-        // Branche 2 : Favoris
+        // Branche 2 : Onglet Favoris (affiche invite connexion ou liste client)
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -112,7 +145,7 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
 
-        // Branche 3 : Panier
+        // Branche 3 : Onglet Panier d'achat
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -122,7 +155,7 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
 
-        // Branche 4 : Profil
+        // Branche 4 : Onglet Profil utilisateur
         StatefulShellBranch(
           routes: [
             GoRoute(

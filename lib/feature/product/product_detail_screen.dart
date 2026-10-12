@@ -20,9 +20,8 @@ final productDetailProvider =
   return repo.getProductById(id);
 });
 
-/// ============================================================
-///  SOUKNA — FICHE PRODUIT DÉTAILLÉE (ÉTAPE 3)
-/// ============================================================
+
+///  Dokan — FICHE PRODUIT DÉTAILLÉE
 class ProductDetailScreen extends ConsumerStatefulWidget {
   final String productId;
 

@@ -1,18 +1,49 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Implémentation simulée du panier d'achat (`MockCartRepository`), état immuable
+/// (`CartState`) et gestionnaire d'état réactif (`CartNotifier`).
+///
+/// COMPORTEMENTS MÉTIER CLÉS :
+/// 1) Maintient le panier d'achat en mémoire vive sans perte lors de la connexion.
+/// 2) Calcule en continu le sous-total brut, les remises de code promo et la livraison.
+/// 3) Code promo de démonstration : `Dokan10` (déduit -10% sur le sous-total).
+/// 4) Frais de livraison forfaitaires de 7 DT, offerts dès 150 DT de commande.
+/// 5) Mécanisme d'annulation (*Undo*) lors de la suppression d'une ligne d'article.
+/// 6) Synchronisation automatique du badge numérique dans la barre d'onglets.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `data/mock/` (Source de Données Panier & Notifier).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Injecté par : `cartProvider`.
+/// - Consommé par : `CartScreen`, `ProductDetailScreen`, `MainShell` (via `cartCountProvider`).
+/// - Dépend de : `data/repositories/cart_repository.dart` et `data/models/cart_item_ui_model.dart`.
+/// ============================================================================
+// DONNÉES FICTIVES
+// TODO API : Synchroniser le panier avec la session du panier persistant sur le serveur.
+library;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/navigation/main_shell.dart';
 import '../models/cart_item_ui_model.dart';
 import '../models/product_ui_model.dart';
 import '../repositories/cart_repository.dart';
 
-/// ============================================================
-///  SOUKNA — ÉTAT GLOBAL DU PANIER
-///  // TODO API : à confirmer côté serveur sur totaux, codes promo et disponibilités.
-/// ============================================================
+/// ÉTAT IMMUABLE DU PANIER (CartState)
 class CartState {
+  /// Liste des articles présents dans le panier.
   final List<CartItemUiModel> items;
+
+  /// Code promotionnel actuellement actif (ex: 'Dokan10').
   final String? appliedPromoCode;
+
+  /// Pourcentage de réduction appliqué (ex: 10.0 pour -10%).
   final double discountPercent;
+
+  /// Indique si la vérification du code promo est en cours.
   final bool isApplyingPromo;
+
+  /// Message d'erreur éventuel lié à la saisie du code promo.
   final String? promoError;
 
   const CartState({
@@ -23,31 +54,36 @@ class CartState {
     this.promoError,
   });
 
+  /// Indique si le panier ne contient aucun article.
   bool get isEmpty => items.isEmpty;
+
+  /// Indique si le panier contient au moins un article.
   bool get isNotEmpty => items.isNotEmpty;
 
+  /// Nombre total d'unités physiques dans le panier (somme des quantités).
   int get totalItemCount => items.fold(0, (sum, i) => sum + i.quantity);
 
-  /// Sous-total brut
+  /// Sous-total financier brut avant réductions.
   double get subtotal => items.fold(0.0, (sum, i) => sum + i.lineTotal);
 
-  /// Montant de la réduction
+  /// Montant déduit grâce au code promo.
   double get discountAmount => subtotal * (discountPercent / 100.0);
 
-  /// Frais de livraison estimés (7 DT, gratuit à partir de 150 DT)
+  /// Frais de port : 7,000 DT, ou Gratuits (0 DT) dès 150 DT de commande.
   double get deliveryFee {
     if (subtotal == 0) return 0.0;
     if (subtotal >= 150.0) return 0.0;
     return 7.000;
   }
 
-  /// Total final calculé
+  /// Montant total final TTC à régler.
   double get total {
     if (subtotal == 0) return 0.0;
     final discounted = subtotal - discountAmount;
     return (discounted + deliveryFee).clamp(0.0, double.infinity);
   }
 
+  /// Copie immuable avec substitution ciblée.
   CartState copyWith({
     List<CartItemUiModel>? items,
     String? Function()? appliedPromoCode,
@@ -65,9 +101,7 @@ class CartState {
   }
 }
 
-/// ============================================================
-///  SOUKNA — MOCK REPOSITORY PANIER
-/// ============================================================
+/// Implémentation simulée du stockage du panier.
 class MockCartRepository implements CartRepository {
   final List<CartItemUiModel> _items = [];
 
@@ -112,24 +146,28 @@ class MockCartRepository implements CartRepository {
   }
 }
 
+/// Provider d'injection du repository panier.
 final cartRepositoryProvider = Provider<CartRepository>((ref) {
   return MockCartRepository();
 });
 
-/// StateNotifier pour gérer les opérations du panier en temps réel
+/// GESTIONNAIRE D'OPÉRATIONS DU PANIER (CartNotifier)
 class CartNotifier extends StateNotifier<CartState> {
   final Ref _ref;
   final CartRepository _repo;
 
   CartNotifier(this._ref, this._repo) : super(const CartState());
 
-  /// Met à jour le badge du shell de navigation
+  /// Met à jour la pastille rouge sur l'icône du panier dans la barre de navigation.
   void _updateBadge() {
     _ref.read(cartCountProvider.notifier).state = state.totalItemCount;
   }
 
-  /// Ajoute un produit au panier
-  /// // DÉCISION À CONFIRMER : conservation du panier invité sans perte lors de la connexion
+  /// SCÉNARIO MÉTIER : AJOUT D'UN PRODUIT DANS LE PANIER
+  /// 1) Génère un identifiant composite combinant l'ID du produit et la variante choisie.
+  /// 2) Si l'article existe déjà, incrémente sa quantité (plafonnée à 10 unités max).
+  /// 3) Si l'article est nouveau, l'ajoute en tête de panier.
+  /// 4) Recalcule immédiatement le sous-total et met à jour le badge de la barre d'onglets.
   Future<void> addProduct(
     ProductUiModel product, {
     int quantity = 1,
@@ -163,7 +201,7 @@ class CartNotifier extends StateNotifier<CartState> {
     await _repo.addItem(currentItems.firstWhere((i) => i.id == compositeId));
   }
 
-  /// Met à jour la quantité d'un article
+  /// Modifie la quantité d'une ligne d'article existante.
   Future<void> updateQuantity(String itemId, int newQuantity) async {
     if (newQuantity < 1) return;
 
@@ -180,7 +218,7 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  /// Retire un article du panier et le retourne pour permettre l'annulation
+  /// Retire un article du panier et le renvoie pour alimenter l'action d'annulation (Undo).
   CartItemUiModel? removeItem(String itemId) {
     final currentItems = List<CartItemUiModel>.from(state.items);
     final index = currentItems.indexWhere((i) => i.id == itemId);
@@ -195,7 +233,9 @@ class CartNotifier extends StateNotifier<CartState> {
     return null;
   }
 
-  /// Restaure un article retiré (action Annuler / Undo du SnackBar)
+  /// SCÉNARIO MÉTIER : RESTAURATION D'UN ARTICLE (ACTION UNDO)
+  /// Si l'utilisateur clique sur « Annuler » dans le SnackBar suite à une suppression,
+  /// cette méthode réinsère l'article exactement à son index d'origine dans la liste.
   void restoreItem(CartItemUiModel item, int index) {
     final currentItems = List<CartItemUiModel>.from(state.items);
     final insertIndex = index.clamp(0, currentItems.length);
@@ -206,9 +246,10 @@ class CartNotifier extends StateNotifier<CartState> {
     _repo.addItem(item);
   }
 
-  /// Application d'un code promotionnel
-  /// Code de démonstration : SOUKNA10 (-10 %)
-  /// // TODO API : validation serveur
+  /// SCÉNARIO MÉTIER : APPLICATION D'UN CODE PROMOTIONNEL
+  /// - Code valide : `Dokan10` accorde 10 % de réduction immédiate.
+  /// - Code erroné : Affiche le message « Code promo invalide ou expiré ».
+  
   Future<bool> applyPromoCode(String code) async {
     final trimmed = code.trim().toUpperCase();
     if (trimmed.isEmpty) return false;
@@ -218,11 +259,12 @@ class CartNotifier extends StateNotifier<CartState> {
       promoError: () => null,
     );
 
+    // Latence artificielle de vérification (600 ms)
     await Future.delayed(const Duration(milliseconds: 600));
 
-    if (trimmed == 'SOUKNA10') {
+    if (trimmed == 'Dokan10') {
       state = state.copyWith(
-        appliedPromoCode: () => 'SOUKNA10',
+        appliedPromoCode: () => 'Dokan10',
         discountPercent: 10.0,
         isApplyingPromo: false,
         promoError: () => null,
@@ -237,7 +279,7 @@ class CartNotifier extends StateNotifier<CartState> {
     }
   }
 
-  /// Suppression du code promotionnel actif
+  /// Supprime la remise promotionnelle en cours.
   void removePromoCode() {
     state = state.copyWith(
       appliedPromoCode: () => null,
@@ -246,7 +288,7 @@ class CartNotifier extends StateNotifier<CartState> {
     );
   }
 
-  /// Vider le panier
+  /// Réinitialise l'ensemble du panier.
   Future<void> clearCart() async {
     state = const CartState();
     _updateBadge();
@@ -254,6 +296,7 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 }
 
+/// Provider global du panier accessible via `ref.watch(cartProvider)`.
 final cartProvider = StateNotifierProvider<CartNotifier, CartState>((ref) {
   final repo = ref.watch(cartRepositoryProvider);
   return CartNotifier(ref, repo);

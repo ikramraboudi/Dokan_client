@@ -14,9 +14,9 @@ import '../../core/ui/quantity_selector.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/models/cart_item_ui_model.dart';
 
-/// ============================================================
-///  SOUKNA — ÉCRAN DU PANIER COMPLET (ÉTAPE 5)
-/// ============================================================
+
+///  Dokan — ÉCRAN DU PANIER COMPLET
+
 class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
 
@@ -361,7 +361,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     textCapitalization: TextCapitalization.characters,
                     style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     decoration: const InputDecoration(
-                      hintText: 'Ex. SOUKNA10',
+                      hintText: 'Ex. Dokan10',
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: AppDimens.space12,
                         vertical: 10,

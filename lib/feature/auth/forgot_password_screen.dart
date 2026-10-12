@@ -7,9 +7,7 @@ import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
 import '../../data/mock/mock_auth_repository.dart';
 
-/// ============================================================
-///  SOUKNA — ÉCRAN MOT DE PASSE OUBLIÉ (ÉTAPE 4)
-/// ============================================================
+///  Dokan — ÉCRAN MOT DE PASSE OUBLIÉ
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 

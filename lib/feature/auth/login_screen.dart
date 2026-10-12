@@ -10,9 +10,7 @@ import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
 import '../../data/mock/mock_auth_repository.dart';
 
-/// ============================================================
-///  SOUKNA — ÉCRAN DE CONNEXION (ÉTAPE 4)
-/// ============================================================
+///  Dokan — ÉCRAN DE CONNEXION
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -22,7 +20,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'demo@soukna.com');
+  final _emailController = TextEditingController(text: 'demo@Dokan.com');
   final _passwordController = TextEditingController(text: 'Demo1234');
 
   bool _isLoading = false;
@@ -240,7 +238,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     borderRadius: BorderRadius.circular(AppDimens.radius12),
                   ),
                   child: const Text(
-                    'Compte de démo : demo@soukna.com / Demo1234\nTest d\'échec : fail@soukna.com',
+                    'Compte de démo : demo@Dokan.com / Demo1234\nTest d\'échec : fail@Dokan.com',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,

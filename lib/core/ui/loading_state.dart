@@ -1,10 +1,34 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Effet d'animation de chargement squelette ("Shimmer") codé en natif pur Flutter.
+/// Il remplace les spinners circulaires par des rectangles aux bords arrondis
+/// parcourus d'une vague lumineuse, préfigurant la mise en page finale.
+///
+/// PARTICULARITÉ TECHNIQUE :
+/// Réalisé SANS AUCUN PACKAGE EXTERNE grâce à `AnimationController`, `AnimatedBuilder`
+/// et un masque de dégradé `ShaderMask`.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/ui/` (Composant d'État de Chargement).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par :
+///   * `HomeScreen` (sections de chargement).
+///   * `ProductGrid` (grille squelette pendant les requêtes).
+///   * `CategoriesScreen` (chargement de la liste).
+/// - Dépend de : `core/theme/app_colors.dart` et `core/theme/app_dimens.dart`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 
-/// ============================================================
-///  SOUKNA — EFFET DE CHARGEMENT SHIMMER NATIF SANS PACKAGE
-/// ============================================================
+/// Conteneur animant un dégradé linéaire lumineux sur tous ses enfants.
+///
+/// MOT TECHNIQUE - SingleTickerProviderStateMixin :
+/// Fournit le signal de synchronisation d'images (ticks à 60 ou 120 FPS)
+/// nécessaire au fonctionnement fluide de l'AnimationController.
 class ShimmerLoading extends StatefulWidget {
   final Widget child;
 
@@ -24,6 +48,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
   @override
   void initState() {
     super.initState();
+    // Boucle d'animation infinie d'une durée de 1,2 seconde par balayage
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -32,6 +57,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
 
   @override
   void dispose() {
+    // Libération impérative de la ressource d'animation pour éviter toute fuite mémoire
     _controller.dispose();
     super.dispose();
   }
@@ -41,6 +67,8 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        // MOT TECHNIQUE - ShaderMask :
+        // Applique un shader graphique (ici un dégradé mobile) sur la forme du widget enfant.
         return ShaderMask(
           blendMode: BlendMode.srcATop,
           shaderCallback: (bounds) {
@@ -66,7 +94,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
   }
 }
 
-/// Bloc rectangulaire avec effet shimmer
+/// Bloc rectangulaire teinté figurant une image ou une ligne de texte en cours de chargement.
 class ShimmerBox extends StatelessWidget {
   final double? width;
   final double height;
@@ -92,7 +120,7 @@ class ShimmerBox extends StatelessWidget {
   }
 }
 
-/// Composant d'état de chargement standard avec placeholders
+/// Liste squelette complète affichée par défaut pendant le chargement d'une collection.
 class LoadingState extends StatelessWidget {
   final String? message;
   final int itemCount;

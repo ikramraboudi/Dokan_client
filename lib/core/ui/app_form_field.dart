@@ -1,10 +1,28 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Composant réutilisable de champ de saisie de formulaire (`AppFormField`).
+/// Il enveloppe le widget Flutter `TextFormField` pour lui appliquer un libellé
+/// clair, une icône de début, un basculeur d'affichage pour les mots de passe et
+/// une gestion complète des erreurs de validation thémées.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/ui/` (Composant Formulaire Réutilisable).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par :
+///   * `lib/feature/auth/login_screen.dart`
+///   * `lib/feature/auth/register_screen.dart`
+///   * `lib/feature/auth/forgot_password_screen.dart`
+/// - Dépend de :
+///   * `core/theme/app_colors.dart` et `core/theme/app_dimens.dart`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 
-/// ============================================================
-///  SOUKNA — CHAMP DE FORMULAIRE RÉUTILISABLE
-/// ============================================================
+/// Champ de saisie personnalisé de l'application Dokan.
 class AppFormField extends StatefulWidget {
   final String label;
   final String? hint;
@@ -38,6 +56,7 @@ class AppFormField extends StatefulWidget {
 }
 
 class _AppFormFieldState extends State<AppFormField> {
+  /// Indique si les caractères du mot de passe doivent être masqués par des puces.
   bool _obscureText = true;
 
   @override
@@ -45,6 +64,7 @@ class _AppFormFieldState extends State<AppFormField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // --- Libellé textuel au-dessus du champ ---
         Text(
           widget.label,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -53,6 +73,10 @@ class _AppFormFieldState extends State<AppFormField> {
               ),
         ),
         const SizedBox(height: AppDimens.space8),
+
+        // --- Champ de texte interactif avec validation ---
+        // MOT TECHNIQUE - TextFormField :
+        // Champ de saisie connecté au Form parent, vérifié par `validator`.
         TextFormField(
           controller: widget.controller,
           validator: widget.validator,
@@ -77,6 +101,8 @@ class _AppFormFieldState extends State<AppFormField> {
                     child: widget.prefixIcon!,
                   )
                 : null,
+
+            // Bouton œil permettant d'afficher ou masquer le mot de passe
             suffixIcon: widget.isPassword
                 ? Semantics(
                     label: _obscureText

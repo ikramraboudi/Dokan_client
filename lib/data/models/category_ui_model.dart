@@ -1,12 +1,33 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Modèle d'affichage d'une catégorie du catalogue Dokan (`CategoryUiModel`).
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `data/models/` (Modèle d'Affichage UI).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par :
+///   * `CatalogRepository` et `MockCatalogRepository`.
+///   * `HomeScreen` (raccourcis ronds de catégories).
+///   * `CategoriesScreen` (liste détaillée des rubriques).
+/// - Dépend de : `package:flutter/material.dart` pour le type `IconData`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 
-/// ============================================================
-///  SOUKNA — MODÈLE D'AFFICHAGE CATÉGORIE
-/// ============================================================
+/// Catégorie de produits du catalogue Dokan.
 class CategoryUiModel {
+  /// Identifiant technique de la catégorie (ex: 'cat_1').
   final String id;
+
+  /// Nom affiché en français (ex: 'Électronique et technologie').
   final String name;
+
+  /// Icône vectorielle Material représentative.
   final IconData icon;
+
+  /// Nombre total d'articles recensés dans cette catégorie.
   final int productCount;
 
   const CategoryUiModel({
@@ -16,6 +37,7 @@ class CategoryUiModel {
     this.productCount = 0,
   });
 
+  /// Méthode de clonage immuable avec substitution ciblée.
   CategoryUiModel copyWith({
     String? id,
     String? name,

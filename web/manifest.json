@@ -1,6 +1,6 @@
 {
-    "name": "soukna_client",
-    "short_name": "soukna_client",
+    "name": "Dokan_client",
+    "short_name": "Dokan_client",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

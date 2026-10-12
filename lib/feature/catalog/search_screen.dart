@@ -40,9 +40,8 @@ class RecentSearchesNotifier extends StateNotifier<List<String>> {
   }
 }
 
-/// ============================================================
-///  SOUKNA — ÉCRAN RECHERCHE AVANCÉE (ÉTAPE 3)
-/// ============================================================
+///  Dokan — ÉCRAN RECHERCHE AVANCÉE
+
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
@@ -191,7 +190,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               onSubmitted: (value) => _performSearch(value.trim()),
               style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
               decoration: InputDecoration(
-                hintText: 'Rechercher sur Soukna...',
+                hintText: 'Rechercher sur Dokan...',
                 filled: false,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppDimens.space12,

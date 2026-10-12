@@ -1,17 +1,48 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Barre d'application supérieure personnalisée (`AppTopBar`) respectant le thème Dokan.
+/// Elle standardise l'en-tête de tous les écrans en offrant un affichage adaptatif :
+/// soit le logo boutique officiel ("Dokan"), soit un titre textuel avec bouton retour.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche `core/ui/` (Composant Graphique Réutilisable).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par : Pratiquement tous les écrans (`HomeScreen`, `CatalogScreen`,
+///   `CartScreen`, `FavoritesScreen`, `ProfileScreen`, `LoginScreen`...).
+/// - Dépend de :
+///   * `core/config/app_config.dart` pour le nom de l'application.
+///   * `core/theme/app_colors.dart` et `core/theme/app_dimens.dart`.
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import '../config/app_config.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 
-/// ============================================================
-///  SOUKNA — BARRE SUPÉRIEURE PERSONNALISÉE
-/// ============================================================
+/// Barre d'application réutilisable implémentant PreferredSizeWidget.
+///
+/// MOT TECHNIQUE - PreferredSizeWidget :
+/// Interface Flutter obligatoire pour tout widget placé dans la propriété `appBar`
+/// d'un `Scaffold`. Elle permet au Scaffold de connaître la hauteur exacte requise.
 class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
+  /// Titre textuel optionnel affiché au centre de la barre.
   final String? title;
+
+  /// Si vrai, affiche le logo boutique officiel Dokan plutôt qu'un simple texte.
   final bool showLogo;
+
+  /// Si vrai, affiche une flèche de retour arrière discrète à gauche.
   final bool showBackButton;
+
+  /// Action personnalisée exécutée lors d'un clic sur le bouton retour.
   final VoidCallback? onBackPressed;
+
+  /// Liste de widgets d'actions positionnés à droite (ex: icône panier, bouton vider).
   final List<Widget>? actions;
+
+  /// Widget optionnel positionné sous la barre (ex: onglets TabBar).
   final PreferredSizeWidget? bottom;
 
   const AppTopBar({
@@ -31,8 +62,11 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // --- Widget du bouton retour (Leading) ---
     Widget? leadingWidget;
     if (showBackButton) {
+      // MOT TECHNIQUE - Semantics :
+      // Annote le bouton pour les personnes utilisant un lecteur d'écran (TalkBack).
       leadingWidget = Semantics(
         label: 'Retour à l\'écran précédent',
         button: true,
@@ -45,6 +79,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
 
+    // --- Widget de Titre (Logo ou Texte) ---
     Widget? titleWidget;
     if (showLogo) {
       titleWidget = Row(
@@ -83,6 +118,7 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       );
     }
 
+    // --- Rendu de l'AppBar Material 3 ---
     return AppBar(
       title: titleWidget,
       leading: leadingWidget,

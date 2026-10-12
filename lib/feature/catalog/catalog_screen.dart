@@ -16,9 +16,9 @@ import '../../data/mock/mock_catalog_repository.dart';
 import '../../data/mock/mock_favorites_repository.dart';
 import '../../data/models/product_ui_model.dart';
 
-/// ============================================================
-///  SOUKNA — ÉCRAN CATALOGUE COMPLET (ÉTAPE 3 : FILTRES & TRI)
-/// ============================================================
+
+///  Dokan — ÉCRAN CATALOGUE COMPLET ( FILTRES et TRI)
+
 class CatalogScreen extends ConsumerStatefulWidget {
   final String? categoryName;
   final String? searchQuery;
