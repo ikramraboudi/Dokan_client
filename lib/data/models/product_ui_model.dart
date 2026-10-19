@@ -1,19 +1,5 @@
-/// ============================================================================
-/// RÔLE DU FICHIER :
-/// Modèle d'affichage complet d'un produit (`ProductUiModel`) et énumération
-/// de disponibilité de stock (`ProductAvailability`).
-///
-/// COUCHE DANS L'ARCHITECTURE :
-/// Couche `data/models/` (Modèle Produit UI).
-///
-/// RELATIONS ET DÉPENDANCES :
-/// - Utilisé par :
-///   * `CatalogRepository`, `MockCatalogRepository`.
-///   * `ProductCard`, `ProductGrid`.
-///   * `HomeScreen`, `CatalogScreen`, `SearchScreen`, `ProductDetailScreen`, `FavoritesScreen`.
-/// - Dépend de : Dart pur.
-/// ============================================================================
-library;
+// lib/data/models/product_ui_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Énumération décrivant la disponibilité d'un article en stock.
 enum ProductAvailability {
@@ -23,50 +9,31 @@ enum ProductAvailability {
 
   final String label;
   const ProductAvailability(this.label);
+
+  static ProductAvailability fromString(String? value) {
+    return switch (value) {
+      'limitedStock' => ProductAvailability.limitedStock,
+      'outOfStock' => ProductAvailability.outOfStock,
+      _ => ProductAvailability.inStock,
+    };
+  }
 }
 
 /// Modèle d'un produit présenté dans le catalogue Dokan.
 class ProductUiModel {
-  /// Identifiant unique (ex: 'prod_1').
   final String id;
-
-  /// Nom commercial complet.
   final String name;
-
-  /// Description textuelle détaillée.
   final String description;
-
-  /// Liste des URLs d'images pour la galerie photo.
   final List<String> imageUrls;
-
-  /// Prix de vente actuel (en dinars tunisiens).
   final double price;
-
-  /// Ancien prix barré (nul si le produit n'a pas de réduction).
   final double? oldPrice;
-
-  /// Libellé du badge promotionnel (ex: '-25 %' ou 'PROMO').
   final String? discountLabel;
-
-  /// Statut de disponibilité en stock.
   final ProductAvailability availability;
-
-  /// Nom de la catégorie associée.
   final String categoryName;
-
-  /// Note moyenne sur 5 étoiles (nul si aucun avis).
   final double? rating;
-
-  /// Nombre d'avis d'acheteurs déposés.
   final int reviewCount;
-
-  /// Variantes disponibles au choix (ex: ['S', 'M', 'L'] ou ['Bleu', 'Noir']).
   final List<String>? variants;
-
-  /// Vrai si l'article est un nouvel arrivage.
   final bool isNew;
-
-  /// Vrai si l'article fait partie des meilleures ventes.
   final bool isPopular;
 
   const ProductUiModel({
@@ -91,4 +58,61 @@ class ProductUiModel {
 
   /// Indique si l'article peut être commandé (non épuisé).
   bool get isInStock => availability != ProductAvailability.outOfStock;
+
+  // lib/data/models/product_ui_model.dart
+
+  /// ── CONVERTISSEUR DEPUIS FIRESTORE ─────────────────────────────────────────
+  factory ProductUiModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+
+    // Support both imageUrls (List) and imageUrl (String)
+    List<String> images = [];
+    if (data['imageUrls'] is List) {
+      images = (data['imageUrls'] as List).map((e) => e.toString()).toList();
+    } else if (data['imageUrl'] is String && (data['imageUrl'] as String).isNotEmpty) {
+      images = [data['imageUrl'] as String];
+    }
+
+    List<String>? variantsList;
+    if (data['variants'] is List) {
+      variantsList = (data['variants'] as List).map((e) => e.toString()).toList();
+    }
+
+    return ProductUiModel(
+      id: doc.id,
+      // Supports both 'name' and 'title' fields from Firestore
+      name: (data['name'] as String?) ?? (data['title'] as String?) ?? 'Produit sans nom',
+      description: data['description'] as String? ?? '',
+      imageUrls: images,
+      price: (data['price'] as num?)?.toDouble() ?? 0.0,
+      oldPrice: (data['oldPrice'] as num?)?.toDouble(),
+      discountLabel: data['discountLabel'] as String?,
+      availability: ProductAvailability.fromString(data['availability'] as String?),
+      categoryName: data['categoryName'] as String? ?? 'Général',
+      rating: (data['rating'] as num?)?.toDouble(),
+      reviewCount: (data['reviewCount'] as num?)?.toInt() ?? 0,
+      variants: variantsList,
+      isNew: data['isNew'] as bool? ?? false,
+      isPopular: data['isPopular'] as bool? ?? false,
+    );
+  }
+
+  /// ── CONVERTISSEUR VERS FIRESTORE ───────────────────────────────────────────
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'description': description,
+      'imageUrls': imageUrls,
+      'price': price,
+      'oldPrice': oldPrice,
+      'discountLabel': discountLabel,
+      'availability': availability.name, // 'inStock', 'limitedStock', ou 'outOfStock'
+      'categoryName': categoryName,
+      'rating': rating,
+      'reviewCount': reviewCount,
+      'variants': variants,
+      'isNew': isNew,
+      'isPopular': isPopular,
+    };
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,8 @@ import '../../core/ui/app_form_field.dart';
 import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
 import '../../data/mock/mock_auth_repository.dart';
+import '../../services/auth_service.dart';
+
 
 ///  Dokan — ÉCRAN DE CONNEXION
 class LoginScreen extends ConsumerStatefulWidget {
@@ -22,6 +25,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController(text: 'demo@Dokan.com');
   final _passwordController = TextEditingController(text: 'Demo1234');
+  final _authService = AuthService();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -73,6 +77,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _errorMessage = e.toString().replaceAll('Exception: ', '');
         });
       }
+    }
+  }
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields.')),
+      );
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      // Call your AuthService
+      await _authService.signIn(email: email, password: password);
+      // NOTE: You do NOT need Navigator.push here!
+      // AuthGate detects the login and swaps the screen to HomeScreen automatically!
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Login failed.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -195,7 +223,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Bouton Se connecter avec état de chargement
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _submitLogin,
+                  onPressed: _isLoading ? null : _handleLogin,
                   child: _isLoading
                       ? const SizedBox(
                           width: 22,

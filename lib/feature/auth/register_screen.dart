@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/session/session_provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -7,6 +8,7 @@ import '../../core/ui/app_form_field.dart';
 import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
 import '../../data/mock/mock_auth_repository.dart';
+import '../../services/auth_service.dart';
 
 
 ///  Dokan — ÉCRAN D'INSCRIPTION
@@ -23,6 +25,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _authService = AuthService();
 
   bool _acceptTerms = false;
   bool _isLoading = false;
@@ -88,6 +91,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
   }
 
+  Future<void> _handleSignUp() async {
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+      if (!mounted) return;
+      // Close register screen; AuthGate automatically shows HomeScreen
+      Navigator.of(context).pop();
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? 'Sign up failed.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,8 +136,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   'Rejoignez notre communauté et profitez de tous nos services',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: AppDimens.space24),
 
@@ -203,25 +226,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onChanged: _isLoading
                       ? null
                       : (val) {
-                          setState(() {
-                            _acceptTerms = val ?? false;
-                          });
-                        },
+                    setState(() {
+                      _acceptTerms = val ?? false;
+                    });
+                  },
                 ),
                 const SizedBox(height: AppDimens.space24),
 
                 // Bouton Créer mon compte
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _submitRegister,
+                  onPressed: _isLoading ? null : _handleSignUp,
                   child: _isLoading
                       ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppColors.onPrimary,
-                          ),
-                        )
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppColors.onPrimary,
+                    ),
+                  )
                       : const Text('Créer mon compte'),
                 ),
                 const SizedBox(height: AppDimens.space16),

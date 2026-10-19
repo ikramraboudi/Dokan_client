@@ -10,14 +10,16 @@
 /// RELATIONS ET DÉPENDANCES :
 /// - Utilisé par : Le moteur Flutter au lancement de l'application.
 /// - Dépend de :
-///   * `package:flutter_riverpod` pour `ProviderScope`.
-///   * `app.dart` pour le widget racine `DokanApp`.
+///   * package:flutter_riverpod pour ProviderScope.
+///   * app.dart pour le widget racine DokanApp.
 /// ============================================================================
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 /// Fonction principale (point d'entrée Dart).
 ///
@@ -29,8 +31,11 @@ import 'app.dart';
 /// Widget racine obligatoire de Riverpod qui stocke tous les états
 /// de l'application (session, panier, favoris, repositories). Sans lui,
 /// aucun provider ne peut fonctionner.
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(
     const ProviderScope(
       child: DokanApp(),

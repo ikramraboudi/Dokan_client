@@ -6,6 +6,7 @@ import '../../core/session/session_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_top_bar.dart';
+import '../../services/auth_service.dart';
 
 ///  Dokan — ÉCRAN PROFIL ( VISITEUR VS CLIENT)
 class ProfileScreen extends ConsumerWidget {
@@ -21,6 +22,8 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   void _confirmLogout(BuildContext context, WidgetRef ref) {
+    final authService = AuthService();
+    final user = authService.currentUser;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -37,7 +40,7 @@ class ProfileScreen extends ConsumerWidget {
               foregroundColor: AppColors.textOnDark,
               minimumSize: const Size(100, 44),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(ctx).pop();
               ref.read(sessionProvider.notifier).logout();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -46,6 +49,7 @@ class ProfileScreen extends ConsumerWidget {
                   duration: Duration(seconds: 2),
                 ),
               );
+              await authService.signOut();
             },
             child: const Text('Se déconnecter'),
           ),
@@ -57,6 +61,8 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
+    final authService = AuthService();
+    final user = authService.currentUser;
 
     return Scaffold(
       appBar: const AppTopBar(
@@ -128,11 +134,11 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildClientView(BuildContext context, WidgetRef ref, dynamic user) {
     final initials = user.fullName.isNotEmpty
         ? user.fullName
-            .split(' ')
-            .map((e) => e.isNotEmpty ? e[0] : '')
-            .take(2)
-            .join()
-            .toUpperCase()
+        .split(' ')
+        .map((e) => e.isNotEmpty ? e[0] : '')
+        .take(2)
+        .join()
+        .toUpperCase()
         : 'S';
 
     return ListView(
@@ -168,15 +174,15 @@ class ProfileScreen extends ConsumerWidget {
                     Text(
                       user.fullName,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: AppDimens.space4),
                     Text(
                       user.email,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -263,11 +269,11 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildMenuTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required VoidCallback onTap,
+      }) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.space8),
       decoration: BoxDecoration(
