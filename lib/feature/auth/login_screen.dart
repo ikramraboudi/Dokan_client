@@ -10,6 +10,7 @@ import '../../core/ui/app_form_field.dart';
 import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
 import '../../data/mock/mock_auth_repository.dart';
+import '../../data/models/user_summary.dart';
 import '../../services/auth_service.dart';
 
 
@@ -90,10 +91,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     setState(() => _isLoading = true);
     try {
-      // Call your AuthService
-      await _authService.signIn(email: email, password: password);
-      // NOTE: You do NOT need Navigator.push here!
-      // AuthGate detects the login and swaps the screen to HomeScreen automatically!
+      final userCredential = await _authService.signIn(email: email, password: password);
+      if (!mounted) return;
+
+      final firebaseUser = userCredential.user;
+      final displayName = (firebaseUser?.displayName != null && firebaseUser!.displayName!.isNotEmpty)
+          ? firebaseUser.displayName!
+          : email.split('@').first;
+
+      final userSummary = UserSummary(
+        fullName: displayName,
+        email: firebaseUser?.email ?? email,
+      );
+
+      // Met a jour la session globale Dokan (Riverpod)
+      ref.read(sessionProvider.notifier).loginSuccess(userSummary);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bienvenue, $displayName !'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Redirection : ferme la page ou retourne à l'accueil
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go(AppRoutes.home);
+      }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -206,7 +232,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   validator: Validators.password,
                   prefixIcon: const Icon(Icons.lock_outline_rounded),
                   enabled: !_isLoading,
-                  onFieldSubmitted: (_) => _submitLogin(),
+                  onFieldSubmitted: (_) => _handleLogin(),
                 ),
 
                 // Mot de passe oublié
