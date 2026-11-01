@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Écran d'ouverture animé avec apparition dynamique du logo Dokan, particules, slogan et vérification de session.
+/// INTERAGIT AVEC : AppConfig, sessionProvider, FirebaseAuth, AppRoutes.home.
+/// POUR L'ORAL : « Le splash screen anime la marque Dokan et vérifie si une session Firebase Auth existe sur le téléphone pour reconnecter le client automatiquement. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Écran de démarrage animé (Splash Screen) officiel de l'application Dokan.
 ///

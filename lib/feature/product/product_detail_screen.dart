@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Fiche produit détaillée avec galerie d'images, choix des variantes, sélecteur de quantité et bouton d'achat fixé en bas.
+/// INTERAGIT AVEC : productDetailProvider, cartProvider, favoritesProvider.
+/// POUR L'ORAL : « La fiche produit présente l'article avec galerie défilante, sélecteur de taille et bouton d'ajout au panier verrouillé en bas d'écran. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_config.dart';

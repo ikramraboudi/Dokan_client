@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Modèle liant un produit favori à la date de son ajout par l'utilisateur.
+/// INTERAGIT AVEC : FavoritesNotifier, FavoritesScreen.
+/// POUR L'ORAL : « FavoriteUiModel encapsule le produit sauvegardé avec l'horodatage de son enregistrement. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Modèle représentant un article enregistré dans les favoris du client (`FavoriteUiModel`).
 ///

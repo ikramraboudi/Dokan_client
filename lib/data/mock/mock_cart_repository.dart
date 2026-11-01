@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Gestionnaire de panier en mémoire (CartNotifier Riverpod) avec recalcul automatique des totaux et application du code promo.
+/// INTERAGIT AVEC : cartProvider, CartScreen, CheckoutScreen, PriceSummary.
+/// POUR L'ORAL : « Le CartNotifier gère l'état du panier en mémoire à 60 FPS et recalcule la remise et le total à chaque modification. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Implémentation simulée du panier d'achat (`MockCartRepository`), état immuable
 /// (`CartState`) et gestionnaire d'état réactif (`CartNotifier`).

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Feuille modale inférieure de filtrage multicritères (fourchette de prix avec RangeSlider, disponibilité).
+/// INTERAGIT AVEC : CatalogScreen, SearchScreen.
+/// POUR L'ORAL : « C'est une feuille tactile combinant un RangeSlider de prix et des FilterChips pour filtrer le catalogue sans changer de page. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Feuille modale de filtrage multicritères (`FilterSheet`).
 /// Permet à l'utilisateur de restreindre l'affichage du catalogue par :

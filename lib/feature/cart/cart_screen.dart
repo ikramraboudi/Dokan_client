@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Écran Panier réactif avec gestion des quantités, geste Dismissible, code promo Dokan10 et redirection sécurisée.
+/// INTERAGIT AVEC : cartProvider, sessionProvider, CheckoutScreen, PriceSummary.
+/// POUR L'ORAL : « Le panier permet la modification instantanée des quantités, applique le code promo Dokan10 et invite le visiteur à se connecter. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Interface abstraite pour l'accès aux catégories, produits et recherche.
+/// INTERAGIT AVEC : firestore_catalog_repository.dart, mock_catalog_repository.dart.
+/// POUR L'ORAL : « CatalogRepository standardise l'accès aux données produits qu'elles viennent de Firestore ou d'un mock. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Interface abstraite définissant le contrat technique du catalogue de produits.
 /// Déclare les méthodes de récupération des rubriques, des nouveautés, des promotions,

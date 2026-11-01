@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Sélecteur de quantité numérique interactif (+ / -) avec désactivation automatique du bouton moins à 1.
+/// INTERAGIT AVEC : CartScreen, ProductDetailScreen.
+/// POUR L'ORAL : « Ce widget contrôle strictement les quantités sans saisie clavier en désactivant le bouton moins dès qu'on atteint 1. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Contrôle interactif d'ajustement numérique de quantité (`QuantitySelector`).
 /// Permet à l'acheteur d'augmenter (`[+]`) ou de diminuer (`[-]`) le nombre

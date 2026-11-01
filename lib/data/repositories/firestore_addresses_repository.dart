@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Implémentation Firestore concrète gérant la sous-collection users/{uid}/addresses.
+/// INTERAGIT AVEC : addressesStreamProvider, AddressesScreen, AddEditAddressScreen.
+/// POUR L'ORAL : « Ce repository lit et écrit dans la sous-collection Firestore des adresses avec un tri automatique de l'adresse par défaut. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Implémentation Firestore concrète de la gestion des adresses client.
 /// Emplacement Firestore : `users/{uid}/addresses/{addressId}`.

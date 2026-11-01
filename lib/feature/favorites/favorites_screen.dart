@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Écran des favoris avec protection d'accès pour les visiteurs et grille réactive pour les clients.
+/// INTERAGIT AVEC : sessionProvider, favoritesProvider, ProductGrid.
+/// POUR L'ORAL : « Cet écran bloque l'accès aux visiteurs conformément au cahier des charges et affiche les coups de cœur du client connecté. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

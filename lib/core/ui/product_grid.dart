@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Grille responsive (2 colonnes sur smartphone, 3 sur tablette) avec défilement infini paginé via ScrollController.
+/// INTERAGIT AVEC : CatalogScreen, SearchScreen, FavoritesScreen.
+/// POUR L'ORAL : « ProductGrid mesure la largeur d'écran avec LayoutBuilder et déclenche la suite des produits à 200 pixels du bas. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Grille de produits responsive avec détection de défilement pour la pagination
 /// infinie simulée (`ProductGrid`).

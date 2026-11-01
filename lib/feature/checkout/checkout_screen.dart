@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Écran récapitulatif contractuel de commande avec sélection d'adresse et validation atomique Firestore.
+/// INTERAGIT AVEC : ordersRepositoryProvider.createOrder(), cartProvider, OrderConfirmationScreen.
+/// POUR L'ORAL : « Le checkout valide l'adresse, relit les prix officiels dans Firestore et crée la commande avec protection anti-double clic. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Écran « Passage de commande » (Checkout).
 /// Regroupe le récapitulatif des articles, le choix de l'adresse de livraison,
@@ -664,12 +669,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Future<void> _confirmAndSubmitOrder(BuildContext context) async {
+    // 1) Vérifications préalables : anti-double clic et adresse sélectionnée
     if (_isSubmitting || _selectedAddress == null) return;
 
     final cart = ref.read(cartProvider);
     final firebaseUser = AuthService().currentUser;
     final session = ref.read(sessionProvider);
 
+    // 2) Sécurité : vérification du jeton Firebase Auth
     if (firebaseUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Session expirée, veuillez vous reconnecter.')),
@@ -685,6 +692,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       final repo = ref.read(ordersRepositoryProvider);
 
+      // 3) Snapshot de l'adresse de livraison et appel Firestore createOrder()
       final addressSnapshot = OrderDeliveryAddress(
         recipientName: _selectedAddress!.recipientName,
         phone: _selectedAddress!.phone,
@@ -708,9 +716,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         deliveryFee: cart.deliveryFee,
       );
 
-      // Le panier n'est vidé QU'APRÈS confirmation de Firestore
+      // 4) Le panier n'est vidé QU'APRÈS confirmation de Firestore
       await ref.read(cartProvider.notifier).clearCart();
 
+      // 5) Redirection définitive vers l'écran de confirmation
       if (mounted) {
         router.go('${AppRoutes.orderConfirmation}/${createdOrder.id}');
       }

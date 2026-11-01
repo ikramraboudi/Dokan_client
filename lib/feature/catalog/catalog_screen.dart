@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Catalogue général des produits avec grille responsive, feuilles de tri et filtres de prix/stock.
+/// INTERAGIT AVEC : ProductGrid, FilterSheet, SortSheet, ProductDetailScreen.
+/// POUR L'ORAL : « Le catalogue affiche les produits par catégorie ou en vrac avec des filtres tactiles de prix et de disponibilité. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

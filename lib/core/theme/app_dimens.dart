@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Constantes dimensionnelles (espacements, rayons de courbure, tailles d'icônes, élévations).
+/// INTERAGIT AVEC : Tous les composants d'interface de core/ui/ et feature/.
+/// POUR L'ORAL : « AppDimens définit une grille de marges et de rayons de courbure cohérente pour tout le design system. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Constantes de dimensions, espacements, arrondis et contraintes d'ergonomie
 /// de l'application mobile Dokan.

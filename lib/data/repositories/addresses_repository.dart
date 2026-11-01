@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Interface abstraite (contrat) pour la gestion CRUD et l'écoute en flux des adresses client.
+/// INTERAGIT AVEC : firestore_addresses_repository.dart.
+/// POUR L'ORAL : « Cette interface définit les méthodes de gestion d'adresses pour découpler l'UI de la base Firestore. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Interface abstraite définissant les opérations sur les adresses de livraison client.
 /// Stockées dans Firestore sous la sous-collection `users/{uid}/addresses`.

@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Écran de recherche textuelle instantanée avec temporisation debounce de 300 ms et effacement rapide.
+/// INTERAGIT AVEC : FirestoreCatalogRepository.searchProducts(), ProductGrid.
+/// POUR L'ORAL : « Le moteur de recherche utilise un Timer debounce pour ne requêter Firestore qu'une fois la saisie stabilisée. »
+/// ============================================================================
+library;
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Interface abstraite pour les opérations d'authentification utilisateur.
+/// INTERAGIT AVEC : AuthService, SessionNotifier.
+/// POUR L'ORAL : « AuthRepository définit le contrat de connexion, inscription et déconnexion pour l'architecture en couches. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Interface abstraite définissant le contrat technique du service d'authentification.
 ///

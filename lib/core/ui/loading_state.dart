@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Indicateur de chargement circulaire centré utilisant la couleur primaire du thème.
+/// INTERAGIT AVEC : Écrans en attente de données asynchrones Firestore.
+/// POUR L'ORAL : « LoadingState affiche un spinner Material 3 harmonisé pendant l'attente des réponses serveur. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Effet d'animation de chargement squelette ("Shimmer") codé en natif pur Flutter.
 /// Il remplace les spinners circulaires par des rectangles aux bords arrondis

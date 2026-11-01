@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Liste temps réel des commandes du client avec rubans diagonaux à 45°, barre de camion à 4 étapes, filtres et compteurs.
+/// INTERAGIT AVEC : myOrdersStreamProvider, OrderDetailScreen, order_status.dart.
+/// POUR L'ORAL : « Mes commandes écoute Firestore en temps réel et décore chaque colis d'un ruban incliné et d'une barre d'acheminement avec camion. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Écran « Mes commandes » (historique et suivi en direct des colis).
 /// Inspiré du design de suivi de colis moderne avec rubans diagonaux,
@@ -132,7 +137,10 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                       .where((o) => o.status == OrderStatus.delivered)
                       .length;
                   final countCancelled = allOrders
-                      .where((o) => o.status == OrderStatus.cancelled)
+                      .where((o) =>
+                          o.status == OrderStatus.cancelled ||
+                          o.status == OrderStatus.failed ||
+                          o.status == OrderStatus.refused)
                       .length;
 
                   // Filtrage selon l'onglet
@@ -149,7 +157,9 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
                       OrderFilterTab.delivered =>
                         order.status == OrderStatus.delivered,
                       OrderFilterTab.cancelled =>
-                        order.status == OrderStatus.cancelled,
+                        order.status == OrderStatus.cancelled ||
+                            order.status == OrderStatus.failed ||
+                            order.status == OrderStatus.refused,
                     };
                   }).toList();
 
@@ -742,26 +752,38 @@ class _OrderProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (status == OrderStatus.cancelled) {
+    if (status == OrderStatus.cancelled ||
+        status == OrderStatus.failed ||
+        status == OrderStatus.refused) {
+      final statusLabel = switch (status) {
+        OrderStatus.failed => 'Livraison échouée',
+        OrderStatus.refused => 'Colis refusé',
+        _ => 'Commande annulée',
+      };
+      final statusIcon = switch (status) {
+        OrderStatus.failed => Icons.error_outline_rounded,
+        OrderStatus.refused => Icons.block_rounded,
+        _ => Icons.cancel_outlined,
+      };
       return Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimens.space12,
           vertical: AppDimens.space8,
         ),
         decoration: BoxDecoration(
-          color: AppColors.statusCancelledSoft,
+          color: status.softColor,
           borderRadius: BorderRadius.circular(AppDimens.radius8),
         ),
         child: Row(
-          children: const [
-            Icon(Icons.cancel_outlined, size: 16, color: AppColors.statusCancelled),
-            SizedBox(width: AppDimens.space8),
+          children: [
+            Icon(statusIcon, size: 16, color: status.color),
+            const SizedBox(width: AppDimens.space8),
             Text(
-              'Commande annulée',
+              statusLabel,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.statusCancelled,
+                color: status.color,
               ),
             ),
           ],

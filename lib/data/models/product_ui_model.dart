@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Modèle de présentation d'un produit avec désérialisation tolérante Firestore (fromFirestore gérant name/title et images).
+/// INTERAGIT AVEC : firestore_catalog_repository.dart, product_service.dart, toutes les vues produits.
+/// POUR L'ORAL : « ProductUiModel décode les documents Firestore en supportant à la fois les schémas title et name pour éviter tout plantage. »
+/// ============================================================================
+library;
+
 // lib/data/models/product_ui_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 

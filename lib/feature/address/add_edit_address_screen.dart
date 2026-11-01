@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Formulaire de création ou modification d'une adresse avec validation et écriture dans Firestore.
+/// INTERAGIT AVEC : firestore_addresses_repository.dart, AddressesScreen.
+/// POUR L'ORAL : « Ce formulaire valide les données de contact tunisiennes et enregistre la nouvelle adresse dans users/{uid}/addresses. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Formulaire d'ajout et de modification d'une adresse de livraison client.
 /// Valide les champs obligatoires et écrit dans users/{uid}/addresses.

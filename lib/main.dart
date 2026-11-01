@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Point d'entrée exécutable (main), initialise Flutter, démarre Firebase et monte le ProviderScope Riverpod.
+/// INTERAGIT AVEC : firebase_options.dart, app.dart.
+/// POUR L'ORAL : « La fonction main() initialise les liaisons natives Flutter, démarre Firebase et installe le ProviderScope qui héberge toute la gestion d'état Riverpod. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Point d'entrée exécutable principal de l'application mobile Dokan.
 /// Il initialise les liaisons Flutter et démarre l'arbre de widgets en

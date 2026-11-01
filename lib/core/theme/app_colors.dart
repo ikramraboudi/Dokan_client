@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Palette officielle complète et exclusive de l'application Dokan (aucune couleur écrite hors de ce fichier).
+/// INTERAGIT AVEC : app_theme.dart, tous les widgets et écrans.
+/// POUR L'ORAL : « Toutes les couleurs de l'application sont centralisées ici sans exception, ce qui garantit le respect de la charte Material 3. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// REGISTRE UNIQUE ET EXCLUSIF DE TOUTES LES COULEURS DE L'APPLICATION Dokan.
 ///

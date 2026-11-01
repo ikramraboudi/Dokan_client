@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Écran affichant la liste des adresses du client avec suppression et choix pour le checkout.
+/// INTERAGIT AVEC : addressesStreamProvider, AddEditAddressScreen, CheckoutScreen.
+/// POUR L'ORAL : « Cet écran permet au client de consulter, supprimer ou sélectionner son adresse de livraison en temps réel. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Écran « Mes adresses » (liste, sélection, modification, suppression).
 /// Utilisé depuis le Profil et depuis le passage de commande (Checkout).

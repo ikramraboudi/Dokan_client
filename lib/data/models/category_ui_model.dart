@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Modèle d'une catégorie du magasin avec son identifiant, nom, icône Material et compteur d'articles.
+/// INTERAGIT AVEC : CategoriesScreen, HomeScreen, catalog_repository.dart.
+/// POUR L'ORAL : « CategoryUiModel structure les univers de produits pour l'affichage des tuiles et des listes de navigation. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Modèle d'affichage d'une catégorie du catalogue Dokan (`CategoryUiModel`).
 ///

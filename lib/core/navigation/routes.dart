@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Répertoire centralisé des chemins de navigation (URL strings) pour éviter les chaînes magiques.
+/// INTERAGIT AVEC : app_router.dart, tous les boutons de redirection dans les écrans.
+/// POUR L'ORAL : « AppRoutes évite les erreurs de frappe en centralisant toutes les URLs sous forme de constantes statiques. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Centralise les chaînes de caractères représentant les chemins de navigation (URLs)
 /// de toute l'application Dokan.

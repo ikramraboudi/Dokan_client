@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Liste des 7 rubriques du magasin avec icônes et compteurs vers le catalogue filtré.
+/// INTERAGIT AVEC : allCategoriesProvider, CatalogScreen.
+/// POUR L'ORAL : « Cet écran liste tous les rayons du magasin pour naviguer de manière thématique dans le catalogue. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Écran complet de consultation des catégories de produits (`CategoriesScreen`).
 /// Affiche la liste verticale des 7 catégories de Dokan avec leur icône,

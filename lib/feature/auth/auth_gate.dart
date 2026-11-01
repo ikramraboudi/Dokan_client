@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Composant d'aiguillage automatique écoutant le Stream authStateChanges() de Firebase Auth.
+/// INTERAGIT AVEC : HomeScreen, LoginScreen.
+/// POUR L'ORAL : « AuthGate est un StreamBuilder basculant automatiquement entre connexion et accueil selon le statut Firebase Auth. »
+/// ============================================================================
+library;
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../home/home_screen.dart';

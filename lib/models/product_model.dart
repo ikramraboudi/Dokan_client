@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Modèle de données produit legacy conservé pour compatibilité avec ProductService.
+/// INTERAGIT AVEC : ProductService.
+/// POUR L'ORAL : « Ce modèle assure la compatibilité historique avec les services de produits Firebase. »
+/// ============================================================================
+library;
+
 // lib/models/product_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 

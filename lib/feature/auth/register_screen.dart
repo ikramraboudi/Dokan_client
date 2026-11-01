@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Écran d'inscription d'un nouveau client sur Firebase Auth avec mise à jour du displayName.
+/// INTERAGIT AVEC : AuthService.signUp(), sessionProvider.
+/// POUR L'ORAL : « Cet écran crée le compte utilisateur dans Firebase Auth et enregistre son nom complet via updateDisplayName. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

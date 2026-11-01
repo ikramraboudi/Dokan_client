@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Écran de demande de réinitialisation de mot de passe par email avec confirmation neutre sécurisée.
+/// INTERAGIT AVEC : AuthService.sendPasswordResetEmail(), LoginScreen.
+/// POUR L'ORAL : « Cet écran envoie le lien de réinitialisation officiel Firebase avec une confirmation neutre pour éviter le piratage par énumération. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';

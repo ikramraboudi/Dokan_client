@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Configuration déclarative GoRouter avec StatefulShellRoute pour 5 onglets et routes secondaires.
+/// INTERAGIT AVEC : main_shell.dart, routes.dart, tous les écrans de feature/.
+/// POUR L'ORAL : « Nous utilisons GoRouter avec StatefulShellRoute pour conserver l'état et le défilement de nos 5 onglets sans rechargement. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Configuration principale du routeur déclaratif GoRouter.
 /// Il organise l'arbre complet des routes de l'application, configure la clé de

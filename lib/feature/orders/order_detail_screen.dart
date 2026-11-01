@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Suivi détaillé du colis avec chronologie verticale horodatée, carte chauffeur et annulation en transaction atomique.
+/// INTERAGIT AVEC : singleOrderStreamProvider, cancelOrder(), OrderStatus.
+/// POUR L'ORAL : « Cette page trace la chronologie complète du colis, affiche les coordonnées du coursier et permet l'annulation si la commande est en attente. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Écran « Détail et suivi de commande » (Tracking & Timeline en direct).
 /// Écoute en flux continu (Stream) l'état de la commande dans Firestore,
@@ -255,6 +260,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
         'Votre colis est entre les mains du livreur, en route vers vous !',
       OrderStatus.delivered =>
         'Votre commande a été livrée avec succès.',
+      OrderStatus.failed =>
+        'La livraison a échoué. Notre service client va vous contacter.',
+      OrderStatus.refused =>
+        'Le colis a été refusé à la livraison.',
       OrderStatus.cancelled =>
         'Cette commande a été annulée.',
     };

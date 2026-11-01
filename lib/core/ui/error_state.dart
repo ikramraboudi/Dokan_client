@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Composant d'état d'erreur avec message d'anomalie et bouton « Réessayer ».
+/// INTERAGIT AVEC : Requêtes Firestore en échec, pannes réseau dans l'accueil, catalogue et commandes.
+/// POUR L'ORAL : « ErrorState capture les exceptions réseau et offre un bouton pour relancer la requête sans fermer l'application. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Composant d'état d'erreur réseau ou logique (`ErrorState`).
 /// Il affiche une icône d'alerte thémée, un message explicatif bienveillant

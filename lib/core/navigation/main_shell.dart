@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Squelette visuel de la barre de navigation inférieure (NavigationBar Material 3) avec badge panier réactif.
+/// INTERAGIT AVEC : app_router.dart, cartCountProvider, CartNotifier.
+/// POUR L'ORAL : « C'est la coquille visuelle affichant la barre inférieure à 5 onglets avec un badge dynamique qui s'incrémente selon le panier. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Squelette visuel de la barre de navigation inférieure persistante à 5 onglets.
 /// Il héberge le widget `navigationShell` fourni par GoRouter et affiche le

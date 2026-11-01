@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Service Firestore écoutant en continu (snapshots()) les flux de produits nouveaux, remisés et populaires.
+/// INTERAGIT AVEC : FirebaseFirestore.instance.collection('products'), HomeScreen.
+/// POUR L'ORAL : « ProductService fournit des Stream temps réel directement connectés à Firestore pour animer l'accueil dès qu'un produit change en base. »
+/// ============================================================================
+library;
+
 // lib/services/product_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

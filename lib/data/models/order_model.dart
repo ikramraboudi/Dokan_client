@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Modèles complets de commande (OrderUiModel, OrderItemUiModel, OrderDeliveryAddress, StatusHistoryEntry, DriverInfo).
+/// INTERAGIT AVEC : firestore_orders_repository.dart, MyOrdersScreen, OrderDetailScreen, CheckoutScreen.
+/// POUR L'ORAL : « OrderUiModel structure toutes les données d'une commande et produit notre numéro formaté DK-AAMMJJ-XXXX. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Modèle de données immuable représentant une commande Dokan dans Firestore.
 /// Contient le modèle principal OrderUiModel et ses sous-composants :

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Énumération officielle des 6 statuts de commande avec labels français, couleurs du thème, icônes et étapes de progression (0-3).
+/// INTERAGIT AVEC : OrderUiModel, MyOrdersScreen, OrderDetailScreen.
+/// POUR L'ORAL : « OrderStatus convertit les statuts texte de Firestore en libellés français, couleurs et étapes de camion pour la barre de progression. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Énumération unique et tolérante des statuts de commande Dokan.
 /// Gère la conversion bidirectionnelle chaîne ⇄ enum, les libellés français,
@@ -18,14 +23,16 @@ import '../../core/theme/app_colors.dart';
 
 /// Statuts officiels d'une commande Dokan (partagés avec Admin et Livreur).
 enum OrderStatus {
-  pending('pending', 'En attente'),
+  pending('en_attente', 'En attente'),
   confirmed('confirmed', 'Confirmée'),
   preparing('preparing', 'En préparation'),
-  outForDelivery('out_for_delivery', 'En livraison'),
+  outForDelivery('in_progress', 'En livraison'),
   delivered('delivered', 'Livrée'),
+  failed('failed', 'Échec de livraison'),
+  refused('refused', 'Colis refusé'),
   cancelled('cancelled', 'Annulée');
 
-  /// Valeur textuelle brute stockée dans Firestore en anglais.
+  /// Valeur textuelle brute stockée dans Firestore.
   final String value;
 
   /// Libellé officiel affiché à l'utilisateur en français.
@@ -33,15 +40,17 @@ enum OrderStatus {
 
   const OrderStatus(this.value, this.label);
 
-  /// Conversion tolérante : une valeur inconnue ne fera jamais planter l'app.
+  /// Conversion tolérante : accepte les conventions des 3 applications (Client, Admin, Livreur).
   static OrderStatus fromString(String? value) {
     if (value == null) return OrderStatus.pending;
     return switch (value.toLowerCase().trim()) {
-      'pending' => OrderStatus.pending,
+      'en_attente' || 'enattente' || 'pending' => OrderStatus.pending,
       'confirmed' => OrderStatus.confirmed,
       'preparing' => OrderStatus.preparing,
-      'out_for_delivery' || 'outfordelivery' => OrderStatus.outForDelivery,
+      'in_progress' || 'inprogress' || 'out_for_delivery' || 'outfordelivery' => OrderStatus.outForDelivery,
       'delivered' => OrderStatus.delivered,
+      'failed' => OrderStatus.failed,
+      'refused' => OrderStatus.refused,
       'cancelled' || 'canceled' => OrderStatus.cancelled,
       _ => OrderStatus.pending,
     };
@@ -54,6 +63,8 @@ enum OrderStatus {
         OrderStatus.preparing => AppColors.statusPreparing,
         OrderStatus.outForDelivery => AppColors.statusOutForDelivery,
         OrderStatus.delivered => AppColors.statusDelivered,
+        OrderStatus.failed => AppColors.error,
+        OrderStatus.refused => AppColors.error,
         OrderStatus.cancelled => AppColors.statusCancelled,
       };
 
@@ -64,6 +75,8 @@ enum OrderStatus {
         OrderStatus.preparing => AppColors.statusPreparingSoft,
         OrderStatus.outForDelivery => AppColors.statusOutForDeliverySoft,
         OrderStatus.delivered => AppColors.statusDeliveredSoft,
+        OrderStatus.failed => AppColors.errorSoft,
+        OrderStatus.refused => AppColors.errorSoft,
         OrderStatus.cancelled => AppColors.statusCancelledSoft,
       };
 
@@ -74,21 +87,25 @@ enum OrderStatus {
         OrderStatus.preparing => Icons.inventory_2_outlined,
         OrderStatus.outForDelivery => Icons.local_shipping_outlined,
         OrderStatus.delivered => Icons.task_alt_rounded,
+        OrderStatus.failed => Icons.error_outline_rounded,
+        OrderStatus.refused => Icons.block_rounded,
         OrderStatus.cancelled => Icons.cancel_outlined,
       };
 
   /// Indice de l'étape sur la barre de progression en 4 étapes :
   /// 0: Reçue / En attente
   /// 1: Préparation (Confirmée + En préparation)
-  /// 2: En livraison
+  /// 2: En livraison (In progress)
   /// 3: Livrée
-  /// -1: Annulée (barre grisée)
+  /// -1: Annulée / Échec / Refusée (barre grisée)
   int get progressStep => switch (this) {
         OrderStatus.pending => 0,
         OrderStatus.confirmed => 1,
         OrderStatus.preparing => 1,
         OrderStatus.outForDelivery => 2,
         OrderStatus.delivered => 3,
+        OrderStatus.failed => -1,
+        OrderStatus.refused => -1,
         OrderStatus.cancelled => -1,
       };
 

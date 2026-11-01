@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Implémentation concrète interrogeant la collection Firestore products (catégories, recherche, filtres).
+/// INTERAGIT AVEC : CatalogScreen, SearchScreen, CheckoutScreen.
+/// POUR L'ORAL : « Ce repository exécute les requêtes de recherche et de catalogue paginé sur la collection products de Firestore. »
+/// ============================================================================
+library;
+
 // lib/data/repositories/firestore_catalog_repository.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

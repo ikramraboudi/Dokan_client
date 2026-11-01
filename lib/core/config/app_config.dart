@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Paramètres globaux de l'application (nom Dokan, devise TND/DT, durée du splash 3s, formatage des prix).
+/// INTERAGIT AVEC : Tous les écrans et composants affichant des prix ou le nom de l'app.
+/// POUR L'ORAL : « AppConfig centralise nos constantes globales comme la durée du splash et le formatage des prix en dinars tunisiens à 3 décimales. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Configuration globale et centralisée des paramètres applicatifs du produit Dokan.
 /// Il regroupe le nom officiel de l'application, la durée du splash screen,

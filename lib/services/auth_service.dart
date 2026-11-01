@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Service d'encapsulation directe des méthodes du SDK Firebase Authentication (signUp, signIn, reset, signOut).
+/// INTERAGIT AVEC : FirebaseAuth.instance, LoginScreen, RegisterScreen, ForgotPasswordScreen.
+/// POUR L'ORAL : « AuthService encapsule tous les appels natifs à Firebase Auth pour isoler les écrans du SDK Google. »
+/// ============================================================================
+library;
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {

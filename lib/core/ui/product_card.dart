@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Carte produit individuelle avec photo, badges de réduction/stock, cœur de favori et prix avec Wrap anti-débordement.
+/// INTERAGIT AVEC : HomeScreen, ProductGrid, CatalogScreen, FavoritesScreen.
+/// POUR L'ORAL : « ProductCard utilise un Wrap sur les prix pour que le prix barré passe à la ligne sur petit écran sans provoquer d'overflow. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Carte de présentation d'un produit individuel (`ProductCard`).
 /// Affiche la photographie de l'article, ses badges d'état (promotion, stock limité,

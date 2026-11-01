@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Interface abstraite définissant la création, l'écoute et l'annulation de commandes.
+/// INTERAGIT AVEC : firestore_orders_repository.dart, ordersRepositoryProvider.
+/// POUR L'ORAL : « OrdersRepository isole nos écrans de commande de l'implémentation Firestore concrète. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Interface abstraite définissant le contrat de gestion des commandes Dokan.
 /// Stockage dans Firestore sous la collection globale `orders/{orderId}`.

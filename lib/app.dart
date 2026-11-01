@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Configuration racine de MaterialApp.router avec thème Material 3 et GoRouter.
+/// INTERAGIT AVEC : main.dart, app_router.dart, app_theme.dart.
+/// POUR L'ORAL : « Ce fichier configure notre application MaterialApp avec le routage déclaratif GoRouter et notre thème Material 3 global. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Widget racine de l'application (`DokanApp`).
 /// Il configure les fondations de l'interface : le titre de l'application,

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Écran de confirmation avec animation de rebond de la coche verte, numéro lisible et blocage du retour arrière.
+/// INTERAGIT AVEC : singleOrderStreamProvider, MyOrdersScreen, HomeScreen.
+/// POUR L'ORAL : « Cet écran rassure l'acheteur avec une animation de succès, affiche son numéro DK-AAMMJJ-XXXX et bloque le retour arrière via PopScope. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Écran « Confirmation de commande » après création réussie dans Firestore.
 /// Comprend une animation de succès fluide, le numéro lisible de commande,

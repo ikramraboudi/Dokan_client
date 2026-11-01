@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Profil utilisateur basculant entre visiteur et client, avec raccourcis commandes/adresses et outil de démo de session.
+/// INTERAGIT AVEC : sessionProvider, AuthService.signOut(), MyOrdersScreen, AddressesScreen.
+/// POUR L'ORAL : « Le profil adapte son affichage selon que l'utilisateur est client ou invité et permet de tester l'expiration de session sans perdre le panier. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Gestionnaire de session Riverpod gérant la distinction Visiteur/Client et la reprise d'action protégée.
+/// INTERAGIT AVEC : AuthRequiredDialog, LoginScreen, ProfileScreen, CartScreen.
+/// POUR L'ORAL : « Le sessionProvider gère l'état connecté/visiteur et permet à un invité de reprendre automatiquement sa commande après connexion. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Gestionnaire d'état de la session utilisateur (authentification et profil).
 /// Il maintient la distinction fondamentale entre un Visiteur anonyme (`isGuest`)

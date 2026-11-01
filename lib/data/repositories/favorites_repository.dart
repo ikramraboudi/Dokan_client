@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Interface abstraite décrivant l'ajout, le retrait et l'observation des articles favoris.
+/// INTERAGIT AVEC : mock_favorites_repository.dart.
+/// POUR L'ORAL : « FavoritesRepository définit le contrat de gestion des coups de cœur client. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Interface abstraite définissant le contrat technique de gestion des favoris client.
 ///

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Résumé du profil utilisateur connecté (nom complet, email, avatar optionnel).
+/// INTERAGIT AVEC : session_provider.dart, LoginScreen, RegisterScreen, ProfileScreen.
+/// POUR L'ORAL : « UserSummary contient les informations essentielles du client affichées dans le profil et sur les commandes. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Modèle de données immuable représentant l'identité sommaire d'un client connecté.
 ///

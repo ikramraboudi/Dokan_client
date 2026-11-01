@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Fonctions de validation de formulaires (email regex, mot de passe ≥ 6 car., téléphone 8 chiffres tunisiens, champs requis).
+/// INTERAGIT AVEC : LoginScreen, RegisterScreen, AddEditAddressScreen.
+/// POUR L'ORAL : « Validators regroupe nos expressions régulières pour certifier la validité des adresses email et téléphones tunisiens. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Bibliothèque de validateurs réutilisables pour les formulaires de l'application
 /// (connexion, inscription, mot de passe oublié).

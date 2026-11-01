@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Champ de formulaire personnalisé encapsulant TextFormField avec bordures, styles et validation.
+/// INTERAGIT AVEC : Formulaires de connexion, inscription, mot de passe et adresses.
+/// POUR L'ORAL : « Ce widget encapsule TextFormField pour harmoniser les bordures, couleurs d'erreur et icônes de tous nos formulaires. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Composant réutilisable de champ de saisie de formulaire (`AppFormField`).
 /// Il enveloppe le widget Flutter `TextFormField` pour lui appliquer un libellé

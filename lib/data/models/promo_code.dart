@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Registre centralisé des codes promotionnels (PromoRules) et logique de validation normalisée (Dokan10 -10%).
+/// INTERAGIT AVEC : MockCartRepository, CartScreen.
+/// POUR L'ORAL : « PromoRules applique la validation insensible à la casse et calcule la remise de 10% sur le sous-total brut. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Définition du modèle et du registre centralisé des codes promotionnels Dokan.
 ///

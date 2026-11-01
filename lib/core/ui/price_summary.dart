@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Bloc récapitulatif financier présentant sous-total, remise promo (négative en vert), frais de livraison et total TTC.
+/// INTERAGIT AVEC : CartScreen, CheckoutScreen.
+/// POUR L'ORAL : « PriceSummary garantit un calcul financier rigoureux et cohérent entre le panier et le passage de commande. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Encadré de synthèse financière de la commande (`PriceSummary`).
 /// Affiche la ventilation complète des coûts du panier : sous-total brut,

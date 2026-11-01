@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Feuille modale de sélection exclusive du critère de tri (pertinence, prix croissant/décroissant, popularité, nouveautés).
+/// INTERAGIT AVEC : CatalogScreen, SearchScreen.
+/// POUR L'ORAL : « SortSheet propose une liste radio Material 3 pour réordonner les produits en un seul geste. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Feuille modale glissante de sélection du critère de tri (`SortSheet`).
 /// Propose 5 modes de classement (Pertinence, Prix croissant, Prix décroissant,

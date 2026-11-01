@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Écran d'accueil principal avec carrousel de bannières, boutons catégories et carrousels produits Firestore en temps réel.
+/// INTERAGIT AVEC : productServiceProvider, ProductCard, SearchScreen, CatalogScreen.
+/// POUR L'ORAL : « L'accueil synchronise en temps réel les nouveautés et promotions depuis Firestore et présente les rubriques phares. »
+/// ============================================================================
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

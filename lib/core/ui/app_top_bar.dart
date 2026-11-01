@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Barre supérieure standardisée implémentant PreferredSizeWidget avec titre et actions.
+/// INTERAGIT AVEC : Tous les écrans secondaires du projet.
+/// POUR L'ORAL : « C'est notre en-tête réutilisable garantissant la même hauteur (56 dp) et le même style de retour sur toutes les pages. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Barre d'application supérieure personnalisée (`AppTopBar`) respectant le thème Dokan.
 /// Elle standardise l'en-tête de tous les écrans en offrant un affichage adaptatif :

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Repository Firestore gérant la création atomique (WriteBatch), la relecture des prix, l'écoute snapshots() et l'annulation en transaction.
+/// INTERAGIT AVEC : CheckoutScreen, MyOrdersScreen, OrderDetailScreen.
+/// POUR L'ORAL : « Ce repository est le cœur du flux de commande : il relit les prix dans Firestore, crée la commande avec WriteBatch et gère l'annulation en transaction. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Implémentation Firestore concrète du repository des commandes Dokan.
 /// Gère la création atomique, la re-vérification des prix côté serveur,
@@ -224,8 +229,10 @@ class FirestoreOrdersRepository implements OrdersRepository {
   Future<void> cancelOrder(String orderId) async {
     final docRef = _ordersRef.doc(orderId);
 
-    // Annulation sécurisée par Transaction atomique
+    // Annulation sécurisée par Transaction atomique Firestore
+    // 1) Démarrage de la transaction isolée
     await _firestore.runTransaction((transaction) async {
+      // 2) Relecture de l'état actuel du document dans Firestore
       final snapshot = await transaction.get(docRef);
       if (!snapshot.exists) {
         throw Exception('Commande introuvable.');
@@ -234,6 +241,7 @@ class FirestoreOrdersRepository implements OrdersRepository {
       final data = snapshot.data() ?? {};
       final currentStatus = data['status'] as String? ?? '';
 
+      // 3) Contrôle d'état : annulation autorisée uniquement si encore 'pending'
       if (currentStatus != OrderStatus.pending.value) {
         throw Exception(
           'Seule une commande encore "En attente" peut être annulée.',
@@ -242,11 +250,13 @@ class FirestoreOrdersRepository implements OrdersRepository {
 
       final rawHistory = data['statusHistory'];
       List<dynamic> history = rawHistory is List ? List.from(rawHistory) : [];
+      // 4) Ajout du jalon d'annulation dans l'historique chronologique
       history.add({
         'status': OrderStatus.cancelled.value,
         'at': Timestamp.now(),
       });
 
+      // 5) Mise à jour atomique du statut et horodatage serveur
       transaction.update(docRef, {
         'status': OrderStatus.cancelled.value,
         'statusHistory': history,

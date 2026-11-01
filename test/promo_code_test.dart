@@ -11,6 +11,8 @@
 /// 4) Gestion de l'état du panier (`CartNotifier`) : application, erreur champ vide,
 ///    erreur code inconnu, retrait manuel et retrait automatique si panier vidé.
 /// ============================================================================
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:Dokan_client/data/models/promo_code.dart';

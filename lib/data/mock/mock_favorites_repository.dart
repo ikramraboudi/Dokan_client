@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Gestionnaire de favoris en mémoire (FavoritesNotifier) avec bascule toggle et vérification d'appartenance.
+/// INTERAGIT AVEC : favoritesProvider, FavoritesScreen, ProductCard, ProductDetailScreen.
+/// POUR L'ORAL : « FavoritesNotifier gère la liste réactive des articles favoris du client avec notification instantanée des cœurs. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Implémentation simulée du service des favoris (`MockFavoritesRepository`)
 /// et gestionnaire d'état réactif global (`FavoritesNotifier`).

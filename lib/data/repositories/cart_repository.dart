@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Interface abstraite décrivant les opérations sur le panier (ajout, retrait, modification, remise).
+/// INTERAGIT AVEC : mock_cart_repository.dart, CartNotifier.
+/// POUR L'ORAL : « CartRepository définit les opérations disponibles sur le panier d'achat. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Interface abstraite définissant le contrat technique du panier d'achat.
 ///

@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Modèle d'adresse de livraison client avec sérialisation Firestore (fromFirestore, toMap).
+/// INTERAGIT AVEC : firestore_addresses_repository.dart, AddressesScreen, CheckoutScreen.
+/// POUR L'ORAL : « AddressUiModel représente l'adresse physique du client et gère la conversion bidirectionnelle avec Cloud Firestore. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Modèle de données immuable représentant une adresse de livraison client.
 /// Stockée dans Firestore sous : users/{uid}/addresses/{addressId}.

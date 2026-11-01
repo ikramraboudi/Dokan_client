@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Modèle immuable d'une ligne d'article dans le panier avec quantité, prix unitaire et calcul du sous-total de ligne.
+/// INTERAGIT AVEC : CartNotifier, CartScreen, CheckoutScreen.
+/// POUR L'ORAL : « CartItemUiModel est l'objet immuable représentant un produit sélectionné avec sa variante et sa quantité. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Modèle représentant une ligne d'article dans le panier d'achat (`CartItemUiModel`).
 ///

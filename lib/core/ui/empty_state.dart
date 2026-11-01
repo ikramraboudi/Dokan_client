@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Composant d'état vide convivial avec icône douce, titre, explication et bouton d'action contextuel.
+/// INTERAGIT AVEC : Panier vide, favoris vides, recherche sans résultat, aucune commande.
+/// POUR L'ORAL : « EmptyState évite les écrans blancs déroutants en guidant l'utilisateur vers le catalogue via un bouton d'action. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Composant d'état d'interface affiché lorsqu'une liste est vide (`EmptyState`).
 /// Il présente une icône thémée chaleureuse, un titre explicatif, un sous-titre

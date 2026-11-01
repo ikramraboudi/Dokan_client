@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Définition du ThemeData Material 3 pour l'application (typographie, boutons, champs, barres).
+/// INTERAGIT AVEC : app.dart, app_colors.dart, app_dimens.dart.
+/// POUR L'ORAL : « AppTheme assemble notre ThemeData Material 3 en configurant les styles par défaut des boutons, cartes et champs de saisie. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Construction du thème global `ThemeData` (clair uniquement) pour Material 3.
 /// Ce fichier applique les règles du système de design à tous les widgets de base

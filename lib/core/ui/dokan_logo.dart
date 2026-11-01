@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Composant graphique du logo Dokan sous 3 tailles (small, medium, large) avec ou sans texte.
+/// INTERAGIT AVEC : SplashScreen, AppTopBar, LoginScreen.
+/// POUR L'ORAL : « DokanLogo est notre composant modulaire de marque qui adapte sa typographie et ses rayons selon l'emplacement. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Widget réutilisable `DokanLogo` — la carte-logo officielle de l'application.
 ///

@@ -1,3 +1,10 @@
+/// ============================================================================
+/// RÔLE DU FICHIER : Écran de connexion client avec validation et reprise automatique d'action en attente.
+/// INTERAGIT AVEC : AuthService.signIn(), sessionProvider, RegisterScreen.
+/// POUR L'ORAL : « Cet écran authentifie le client sur Firebase et déclenche immédiatement la reprise de l'action qu'il avait tentée en mode visiteur. »
+/// ============================================================================
+library;
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    // 1) Contrôle de présence des champs email et mot de passe
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
@@ -48,6 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
     setState(() => _isLoading = true);
     try {
+      // 2) Appel Firebase Auth : signInWithEmailAndPassword
       final userCredential = await _authService.signIn(email: email, password: password);
       if (!mounted) return;
 
@@ -61,7 +70,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         email: firebaseUser?.email ?? email,
       );
 
-      // Met a jour la session globale Dokan (Riverpod)
+      // 3) Mise à jour de la session Riverpod et reprise de l'action en attente
       ref.read(sessionProvider.notifier).loginSuccess(userSummary);
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -71,7 +80,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
       );
 
-      // Redirection : ferme la page ou retourne à l'accueil
+      // 4) Redirection vers l'écran appelant ou l'accueil
       if (context.canPop()) {
         context.pop();
       } else {

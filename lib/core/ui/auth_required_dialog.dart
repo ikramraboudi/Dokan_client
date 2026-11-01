@@ -1,4 +1,9 @@
 /// ============================================================================
+/// RÔLE DU FICHIER : Feuille modale invitant le visiteur à se connecter avec sauvegarde de l'action en attente.
+/// INTERAGIT AVEC : sessionProvider, CartScreen, FavoritesScreen, ProductDetailScreen.
+/// POUR L'ORAL : « Cette modale surgit quand un visiteur clique sur une action restreinte et mémorise son intention pour la rejouer après connexion. »
+/// ============================================================================
+/// ============================================================================
 /// RÔLE DU FICHIER :
 /// Feuille modale / Dialogue d'invitation à l'authentification (`AuthRequiredDialog`).
 /// Affiché chaque fois qu'un visiteur non connecté tente d'exécuter une action
