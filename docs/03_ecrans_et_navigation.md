@@ -139,4 +139,23 @@ L'une des exigences fondamentales de Dokan est que l'interface s'adapte en temps
   * Avatar avec initiales du client et coordonnées (nom complet, email).
   * Liens vers les rubriques hors périmètre (commandes, adresses, paramètres) qui affichent le SnackBar officiel.
   * Outil de test pédagogique « Simuler session expirée » pour vérifier le bon comportement de l'app si le jeton expire sans perdre le contenu de son panier.
-  * Bouton de déconnexion ouvrant une boîte de dialogue de confirmation.
+  * Bouton de déconnexion ouvrant une boîte de dialogue de confirmation.### 1. SplashScreen (/splash)
+* **Route** : /splash (route initiale au démarrage).
+* **Affichage & Scénario d'animation** :
+  - Dégradé vertical doux (AppColors.primaryDark -> AppColors.primary -> AppColors.primaryLight) avec cercles translucides (blobs) organiques dérivant en continu.
+  - Carte-logo Dokan (widget modulaire DokanLogo dans core/ui/) avec rebond élastique (Curves.elasticOut, scale 0 -> 1.0) puis pulsation douce continue (Curves.easeInOut).
+  - Nom « Dokan » apparaissant lettre par lettre avec fondu et glissement vers le haut (décalage de ~80 ms, piloté par Interval sur le contrôleur d'entrée).
+  - Slogan chaleureux (AppConfig.appTagline) en fondu progressif sous le nom.
+  - 12 icônes d'ambiance flottantes en transparence (sac, cœur, étiquette promo, panier, étoile...).
+  - Fine barre de progression discrète en bas sans texte technique.
+  - Bouton discret « Passer » en haut à droite (accessible après 1 seconde).
+* **Interactivité & Gestes** :
+  - Toucher l'écran : émission d'étincelles/particules colorées (max 30 éléments gérés par CustomPainter) avec retour haptique léger (HapticFeedback.lightImpact).
+  - Glisser le doigt : effet de parallaxe dynamique sur les blobs et les icônes en sens inverse, avec retour élastique amorti.
+* **Fonctionnement & Robustesse** :
+  - Respecte la durée minimale incompressible de **3 secondes** (AppConfig.splashDuration).
+  - Vérification asynchrone de la session Firebase en tâche de fond. Redirige vers /home avec une transition personnalisée fondu + zoom sans scintillement blanc (CustomTransitionPage).
+  - En cas d'erreur de session ou hors-ligne, bascule en mode visiteur sans jamais bloquer l'interface.
+  - Prise en charge de l'accessibilité (MediaQuery.disableAnimations) affichant instantanément une version statique sans animations.
+
+

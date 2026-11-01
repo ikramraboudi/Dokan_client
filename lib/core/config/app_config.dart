@@ -11,7 +11,7 @@
 /// RELATIONS ET DÉPENDANCES :
 /// - Utilisé par :
 ///   * `lib/app.dart` (nom de l'application).
-///   * `lib/feature/splash/splash_screen.dart` (durée du splash).
+///   * `lib/feature/splash/splash_screen.dart` (durée du splash, slogan).
 ///   * `lib/core/ui/product_card.dart`, `lib/core/ui/price_summary.dart`,
 ///     `lib/feature/catalog/catalog_screen.dart`, `lib/feature/cart/cart_screen.dart`,
 ///     `lib/feature/product/product_detail_screen.dart` (formatage des prix).
@@ -35,6 +35,11 @@ class AppConfig {
 
   /// Symbole affiché à côté des montants financiers dans toute l'interface.
   static const String currencySymbol = 'DT';
+
+  /// Slogan court affiché sous le nom de l'application sur l'écran de démarrage.
+  /// Texte chaleureux et neutre, sans promesse de délai ni de prix.
+  /// À modifier ici pour mettre à jour le slogan sur tout l'écran splash.
+  static const String appTagline = 'Tout ce dont vous avez besoin, livré chez vous.';
 
   /// FONCTIONNALITÉ :
   /// Formate un montant numérique décimal en une chaîne textuelle conforme aux
