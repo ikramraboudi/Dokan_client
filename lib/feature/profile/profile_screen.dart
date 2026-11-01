@@ -23,7 +23,6 @@ class ProfileScreen extends ConsumerWidget {
 
   void _confirmLogout(BuildContext context, WidgetRef ref) {
     final authService = AuthService();
-    final user = authService.currentUser;
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -61,9 +60,6 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
-    final authService = AuthService();
-    final user = authService.currentUser;
-
     return Scaffold(
       appBar: const AppTopBar(
         title: 'Mon profil',
@@ -203,13 +199,13 @@ class ProfileScreen extends ConsumerWidget {
           context,
           icon: Icons.receipt_long_outlined,
           title: 'Mes commandes',
-          onTap: () => _showComingSoonSnackBar(context),
+          onTap: () => context.push(AppRoutes.myOrders),
         ),
         _buildMenuTile(
           context,
           icon: Icons.location_on_outlined,
           title: 'Mes adresses de livraison',
-          onTap: () => _showComingSoonSnackBar(context),
+          onTap: () => context.push(AppRoutes.addresses),
         ),
         _buildMenuTile(
           context,

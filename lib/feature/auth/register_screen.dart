@@ -7,7 +7,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_form_field.dart';
 import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
-import '../../data/mock/mock_auth_repository.dart';
+import '../../data/models/user_summary.dart';
 import '../../services/auth_service.dart';
 
 
@@ -40,7 +40,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  Future<void> _submitRegister() async {
+  Future<void> _handleSignUp() async {
     if (_isLoading) return;
 
     if (!_formKey.currentState!.validate()) {
@@ -60,52 +60,43 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     try {
-      final repo = ref.read(authRepositoryProvider);
-      final user = await repo.register(
-        _nameController.text,
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (mounted) {
-        // Enregistre la session et exécute l'action protégée en attente
-        ref.read(sessionProvider.notifier).loginSuccess(user);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Compte créé avec succès ! Bienvenue ${user.fullName}.'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Retour à l'écran précédent
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-        });
-      }
-    }
-  }
-
-  Future<void> _handleSignUp() async {
-    setState(() => _isLoading = true);
-    try {
-      await _authService.signUp(
+      final userCredential = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      final fullName = _nameController.text.trim();
+      if (fullName.isNotEmpty) {
+        await userCredential.user?.updateDisplayName(fullName);
+      }
+
       if (!mounted) return;
-      // Close register screen; AuthGate automatically shows HomeScreen
+
+      final user = UserSummary(
+        fullName: fullName.isNotEmpty ? fullName : _emailController.text.trim().split('@').first,
+        email: _emailController.text.trim(),
+      );
+
+      ref.read(sessionProvider.notifier).loginSuccess(user);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Compte créé avec succès ! Bienvenue ${user.fullName}.'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
       Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Sign up failed.')),
-      );
+      setState(() {
+        _errorMessage = e.message ?? 'Inscription échouée.';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -206,7 +197,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   validator: (val) => Validators.confirmPassword(val, _passwordController.text),
                   prefixIcon: const Icon(Icons.lock_reset_rounded),
                   enabled: !_isLoading,
-                  onFieldSubmitted: (_) => _submitRegister(),
+                  onFieldSubmitted: (_) => _handleSignUp(),
                 ),
                 const SizedBox(height: AppDimens.space16),
 

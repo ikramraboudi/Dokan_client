@@ -153,3 +153,32 @@ Ce glossaire définit simplement tous les termes techniques rencontrés dans le 
 ### Semantics
 * **Définition** : Système d'accessibilité de Flutter fournissant des annotations textuelles pour les technologies d'assistance (lecteurs d'écran TalkBack / VoiceOver).
 * **Exemple dans le code** : `Semantics(label: 'Ouvrir mon panier', button: true, child: ...)` dans l'AppBar de l'accueil.
+
+
+---
+
+## 7. Firebase & Synchronisation Temps Réel
+
+### Cloud Firestore
+* **Définition** : Base de données NoSQL hébergée dans le Cloud par Google, organisée en collections et documents, offrant une synchronisation en direct bidirectionnelle.
+* **Exemple dans le code** : Collections `products`, `orders` et `users/{uid}/addresses`.
+
+### Stream (Flux Réactif Asynchrone)
+* **Définition** : Tuyau de communication émettant une séquence d'événements dans le temps. Dans Flutter, un `Stream` branché sur Firestore permet à l'interface de s'actualiser toute seule dès qu'une modification survient en base sans aucun rechargement manuel.
+* **Exemple dans le code** : `watchMyOrders()` et `myOrdersStreamProvider` qui mettent à jour l'écran « Mes commandes » quand l'Admin change le statut.
+
+### Snapshot (Copie Figée)
+* **Définition** : Capture immuable de l'état des données à un instant précis. Utilisé lors de la commande pour figer le nom, le prix unitaire et l'adresse de livraison, afin que les futures modifications de catalogue de l'Admin n'altèrent pas l'historique de la facture.
+* **Exemple dans le code** : `OrderItemUiModel` et `OrderDeliveryAddress` dans `OrderUiModel`.
+
+### WriteBatch & Transaction
+* **Définition** : Mécanismes d'écriture atomique dans Firestore assurant le principe du « tout ou rien ». Soit l'ensemble des opérations réussit, soit aucune n'est appliquée, évitant les états incohérents en cas de coupure réseau.
+* **Exemple dans le code** : `_firestore.batch()` lors de la création de commande et `_firestore.runTransaction()` lors de l'annulation d'une commande.
+
+### Index Composite
+* **Définition** : Structure de données Firestore combinant plusieurs champs indexés pour optimiser les requêtes combinant filtres d'égalité et tris (ex: `userId == uid` ET `createdAt DESC`).
+* **Exemple dans le code** : `firestore.indexes.json` pour la collection `orders`.
+
+### Règles de Sécurité (Firestore Security Rules)
+* **Définition** : Règles exécutées directement sur les serveurs Google évaluant chaque tentative de lecture ou d'écriture selon l'identité de l'utilisateur (`request.auth`) et le contenu des données (`request.resource.data`).
+* **Exemple dans le code** : `firestore.rules` garantissant qu'un client ne peut lire que ses propres commandes et ne peut annuler qu'une commande en attente.

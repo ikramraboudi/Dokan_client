@@ -36,29 +36,18 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   void _onCheckoutPressed() {
     final session = ref.read(sessionProvider);
     if (session.isGuest) {
-      // Visiteur : invite de connexion avec texte exact
+      // Visiteur : invite de connexion avec reprise automatique vers le passage de commande
       AuthRequiredDialog.show(
         context,
         ref,
         message: 'Connectez-vous pour continuer votre commande.',
         pendingAction: () {
-          // Reprise après authentification
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cette fonctionnalité sera disponible prochainement.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          context.push(AppRoutes.checkout);
         },
       );
     } else {
-      // Client connecté : hors périmètre
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cette fonctionnalité sera disponible prochainement.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      // Client connecté : transition vers le passage de commande
+      context.push(AppRoutes.checkout);
     }
   }
 

@@ -1,0 +1,97 @@
+/// ============================================================================
+/// RÔLE DU FICHIER :
+/// Énumération unique et tolérante des statuts de commande Dokan.
+/// Gère la conversion bidirectionnelle chaîne ⇄ enum, les libellés français,
+/// les couleurs du thème (AppColors) et l'étape d'avancement graphique.
+///
+/// COUCHE DANS L'ARCHITECTURE :
+/// Couche data/models/ (Modèle Métier / Statuts).
+///
+/// RELATIONS ET DÉPENDANCES :
+/// - Utilisé par : OrderUiModel, MyOrdersScreen, OrderDetailScreen.
+/// - Dépend de : core/theme/app_colors.dart et material.dart pour les icônes/couleurs.
+/// ============================================================================
+library;
+
+import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
+
+/// Statuts officiels d'une commande Dokan (partagés avec Admin et Livreur).
+enum OrderStatus {
+  pending('pending', 'En attente'),
+  confirmed('confirmed', 'Confirmée'),
+  preparing('preparing', 'En préparation'),
+  outForDelivery('out_for_delivery', 'En livraison'),
+  delivered('delivered', 'Livrée'),
+  cancelled('cancelled', 'Annulée');
+
+  /// Valeur textuelle brute stockée dans Firestore en anglais.
+  final String value;
+
+  /// Libellé officiel affiché à l'utilisateur en français.
+  final String label;
+
+  const OrderStatus(this.value, this.label);
+
+  /// Conversion tolérante : une valeur inconnue ne fera jamais planter l'app.
+  static OrderStatus fromString(String? value) {
+    if (value == null) return OrderStatus.pending;
+    return switch (value.toLowerCase().trim()) {
+      'pending' => OrderStatus.pending,
+      'confirmed' => OrderStatus.confirmed,
+      'preparing' => OrderStatus.preparing,
+      'out_for_delivery' || 'outfordelivery' => OrderStatus.outForDelivery,
+      'delivered' => OrderStatus.delivered,
+      'cancelled' || 'canceled' => OrderStatus.cancelled,
+      _ => OrderStatus.pending,
+    };
+  }
+
+  /// Couleur principale du badge ou ruban (depuis AppColors).
+  Color get color => switch (this) {
+        OrderStatus.pending => AppColors.statusPending,
+        OrderStatus.confirmed => AppColors.statusPreparing,
+        OrderStatus.preparing => AppColors.statusPreparing,
+        OrderStatus.outForDelivery => AppColors.statusOutForDelivery,
+        OrderStatus.delivered => AppColors.statusDelivered,
+        OrderStatus.cancelled => AppColors.statusCancelled,
+      };
+
+  /// Couleur de fond douce (soft) du badge ou ruban (depuis AppColors).
+  Color get softColor => switch (this) {
+        OrderStatus.pending => AppColors.statusPendingSoft,
+        OrderStatus.confirmed => AppColors.statusPreparingSoft,
+        OrderStatus.preparing => AppColors.statusPreparingSoft,
+        OrderStatus.outForDelivery => AppColors.statusOutForDeliverySoft,
+        OrderStatus.delivered => AppColors.statusDeliveredSoft,
+        OrderStatus.cancelled => AppColors.statusCancelledSoft,
+      };
+
+  /// Icône Material représentative du statut.
+  IconData get icon => switch (this) {
+        OrderStatus.pending => Icons.hourglass_top_rounded,
+        OrderStatus.confirmed => Icons.check_circle_outline_rounded,
+        OrderStatus.preparing => Icons.inventory_2_outlined,
+        OrderStatus.outForDelivery => Icons.local_shipping_outlined,
+        OrderStatus.delivered => Icons.task_alt_rounded,
+        OrderStatus.cancelled => Icons.cancel_outlined,
+      };
+
+  /// Indice de l'étape sur la barre de progression en 4 étapes :
+  /// 0: Reçue / En attente
+  /// 1: Préparation (Confirmée + En préparation)
+  /// 2: En livraison
+  /// 3: Livrée
+  /// -1: Annulée (barre grisée)
+  int get progressStep => switch (this) {
+        OrderStatus.pending => 0,
+        OrderStatus.confirmed => 1,
+        OrderStatus.preparing => 1,
+        OrderStatus.outForDelivery => 2,
+        OrderStatus.delivered => 3,
+        OrderStatus.cancelled => -1,
+      };
+
+  /// Indique si la commande est encore annulable par le client.
+  bool get canBeCancelledByCustomer => this == OrderStatus.pending;
+}

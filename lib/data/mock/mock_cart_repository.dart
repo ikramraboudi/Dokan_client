@@ -20,7 +20,7 @@
 /// - Dépend de : `data/repositories/cart_repository.dart` et `data/models/cart_item_ui_model.dart`.
 /// ============================================================================
 // DONNÉES FICTIVES
-// TODO API : Synchroniser le panier avec la session du panier persistant sur le serveur.
+// TODO Firebase : à migrer (panier persistant Firestore et codes promos dynamiques)
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

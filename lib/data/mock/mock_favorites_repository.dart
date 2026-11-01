@@ -29,41 +29,8 @@ import '../repositories/favorites_repository.dart';
 class MockFavoritesRepository implements FavoritesRepository {
   final List<ProductUiModel> _favorites = [];
 
-  MockFavoritesRepository() {
-    // Initialise 2 favoris de démonstration au démarrage
-    _favorites.addAll([
-      const ProductUiModel(
-        id: 'prod-101',
-        name: 'Chemise en lin premium à manches retroussables',
-        description: 'Chemise en pur lin naturel respirant. Coupe droite moderne.',
-        imageUrls: ['https://picsum.photos/seed/Dokan-p101-1/600/600'],
-        price: 89.900,
-        oldPrice: 119.900,
-        discountLabel: '-25%',
-        availability: ProductAvailability.inStock,
-        categoryName: 'Vêtements et mode',
-        rating: 4.8,
-        reviewCount: 42,
-        isNew: true,
-        isPopular: true,
-      ),
-      const ProductUiModel(
-        id: 'prod-201',
-        name: 'Sneakers urbaines en cuir suédé beige et blanc',
-        description: 'Baskets légères avec semelle ergonomique.',
-        imageUrls: ['https://picsum.photos/seed/Dokan-p201-1/600/600'],
-        price: 159.000,
-        oldPrice: 199.000,
-        discountLabel: '-20%',
-        availability: ProductAvailability.inStock,
-        categoryName: 'Chaussures et accessoires',
-        rating: 4.7,
-        reviewCount: 65,
-        isNew: true,
-        isPopular: true,
-      ),
-    ]);
-  }
+  // TODO Firebase : à migrer vers Firestore (favoris synchronisés avec le compte utilisateur)
+  MockFavoritesRepository();
 
   @override
   Future<List<ProductUiModel>> getFavorites() async {

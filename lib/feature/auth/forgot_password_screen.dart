@@ -5,7 +5,7 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_form_field.dart';
 import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
-import '../../data/mock/mock_auth_repository.dart';
+import '../../services/auth_service.dart';
 
 ///  Dokan — ÉCRAN MOT DE PASSE OUBLIÉ
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -17,6 +17,7 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
   final _emailController = TextEditingController();
 
   bool _isLoading = false;
@@ -40,8 +41,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     });
 
     try {
-      final repo = ref.read(authRepositoryProvider);
-      await repo.sendPasswordReset(_emailController.text);
+      await _authService.sendPasswordResetEmail(_emailController.text.trim());
 
       if (mounted) {
         setState(() {

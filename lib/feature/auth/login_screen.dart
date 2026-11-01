@@ -9,7 +9,6 @@ import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_form_field.dart';
 import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
-import '../../data/mock/mock_auth_repository.dart';
 import '../../data/models/user_summary.dart';
 import '../../services/auth_service.dart';
 
@@ -24,8 +23,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'demo@Dokan.com');
-  final _passwordController = TextEditingController(text: 'Demo1234');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _authService = AuthService();
 
   bool _isLoading = false;
@@ -38,48 +37,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _submitLogin() async {
-    if (_isLoading) return; // Empêche le double envoi
-
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final repo = ref.read(authRepositoryProvider);
-      final user = await repo.login(
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (mounted) {
-        // Enregistre la session et exécute automatiquement l'action protégée en attente
-        ref.read(sessionProvider.notifier).loginSuccess(user);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Bienvenue, ${user.fullName} !'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Retour à l'écran d'origine
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-        });
-      }
-    }
-  }
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -281,25 +238,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: const Text('Créer un compte'),
                     ),
                   ],
-                ),
-
-                const SizedBox(height: AppDimens.space20),
-                // Indication compte de démo
-                Container(
-                  padding: const EdgeInsets.all(AppDimens.space12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(AppDimens.radius12),
-                  ),
-                  child: const Text(
-                    'Compte de démo : demo@Dokan.com / Demo1234\nTest d\'échec : fail@Dokan.com',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                      height: 1.4,
-                    ),
-                  ),
                 ),
               ],
             ),

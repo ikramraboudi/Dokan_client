@@ -359,39 +359,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             );
           }).toList(),
         ),
-
-        const SizedBox(height: AppDimens.space32),
-        // Astuce pour tester les états
-        Container(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppDimens.radius12),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Astuce de démonstration :',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: AppDimens.space4),
-              Text(
-                '• Tapez "#error" pour simuler une erreur réseau.\n• Tapez "#empty" pour tester l\'écran aucun résultat.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

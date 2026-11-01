@@ -72,4 +72,16 @@ class AppColors {
   static const Color shimmerBase   = Color(0xFFE9E6E0); // Base de l'animation de chargement
   static const Color shimmerHigh   = Color(0xFFF6F4EF); // Brillance de l'animation de chargement
   static const Color star          = Color(0xFFF2B01E); // Étoiles de notation des produits
+
+  // --- Statuts de commande (Dokan - Palette douce et harmonieuse) ---
+  static const Color statusPending          = Color(0xFFD97706); // Ambre chaud (En attente)
+  static const Color statusPendingSoft      = Color(0xFFFEF3C7);
+  static const Color statusPreparing        = Color(0xFF2563EB); // Bleu info (En préparation / Confirmée)
+  static const Color statusPreparingSoft    = Color(0xFFEFF6FF);
+  static const Color statusOutForDelivery   = Color(0xFFEA580C); // Orange chaud / accent (En livraison)
+  static const Color statusOutForDeliverySoft= Color(0xFFFFEDD5);
+  static const Color statusDelivered        = Color(0xFF16A34A); // Vert succès (Livrée)
+  static const Color statusDeliveredSoft    = Color(0xFFDCFCE7);
+  static const Color statusCancelled        = Color(0xFF6B7280); // Gris doux (Annulée)
+  static const Color statusCancelledSoft    = Color(0xFFF3F4F6);
 }

@@ -37,6 +37,15 @@ class AppRoutes {
   static const String register       = '/register';        // Écran d'inscription
   static const String forgotPassword = '/forgot-password'; // Récupération mot de passe
 
+  // --- Flux de commande, adresses et suivi de livraison ---
+  static const String checkout          = '/checkout';
+  static const String orderConfirmation = '/order-confirmation';
+  static const String myOrders          = '/orders';
+  static const String orderDetail       = '/orders/:id';
+  static const String addresses         = '/addresses';
+  static const String addAddress        = '/addresses/add';
+  static const String editAddress       = '/addresses/edit';
+
   /// FONCTIONNALITÉ :
   /// Construit l'URL paramétrée pour ouvrir la fiche détaillée d'un produit précis.
   ///

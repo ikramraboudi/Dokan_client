@@ -32,6 +32,12 @@ import '../../feature/home/home_screen.dart';
 import '../../feature/product/product_detail_screen.dart';
 import '../../feature/profile/profile_screen.dart';
 import '../../feature/splash/splash_screen.dart';
+import '../../feature/address/add_edit_address_screen.dart';
+import '../../feature/address/addresses_screen.dart';
+import '../../feature/checkout/checkout_screen.dart';
+import '../../feature/checkout/order_confirmation_screen.dart';
+import '../../feature/orders/my_orders_screen.dart';
+import '../../feature/orders/order_detail_screen.dart';
 import 'main_shell.dart';
 import 'routes.dart';
 
@@ -102,6 +108,92 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.forgotPassword,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+
+    // --- Écrans du flux de commande, adresses et suivi ---
+    GoRoute(
+      path: AppRoutes.checkout,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const CheckoutScreen(),
+    ),
+    GoRoute(
+      path: '${AppRoutes.orderConfirmation}/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => OrderConfirmationScreen(
+        orderId: state.pathParameters['id'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.myOrders,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const MyOrdersScreen(),
+    ),
+    GoRoute(
+      path: '${AppRoutes.myOrders}/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => OrderDetailScreen(
+        orderId: state.pathParameters['id'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.addresses,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddressesScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.addAddress,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddEditAddressScreen(),
+    ),
+    GoRoute(
+      path: '${AppRoutes.editAddress}/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => AddEditAddressScreen(
+        addressId: state.pathParameters['id'],
+      ),
+    ),
+
+    // --- Écrans du flux de commande, adresses et suivi ---
+    GoRoute(
+      path: AppRoutes.checkout,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const CheckoutScreen(),
+    ),
+    GoRoute(
+      path: '${AppRoutes.orderConfirmation}/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => OrderConfirmationScreen(
+        orderId: state.pathParameters['id'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.myOrders,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const MyOrdersScreen(),
+    ),
+    GoRoute(
+      path: '${AppRoutes.myOrders}/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => OrderDetailScreen(
+        orderId: state.pathParameters['id'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.addresses,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddressesScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.addAddress,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AddEditAddressScreen(),
+    ),
+    GoRoute(
+      path: '${AppRoutes.editAddress}/:id',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => AddEditAddressScreen(
+        addressId: state.pathParameters['id'],
+      ),
     ),
 
     // COQUILLE DE NAVIGATION PERSISTANTE À 5 ONGLETS
