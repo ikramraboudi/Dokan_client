@@ -72,16 +72,22 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   }
 
   Future<void> _applyPromo() async {
-    final code = _promoController.text.trim();
-    if (code.isEmpty) return;
+    // Fermeture immédiate du clavier virtuel à la validation
+    FocusScope.of(context).unfocus();
 
+    // Protection anti-double-clic si la vérification est déjà en cours
+    if (ref.read(cartProvider).isApplyingPromo) return;
+
+    final code = _promoController.text;
     final success = await ref.read(cartProvider.notifier).applyPromoCode(code);
     if (success && mounted) {
       _promoController.clear();
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Code promo appliqué avec succès (-10 %) !'),
-          duration: Duration(seconds: 2),
+          content: Text('Code Dokan10 appliqué : -10 %'),
+          backgroundColor: AppColors.success,
+          duration: Duration(seconds: 3),
         ),
       );
     }
@@ -288,30 +294,50 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           border: Border.all(color: AppColors.success),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.local_offer_rounded,
-                  color: AppColors.success,
-                  size: 20,
-                ),
-                const SizedBox(width: AppDimens.space8),
-                Text(
-                  'Code promo : ${cartState.appliedPromoCode} (-10 %)',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.success,
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              icon: const Icon(Icons.close_rounded, size: 18),
+            const Icon(
+              Icons.check_circle_rounded,
               color: AppColors.success,
-              tooltip: 'Retirer le code promo',
+              size: 22,
+            ),
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Code  appliqué : -10 %',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Économie : ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.success.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.error,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.space8,
+                  vertical: AppDimens.space4,
+                ),
+              ),
+              icon: const Icon(Icons.close_rounded, size: 16),
+              label: const Text(
+                'Retirer',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
               onPressed: () {
                 ref.read(cartProvider.notifier).removePromoCode();
               },

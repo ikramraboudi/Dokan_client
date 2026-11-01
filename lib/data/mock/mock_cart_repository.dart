@@ -27,6 +27,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/navigation/main_shell.dart';
 import '../models/cart_item_ui_model.dart';
 import '../models/product_ui_model.dart';
+import '../models/promo_code.dart';
 import '../repositories/cart_repository.dart';
 
 /// ÉTAT IMMUABLE DU PANIER (CartState)
@@ -219,13 +220,24 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   /// Retire un article du panier et le renvoie pour alimenter l'action d'annulation (Undo).
+  /// Si le panier devient vide suite à cette suppression, le code promo est retiré automatiquement.
   CartItemUiModel? removeItem(String itemId) {
     final currentItems = List<CartItemUiModel>.from(state.items);
     final index = currentItems.indexWhere((i) => i.id == itemId);
 
     if (index >= 0) {
       final removed = currentItems.removeAt(index);
-      state = state.copyWith(items: currentItems);
+      if (currentItems.isEmpty) {
+        // Le panier devient vide : retrait automatique du code promo
+        state = state.copyWith(
+          items: currentItems,
+          appliedPromoCode: () => null,
+          discountPercent: 0.0,
+          promoError: () => null,
+        );
+      } else {
+        state = state.copyWith(items: currentItems);
+      }
       _updateBadge();
       _repo.removeItem(itemId);
       return removed;
@@ -247,25 +259,34 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   /// SCÉNARIO MÉTIER : APPLICATION D'UN CODE PROMOTIONNEL
-  /// - Code valide : `Dokan10` accorde 10 % de réduction immédiate.
-  /// - Code erroné : Affiche le message « Code promo invalide ou expiré ».
-  
+  /// Étape 1 : Nettoyage et vérification de la présence d'un texte.
+  /// Étape 2 : Si vide -> message d'erreur « Saisissez un code promo. ».
+  /// Étape 3 : Normalisation et recherche insensible à la casse dans PromoRules.
+  /// Étape 4 : Si trouvé -> application de la remise (-10%), mise à jour de l'état, retour true.
+  /// Étape 5 : Si non trouvé -> message d'erreur « Ce code promo n'existe pas. », retour false.
   Future<bool> applyPromoCode(String code) async {
-    final trimmed = code.trim().toUpperCase();
-    if (trimmed.isEmpty) return false;
+    final trimmed = code.trim();
+    if (trimmed.isEmpty) {
+      state = state.copyWith(
+        isApplyingPromo: false,
+        promoError: () => 'Saisissez un code promo.',
+      );
+      return false;
+    }
 
     state = state.copyWith(
       isApplyingPromo: true,
       promoError: () => null,
     );
 
-    // Latence artificielle de vérification (600 ms)
-    await Future.delayed(const Duration(milliseconds: 600));
+    // Simulation de délai réseau (300 ms)
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    if (trimmed == 'Dokan10') {
+    final promo = PromoRules.find(trimmed);
+    if (promo != null) {
       state = state.copyWith(
-        appliedPromoCode: () => 'Dokan10',
-        discountPercent: 10.0,
+        appliedPromoCode: () => promo.displayCode,
+        discountPercent: promo.discountValue,
         isApplyingPromo: false,
         promoError: () => null,
       );
@@ -273,7 +294,7 @@ class CartNotifier extends StateNotifier<CartState> {
     } else {
       state = state.copyWith(
         isApplyingPromo: false,
-        promoError: () => 'Code promo invalide ou expiré.',
+        promoError: () => 'Ce code promo n\'existe pas.',
       );
       return false;
     }
@@ -288,7 +309,7 @@ class CartNotifier extends StateNotifier<CartState> {
     );
   }
 
-  /// Réinitialise l'ensemble du panier.
+  /// Réinitialise l'ensemble du panier et retire tout code promotionnel.
   Future<void> clearCart() async {
     state = const CartState();
     _updateBadge();
