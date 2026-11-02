@@ -40,8 +40,6 @@ abstract class OrdersRepository {
     required String customerPhone,
     required List<CartItemUiModel> cartItems,
     required OrderDeliveryAddress deliveryAddress,
-    required String? promoCode,
-    required double discountPercent,
     required double deliveryFee,
   });
 

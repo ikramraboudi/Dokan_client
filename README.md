@@ -2,7 +2,7 @@
 
 Application mobile e-commerce Android développée avec le framework **Flutter**, utilisant **Riverpod** pour la gestion d'état réactive, **GoRouter** pour la navigation déclarative à 5 onglets persistants, **Google Firebase** (Auth & Cloud Firestore temps réel) pour le backend, et un thème **Material 3** entièrement isolé sans aucune couleur en dur.
 
-Ce projet couvre l'intégralité du cycle e-commerce : Découverte du catalogue, recherche & filtres multicritères, authentification sécurisée & mode visiteur/client, gestion du panier et codes promo, passage de commande atomique avec relecture des prix, et suivi de livraison en temps réel avec chronologie d'étapes.
+Ce projet couvre l'intégralité du cycle e-commerce : Découverte du catalogue, recherche & filtres multicritères, authentification sécurisée & mode visiteur/client, gestion réactive du panier, passage de commande atomique avec relecture des prix, et suivi de livraison en temps réel avec chronologie d'étapes.
 
 ---
 
@@ -61,7 +61,7 @@ flutter run
 
 * **Compte Démo Valide** : `demo@Dokan.com` / `Demo1234`
 * **Compte de Test d'Échec** : `fail@Dokan.com` / `n'importe_quoi`
-* **Code Promo Panier (-10 %)** : `Dokan10` (tolérant aux majuscules/minuscules et espaces : `dokan10`, `DOKAN10`, ` Dokan10 `)
+* **Promotions & Remises** : Gérées directement par l'application Admin (le Client n'écrit jamais de code promo).
 * **Mots-clés de test dans la recherche** :
   * `#error` : Simule une panne réseau avec bouton Réessayer
   * `#empty` : Simule une recherche sans résultat

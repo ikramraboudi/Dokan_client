@@ -13,7 +13,7 @@ Ce document décrit en détail la gestion d'état réactive avec **Riverpod**, l
 | Provider | Fichier source | Type Riverpod | Rôle et données contenues | Qui l'écoute ? | Qui le modifie ? |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `sessionProvider` | `lib/core/session/session_provider.dart` | `StateNotifierProvider` | Contient `SessionState` (`user`, `isGuest`, `pendingAction`). | Tous les écrans pour adapter la vue visiteur/client. | `LoginScreen`, `RegisterScreen`, `ProfileScreen` (déconnexion). |
-| `cartProvider` | `lib/data/mock/mock_cart_repository.dart` | `StateNotifierProvider` | Contient `CartState` (liste d'articles, promo, totaux). | `CartScreen`, `MainShell` (via cartCountProvider). | `ProductDetailScreen` (ajout), `CartScreen` (quantités, suppression, code promo). |
+| `cartProvider` | `lib/data/mock/mock_cart_repository.dart` | `StateNotifierProvider` | Contient `CartState` (liste d'articles, totaux réactifs). | `CartScreen`, `MainShell` (via cartCountProvider). | `ProductDetailScreen` (ajout), `CartScreen` (quantités, suppression). |
 | `cartCountProvider` | `lib/core/navigation/main_shell.dart` | `StateProvider<int>` | Nombre total d'articles dans le panier. | Le badge rouge de la barre de navigation. | Synchronisé automatiquement par les mutations de `cartProvider`. |
 | `favoritesProvider` | `lib/data/mock/mock_favorites_repository.dart` | `StateNotifierProvider` | Liste des articles favoris du client. | `FavoritesScreen`, `HomeScreen`, `CatalogScreen`, `ProductCard`. | Bouton cœur sur n'importe quel écran. |
 | `homeCategoriesProvider` | `lib/feature/home/home_screen.dart` | `FutureProvider` | Liste asynchrone des catégories de l'accueil. | Section catégories de l'accueil. | `RefreshIndicator` de l'accueil (`ref.invalidate`). |
@@ -36,8 +36,7 @@ En programmation fonctionnelle et réactive, on ne modifie jamais directement le
 // Exemple dans CartNotifier :
 state = state.copyWith(
   items: updatedItems,
-  appliedPromoCode: 'Dokan10',
-);
+  );
 ```
 Grâce à ce mécanisme, Riverpod compare l'ancienne et la nouvelle référence mémoire : s'il détecte un nouvel objet, il reconstruit uniquement les widgets concernés.
 

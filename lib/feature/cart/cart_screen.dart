@@ -1,7 +1,7 @@
 /// ============================================================================
-/// RÔLE DU FICHIER : Écran Panier réactif avec gestion des quantités, geste Dismissible, code promo Dokan10 et redirection sécurisée.
+/// RÔLE DU FICHIER : Écran Panier réactif avec gestion des quantités, suppression avec annulation et redirection sécurisée.
 /// INTERAGIT AVEC : cartProvider, sessionProvider, CheckoutScreen, PriceSummary.
-/// POUR L'ORAL : « Le panier permet la modification instantanée des quantités, applique le code promo Dokan10 et invite le visiteur à se connecter. »
+/// POUR L'ORAL : « Le panier permet la modification instantanée des quantités, la suppression avec annulation et invite le visiteur à se connecter. »
 /// ============================================================================
 library;
 
@@ -32,14 +32,6 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
-  final TextEditingController _promoController = TextEditingController();
-
-  @override
-  void dispose() {
-    _promoController.dispose();
-    super.dispose();
-  }
-
   void _onCheckoutPressed() {
     final session = ref.read(sessionProvider);
     if (session.isGuest) {
@@ -78,28 +70,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     );
   }
 
-  Future<void> _applyPromo() async {
-    // Fermeture immédiate du clavier virtuel à la validation
-    FocusScope.of(context).unfocus();
-
-    // Protection anti-double-clic si la vérification est déjà en cours
-    if (ref.read(cartProvider).isApplyingPromo) return;
-
-    final code = _promoController.text;
-    final success = await ref.read(cartProvider.notifier).applyPromoCode(code);
-    if (success && mounted) {
-      _promoController.clear();
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Code Dokan10 appliqué : -10 %'),
-          backgroundColor: AppColors.success,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartProvider);
@@ -136,17 +106,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         final item = cartState.items[index];
                         return _buildCartItemCard(item, index);
                       }),
-                      const SizedBox(height: AppDimens.space16),
-
-                      // Section Code Promo
-                      _buildPromoSection(cartState),
                       const SizedBox(height: AppDimens.space20),
 
                       // Récapitulatif des prix
                       PriceSummary(
                         subtotal: cartState.subtotal,
-                        discountAmount: cartState.discountAmount,
-                        promoCode: cartState.appliedPromoCode,
                         deliveryFee: cartState.deliveryFee,
                         total: cartState.total,
                       ),
@@ -283,145 +247,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPromoSection(CartState cartState) {
-    if (cartState.appliedPromoCode != null) {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimens.space16,
-          vertical: AppDimens.space12,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.successSoft,
-          borderRadius: BorderRadius.circular(AppDimens.radius12),
-          border: Border.all(color: AppColors.success),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_rounded,
-              color: AppColors.success,
-              size: 22,
-            ),
-            const SizedBox(width: AppDimens.space12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Code  appliqué : -10 %',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Économie : ',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.success.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.error,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.space8,
-                  vertical: AppDimens.space4,
-                ),
-              ),
-              icon: const Icon(Icons.close_rounded, size: 16),
-              label: const Text(
-                'Retirer',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-              ),
-              onPressed: () {
-                ref.read(cartProvider.notifier).removePromoCode();
-              },
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimens.radius16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Code promotionnel',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppDimens.space8),
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 48,
-                  child: TextField(
-                    controller: _promoController,
-                    textCapitalization: TextCapitalization.characters,
-                    style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-                    decoration: const InputDecoration(
-                      hintText: 'Ex. Dokan10',
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: AppDimens.space12,
-                        vertical: 10,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppDimens.space12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(100, 48),
-                ),
-                onPressed: cartState.isApplyingPromo ? null : _applyPromo,
-                child: cartState.isApplyingPromo
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.onPrimary,
-                        ),
-                      )
-                    : const Text('Appliquer'),
-              ),
-            ],
-          ),
-          if (cartState.promoError != null) ...[
-            const SizedBox(height: AppDimens.space8),
-            Text(
-              cartState.promoError!,
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.error,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
         ],
       ),
     );

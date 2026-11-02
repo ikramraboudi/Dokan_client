@@ -238,10 +238,9 @@ Pour la soutenance, il est très valorisant d'expliquer au professeur les choix 
    - *État actuel* : Gérés en mémoire avec simulation de persistance locale.
    - *Pourquoi ce choix* : Isoler la logique UI des favoris avant d'implémenter la synchronisation multi-appareils.
    - *Évolution future* : Créer une sous-collection `users/{uid}/favorites/{productId}` avec écoute en temps réel.
-3. **Les Codes Promotionnels (`PromoRules`)** :
-   - *État actuel* : Registre centralisé dans `lib/data/models/promo_code.dart` (code canonique `Dokan10` offrant -10%).
-   - *Pourquoi ce choix* : Garantir une validation instantanée et sans faille sans dépendre d'un module d'administration encore en développement.
-   - *Évolution future* : Stocker les promotions dans une collection `promo_codes/{code}` avec dates d'expiration, quotas d'utilisation et montant minimum gérés par l'Admin.
+3. **Les Promotions et Remises** :
+   - *État actuel* : Gérées exclusivement par l'application Admin. Le Client ne saisit aucun code promo et écrit `promoCode: null` et `discount: 0` lors de la création de la commande.
+   - *Pourquoi ce choix* : Sécurité et centralisation métier : le client ne calcule ni ne valide de réduction arbitraire. Si l'Admin applique une remise sur une commande, l'application Client l'affiche fidèlement en lecture seule dans l'écran de détail de commande.
 4. **La Décrémentation du Stock** :
    - *État actuel* : Le client vérifie la disponibilité (`inStock`), mais ne modifie pas le champ `stock` du produit.
    - *Pourquoi ce choix* : **Règle de sécurité fondamentale** : un client ne doit jamais avoir le droit d'écrire directement dans la collection `products`.

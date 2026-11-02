@@ -160,9 +160,9 @@
 * **Réponse (30s)** : *« Notre `ProductGrid` utilise un `LayoutBuilder`. Si la largeur de l'écran est supérieure à 700 pixels (cas d'une tablette), il configure le `crossAxisCount` du `SliverGrid` à 3 colonnes. Sur un smartphone standard, il reste automatiquement à 2 colonnes. »*
 * **Emplacement** : `lib/core/ui/product_grid.dart` (lignes 75-95).
 
-#### Q27 : Comment fermez-vous le clavier après l'application du code promo ?
-* **Réponse (30s)** : *« Nous appelons `FocusScope.of(context).unfocus()`. Cela retire le focus actif de l'élément de saisie et replie immédiatement le clavier virtuel Android pour dégager la vue sur le nouveau montant total calculé. »*
-* **Emplacement** : `lib/feature/cart/cart_screen.dart` (ligne 135).
+#### Q27 : Comment fermez-vous le clavier virtuel lors d'une action utilisateur ?
+* **Réponse (30s)** : *« Nous appelons `FocusScope.of(context).unfocus()`. Cela retire le focus actif de l'élément de saisie et replie immédiatement le clavier virtuel Android pour dégager la vue sur l'interface. »*
+* **Emplacement** : Dans les formulaires et dialogues de saisie.
 
 ---
 
@@ -184,13 +184,13 @@
 * **Réponse (30s)** : *« Pour offrir une réactivité parfaite à 60 images par seconde : incrémenter ou décrémenter une quantité ne subit aucune latence réseau. Cela permet également aux simples visiteurs non connectés d'ajouter des articles avant même d'avoir créé un compte. »*
 * **Emplacement** : `lib/data/mock/mock_cart_repository.dart`.
 
-#### Q32 : Comment assurez-vous que le code promo accepte « Dokan10 », « dokan10 » et « Dokan10  » ?
-* **Réponse (30s)** : *« Dans `PromoRules.find()`, nous appliquons systématiquement `code.trim().toUpperCase()`. Que l'utilisateur tape en minuscules, majuscules ou avec des espaces parasites au début ou à la fin, la chaîne normalisée correspond toujours à la clé officielle `"DOKAN10"`. »*
-* **Emplacement** : `lib/data/models/promo_code.dart` (lignes 30-55).
+#### Q32 : Pourquoi les promotions ne sont-elles pas saisies dans l'application Client ?
+* **Réponse (30s)** : *« Les promotions sont gérées exclusivement par l'application Admin pour des raisons de sécurité métier : le Client n'écrit jamais de code promo (il écrit `promoCode: null` et `discount: 0`). Si l'Admin applique une remise sur une commande, le Client l'affiche fidèlement en lecture seule dans l'écran de suivi de commande. »*
+* **Emplacement** : `lib/data/repositories/firestore_orders_repository.dart` (lignes 130-170) et `lib/feature/orders/order_detail_screen.dart` (lignes 770-785).
 
-#### Q33 : Que se passe-t-il si un utilisateur vide son panier ou retire le code promo ?
-* **Réponse (30s)** : *« Si le panier devient vide ou si le client appuie sur le bouton "Retirer", `appliedPromoCode` repasse à `null` et `discountPercent` à `0.0`. Le total du panier est immédiatement recalculé comme étant la simple somme du sous-total brut et des frais de port. »*
-* **Emplacement** : `lib/data/mock/mock_cart_repository.dart` (méthodes `removePromoCode()` et `clearCart()`).
+#### Q33 : Comment le calcul des montants du panier fonctionne-t-il ?
+* **Réponse (30s)** : *« Le panier calcule le sous-total en faisant la somme de `unitPrice * quantity` pour chaque article. Les frais de livraison sont forfaitaires à 7 DT et deviennent automatiquement gratuits (0 DT) dès que le panier atteint 150 DT. Le total TTC est simplement la somme du sous-total et de la livraison. »*
+* **Emplacement** : `lib/data/mock/mock_cart_repository.dart` (`CartState.total` et `CartState.deliveryFee`).
 
 ---
 
@@ -219,4 +219,4 @@
 * **Emplacement** : `lib/main.dart` (ligne 35).
 
 #### Q40 : Quel a été votre plus grand défi technique sur ce projet ?
-* **Réponse (30s)** : *« Le plus grand défi a été de synchroniser le cycle de vie du flux de commande entre la gestion d'état locale Riverpod et le temps réel asynchrone de Firestore, tout en veillant à l'intégrité financière (relecture des prix, recalcul de la remise promo et écriture atomique) et à une ergonomie fluide sans blocage d'interface. »*
+* **Réponse (30s)** : *« Le plus grand défi a été de synchroniser le cycle de vie du flux de commande entre la gestion d'état locale Riverpod et le temps réel asynchrone de Firestore, tout en veillant à l'intégrité financière (relecture des prix, calcul exact de la livraison et écriture atomique WriteBatch) et à une ergonomie fluide sans blocage d'interface. »*

@@ -23,7 +23,7 @@ Le développement a été réalisé de manière incrémentale selon 5 étapes pr
 * **Étape 2 — Accueil, Catégories et Cartes Produits** : Écran d'accueil dynamique avec bannières dégradées peintes en code, carrousels de catégories et de sélections produits, grille responsive et pagination simulée au défilement.
 * **Étape 3 — Recherche, Filtres, Tri et Fiche Produit** : Moteur de recherche avec temporisation (*debounce* de 400 ms), panneau modal de tri, panneau modal de filtres multicritères (fourchette de prix, catégories, disponibilité en stock), et fiche produit détaillée (galerie d'images, variantes, quantités, disponibilité).
 * **Étape 4 — Gestion des états Visiteur / Client & Authentification** : Écrans de connexion, inscription et mot de passe oublié. Mécanisme de protection d'accès avec boîte de dialogue contextuelle et reprise automatique de l'action souhaitée (*Pending Action*).
-* **Étape 5 — Favoris Client & Panier Réactif** : Liste réactive des favoris synchronisée en temps réel, panier d'achat complet avec sélecteur de quantités, calcul dynamique des totaux, application de code promotionnel (`Dokan10`), suppression avec option d'annulation (*Undo*), et transition protégée vers la commande.
+* **Étape 5 — Favoris Client & Panier Réactif** : Liste réactive des favoris synchronisée en temps réel, panier d'achat complet avec sélecteur de quantités, calcul dynamique des totaux, suppression avec option d'annulation (*Undo*), et transition protégée vers la commande.
 
 ### Ce qui est volontairement HORS PÉRIMÈTRE (étapes futures) :
 Conformément au cahier des charges, les éléments suivants ne sont pas implémentés et affichent un message informatif (*SnackBar* : « *Cette fonctionnalité sera disponible prochainement.* ») :
@@ -125,7 +125,6 @@ Utilisateur clique sur "Ajouter au panier"
    - S'il n'existe pas : il crée une nouvelle instance de CartItemUiModel.
    - Il recalcule immédiatement :
      * Le sous-total (subtotal)
-     * La remise du code promo éventuel (discountAmount)
      * Les frais de port (deliveryFee)
      * Le total général (total)
    - Il produit une nouvelle copie de l'état : state = state.copyWith(items: ...);

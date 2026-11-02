@@ -1,20 +1,19 @@
 /// ============================================================================
-/// RÔLE DU FICHIER : Bloc récapitulatif financier présentant sous-total, remise promo (négative en vert), frais de livraison et total TTC.
+/// RÔLE DU FICHIER : Bloc récapitulatif financier présentant sous-total, frais de livraison et total TTC.
 /// INTERAGIT AVEC : CartScreen, CheckoutScreen.
 /// POUR L'ORAL : « PriceSummary garantit un calcul financier rigoureux et cohérent entre le panier et le passage de commande. »
 /// ============================================================================
 /// ============================================================================
 /// RÔLE DU FICHIER :
 /// Encadré de synthèse financière de la commande (`PriceSummary`).
-/// Affiche la ventilation complète des coûts du panier : sous-total brut,
-/// remise promotionnelle déduite (en vert si code appliqué), frais de livraison
+/// Affiche la ventilation des coûts du panier : sous-total brut, frais de livraison
 /// estimés (ou "Gratuite" dès le seuil atteint), et le total général TTC.
 ///
 /// COUCHE DANS L'ARCHITECTURE :
 /// Couche `core/ui/` (Composant Récapitulatif Financier).
 ///
 /// RELATIONS ET DÉPENDANCES :
-/// - Utilisé par : `lib/feature/cart/cart_screen.dart` au bas de la liste d'articles.
+/// - Utilisé par : `lib/feature/cart/cart_screen.dart` et `lib/feature/checkout/checkout_screen.dart`.
 /// - Dépend de :
 ///   * `core/config/app_config.dart` pour le formatage monétaire `formatPrice()`.
 ///   * `core/theme/app_colors.dart` et `core/theme/app_dimens.dart`.
@@ -31,12 +30,6 @@ class PriceSummary extends StatelessWidget {
   /// Montant brut de l'ensemble des articles.
   final double subtotal;
 
-  /// Montant de la réduction accordée par le code promo (0.0 si aucun).
-  final double discountAmount;
-
-  /// Libellé du code promo actuellement appliqué (ex: 'Dokan10').
-  final String? promoCode;
-
   /// Frais d'expédition (0.0 si livraison offerte).
   final double deliveryFee;
 
@@ -46,8 +39,6 @@ class PriceSummary extends StatelessWidget {
   const PriceSummary({
     super.key,
     required this.subtotal,
-    required this.discountAmount,
-    this.promoCode,
     required this.deliveryFee,
     required this.total,
   });
@@ -80,17 +71,7 @@ class PriceSummary extends StatelessWidget {
           ),
           const SizedBox(height: AppDimens.space8),
 
-          // Ligne 2 : Remise promotionnelle conditionnelle
-          if (discountAmount > 0) ...[
-            _buildRow(
-              label: promoCode != null ? 'Remise ($promoCode)' : 'Remise',
-              value: '- ${AppConfig.formatPrice(discountAmount)}',
-              valueColor: AppColors.success,
-            ),
-            const SizedBox(height: AppDimens.space8),
-          ],
-
-          // Ligne 3 : Frais de port estimés
+          // Ligne 2 : Frais de port estimés
           _buildRow(
             label: 'Livraison estimée',
             value: deliveryFee == 0 ? 'Gratuite' : AppConfig.formatPrice(deliveryFee),
@@ -102,7 +83,7 @@ class PriceSummary extends StatelessWidget {
             height: AppDimens.space24,
           ),
 
-          // Ligne 4 : Total TTC mis en valeur
+          // Ligne 3 : Total TTC mis en valeur
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

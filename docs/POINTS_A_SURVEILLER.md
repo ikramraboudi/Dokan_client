@@ -14,7 +14,7 @@
 | **3** | Persistance des données | `lib/data/mock/mock_cart_repository.dart` et `mock_favorites_repository.dart` | Panier et favoris conservés en mémoire vive uniquement | Perte du panier si l'application est tuée par le système Android | Migrer vers des sous-collections Firestore (`users/{uid}/cart`) |
 | **4** | Gestion des stocks | `lib/data/repositories/firestore_orders_repository.dart` (ligne 172) | Stock non décrémenté lors de la commande | Risque de survente (« overselling ») si 2 clients commandent en même temps | Implémenter une Cloud Function Firebase `onOrderCreated` |
 | **5** | Numérotation commandes | `lib/data/models/order_model.dart` (`generateDisplayNumber`) | Numéro `DK-AAMMJJ-XXXX` généré aléatoirement côté client | Risque théorique de collision à très fort volume | Générer un numéro séquentiel via transaction ou Cloud Function |
-| **6** | Codes promotionnels | `lib/data/models/promo_code.dart` (`PromoRules`) | Liste des codes promo codée en dur dans l'application (`Dokan10`) | L'administrateur ne peut pas créer de code promo sans recompiler l'app | Créer une collection Firestore `promo_codes/{code}` |
+| **6** | Gestion des promotions | `lib/data/repositories/firestore_orders_repository.dart` | Les promotions sont gérées exclusivement par l'app Admin | Le Client écrit `promoCode: null` et `discount: 0` ; les remises sont appliquées par l'Admin | Développer l'interface de gestion des promotions dans l'application Admin |
 | **7** | Convention Dart | `pubspec.yaml` (ligne 1 : `name: Dokan_client`) | Présence d'une lettre majuscule dans le nom de package Dart | Avertissement d'information (info) dans le rapport `flutter analyze` | Renommer le package en `dokan_client` en minuscules |
 
 ---
@@ -94,12 +94,12 @@
 
 ---
 
-### 6. Codes Promotionnels Gérés dans le Code Source Client
+### 6. Gestion Centralisée des Promotions par l'Application Admin
 
-* **Fichier** : `lib/data/models/promo_code.dart` (`PromoRules`).
-* **Description** : Le code promo `Dokan10` (-10%) est enregistré dans une classe Dart locale annotée d'un commentaire : `// TODO Firebase : les codes promo seront gérés par l'Admin dans Firestore`.
-* **Risque** : L'équipe marketing ou l'administrateur ne peut pas lancer une nouvelle opération promotionnelle temporaire (ex: soldes d'été, réduction de bienvenue) sans demander une recompilation et une mise à jour complète de l'application sur le Play Store.
-* **Correction suggérée** : Déplacer les règles promotionnelles dans une collection Firestore `promo_codes/{codeId}` contenant : `code`, `discountPercent`, `startDate`, `endDate`, `minSubtotal`, `maxUsageCount` et `currentUsageCount`.
+* **Fichier** : `lib/data/repositories/firestore_orders_repository.dart` et `lib/data/models/order_model.dart`.
+* **Description** : L'application Client Dokan ne propose pas de champ de saisie de code promo : la commande est créée avec `promoCode: null` et `discount: 0`. Les promotions sont appliquées directement par l'application Admin. Le modèle de données conserve les champs `promoCode` et `discount` pour permettre au Client d'afficher la remise en lecture seule si l'Admin en accorde une.
+* **Avantage** : Sécurité et intégrité commerciale : aucun client ne peut manipuler ou forcer l'application d'une réduction côté client.
+* **Évolution prévue** : Développer l'interface d'application de remise dans l'application Admin partenaire.
 
 ---
 

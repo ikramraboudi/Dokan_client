@@ -186,8 +186,13 @@ class OrderUiModel {
   final List<OrderItemUiModel> items;
   final int itemCount;
   final double subtotal;
+
+  /// Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo.
   final double discount;
+
+  /// Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo.
   final String? promoCode;
+
   final double deliveryFee;
   final double total;
   final String currency;

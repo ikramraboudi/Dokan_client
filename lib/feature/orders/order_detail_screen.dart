@@ -771,6 +771,8 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ),
           const Divider(height: AppDimens.space20),
           _buildAmountRow('Sous-total', '${order.subtotal.toStringAsFixed(3)} DT'),
+          // Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo.
+          // On affiche la ligne de remise uniquement si une promotion a été appliquée par l'Admin.
           if (order.discount > 0) ...[
             const SizedBox(height: AppDimens.space6),
             _buildAmountRow(

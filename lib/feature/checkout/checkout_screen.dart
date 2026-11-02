@@ -226,8 +226,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             // ── 5. RÉSUMÉ DU PRIX ───────────────────────────────────────────
             PriceSummary(
               subtotal: cart.subtotal,
-              discountAmount: cart.discountAmount,
-              promoCode: cart.appliedPromoCode,
               deliveryFee: cart.deliveryFee,
               total: cart.total,
             ),
@@ -711,8 +709,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         customerPhone: _selectedAddress!.phone,
         cartItems: cart.items,
         deliveryAddress: addressSnapshot,
-        promoCode: cart.appliedPromoCode,
-        discountPercent: cart.discountPercent,
         deliveryFee: cart.deliveryFee,
       );
 

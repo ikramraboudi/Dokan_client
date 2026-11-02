@@ -135,7 +135,7 @@ void loginSuccess(UserSummary user) {
   1. *Articles commandés* : liste compacte des produits du panier avec miniatures, quantités et prix.
   2. *Adresse de livraison* : carte avec le nom du destinataire, la ville, le numéro de téléphone et un bouton « Modifier ».
   3. *Mode de livraison & Paiement* : Livraison standard (7.000 DT ou offerte) et Paiement en espèces à la livraison (« Cash on delivery »).
-  4. *Récapitulatif financier* : sous-total, remise éventuelle (code promo), frais de livraison et total à payer.
+  4. *Récapitulatif financier* : sous-total, frais de livraison et total à payer.
 * **Ce qui se passe dans le code** : Le widget `CheckoutScreen` (ConsumerStatefulWidget) observe `cartProvider` pour afficher les articles et les montants, et `addressesStreamProvider` pour récupérer les adresses enregistrées.
 * **Où c'est dans le code** : `lib/feature/checkout/checkout_screen.dart` (lignes 35-250).
 * **Extrait de code réel** :
@@ -227,7 +227,7 @@ Future<void> _confirmAndSubmitOrder(BuildContext context) async {
 * **Ce que voit l'utilisateur** : Le sablier tourne brièvement (quelques centaines de millisecondes) pendant que l'application dialogue de manière sécurisée avec Firestore.
 * **Ce qui se passe dans le code** :
   1. *Relecture impérative des produits* : Pour chaque produit du panier, l'application exécute un `_productsRef.doc(productId).get()`. Si un produit a été supprimé ou marqué `outOfStock` par l'Admin, l'opération s'interrompt avec une `ProductUnavailableException`.
-  2. *Recalcul des prix* : Le sous-total est calculé à partir du `price` officiel stocké dans Firestore (et non du panier local). La remise promo (`discountPercent`) est appliquée sur ce sous-total relu.
+  2. *Recalcul des prix* : Le sous-total est calculé à partir du `price` officiel stocké dans Firestore (et non du panier local) + frais de livraison. Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo (écrit `0` en remise et `null` en code promo).
   3. *Génération du numéro lisible* : `OrderUiModel.generateDisplayNumber()` produit un identifiant convivial du type `DK-261101-7F3K`.
   4. *Écriture par lot atomique* : Un `WriteBatch` Firestore écrit le document complet dans `orders/{orderId}` avec `FieldValue.serverTimestamp()` pour `createdAt` et `updatedAt`.
 * **Où c'est dans le code** : `lib/data/repositories/firestore_orders_repository.dart` → méthode `createOrder()` (≈ lignes 58-177).
@@ -272,7 +272,7 @@ if (mounted) {
 }
 ```
 * **Explication ligne par ligne** :
-  - Ligne 2 : Appel au notifier du panier pour réinitialiser les articles et la remise.
+  - Ligne 2 : Appel au notifier du panier pour réinitialiser les articles (`clearCart()`).
   - Lignes 4-6 : Vérification que le widget est toujours monté dans l'arborescence Flutter avant de rediriger vers l'écran de confirmation avec l'identifiant Firestore `createdOrder.id`.
 * **Pourquoi ce choix technique** : Si la commande échoue (ex: perte subite de 4G), l'utilisateur n'a pas à recomposer son panier de zéro.
 
@@ -468,8 +468,8 @@ await _firestore.runTransaction((transaction) async {
 | `items` | `array<map>` | Client | Copie figée (snapshot) des articles achetés |
 | `itemCount` | `number` | Client | Somme cumulée des quantités physiques d'articles |
 | `subtotal` | `number` | Client | Montant brut recalculé depuis les prix de Firestore |
-| `discount` | `number` | Client | Montant déduit via le code promo (ex: 8.990) |
-| `promoCode` | `string` \| `null` | Client | Code promo utilisé (ex: `"Dokan10"`) |
+| `discount` | `number` | Admin (Client écrit 0) | Montant déduit via une promotion gérée par l'Admin (le Client écrit toujours 0) |
+| `promoCode` | `string` \| `null` | Admin (Client écrit null) | Code promo éventuel renseigné par l'Admin (le Client écrit toujours `null`) |
 | `deliveryFee` | `number` | Client | Frais d'expédition (ex: 7.000 ou 0.000) |
 | `total` | `number` | Client | Total TTC final payable à la livraison |
 | `currency` | `string` | Client | Devise (`"TND"` pour Dinar Tunisien) |
@@ -518,10 +518,10 @@ await _firestore.runTransaction((transaction) async {
   ],
   "itemCount": 1,
   "subtotal": 89.900,
-  "discount": 8.990,
-  "promoCode": "Dokan10",
+  "discount": 0,
+  "promoCode": null,
   "deliveryFee": 7.000,
-  "total": 87.910,
+  "total": 96.900,
   "currency": "TND",
   "deliveryAddress": {
     "recipientName": "Mohamed Ben Salah",

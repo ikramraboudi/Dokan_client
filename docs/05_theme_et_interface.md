@@ -72,7 +72,7 @@ Ces composants sont des briques élémentaires réutilisables créées pour évi
 * **Rôle** : Synthèse financière du panier d'achat.
 * **Lignes calculées** :
   * Sous-total des articles.
-  * Ligne verte dédiée à la remise si un code promotionnel est validé.
+  * Ligne verte dédiée à la remise si une réduction a été appliquée par l'Admin.
   * Frais de livraison (offerts à partir d'un seuil ou forfaitaires à 7,000 DT).
   * Montant total TTC mis en valeur en couleur primaire et typographie grasse.
 

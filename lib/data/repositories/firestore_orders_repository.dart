@@ -66,8 +66,6 @@ class FirestoreOrdersRepository implements OrdersRepository {
     required String customerPhone,
     required List<CartItemUiModel> cartItems,
     required OrderDeliveryAddress deliveryAddress,
-    required String? promoCode,
-    required double discountPercent,
     required double deliveryFee,
   }) async {
     if (cartItems.isEmpty) {
@@ -127,10 +125,11 @@ class FirestoreOrdersRepository implements OrdersRepository {
 
     // ────────────────────────────────────────────────────────────────────────
     // ÉTAPE 2 : CALCUL DES MONTANTS FINANCIERS DÉFINITIFS
+    // Total = sous-total des articles vérifiés + frais de livraison.
+    // Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo.
     // ────────────────────────────────────────────────────────────────────────
-    final discountAmount = calculatedSubtotal * (discountPercent / 100.0);
     final calculatedTotal =
-        (calculatedSubtotal - discountAmount + deliveryFee).clamp(0.0, double.infinity);
+        (calculatedSubtotal + deliveryFee).clamp(0.0, double.infinity);
 
     final displayNumber = OrderUiModel.generateDisplayNumber();
 
@@ -157,8 +156,9 @@ class FirestoreOrdersRepository implements OrdersRepository {
       'items': verifiedItems.map((i) => i.toMap()).toList(),
       'itemCount': verifiedItems.fold<int>(0, (acc, i) => acc + i.quantity),
       'subtotal': calculatedSubtotal,
-      'discount': discountAmount,
-      'promoCode': promoCode,
+      // Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo.
+      'discount': 0,
+      'promoCode': null,
       'deliveryFee': deliveryFee,
       'total': calculatedTotal,
       'currency': 'TND',
@@ -191,8 +191,8 @@ class FirestoreOrdersRepository implements OrdersRepository {
       items: verifiedItems,
       itemCount: verifiedItems.fold<int>(0, (acc, i) => acc + i.quantity),
       subtotal: calculatedSubtotal,
-      discount: discountAmount,
-      promoCode: promoCode,
+      discount: 0.0,
+      promoCode: null,
       deliveryFee: deliveryFee,
       total: calculatedTotal,
       currency: 'TND',

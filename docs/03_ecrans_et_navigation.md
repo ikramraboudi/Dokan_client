@@ -128,7 +128,7 @@ L'une des exigences fondamentales de Dokan est que l'interface s'adapte en temps
 * **Affichage** :
   * Liste des articles avec miniature, nom, variante choisie, prix unitaire, contrôle de quantité et bouton de suppression.
   * Option de suppression sécurisée avec possibilité d'annulation (*Undo*) : un SnackBar s'affiche pendant 4 secondes avec un bouton « Annuler » qui réinsère l'article exactement à son index d'origine.
-  * Champ d'application de code promo avec validation (ex: `Dokan10` accorde 10 % de réduction).
+  * Récapitulatif financier PriceSummary (sous-total, livraison estimée, total TTC).
   * Récapitulatif financier complet (`PriceSummary`).
   * Barre inférieure fixe avec le montant total à régler et le bouton « Continuer la commande ».
 
@@ -139,7 +139,8 @@ L'une des exigences fondamentales de Dokan est que l'interface s'adapte en temps
   * Avatar avec initiales du client et coordonnées (nom complet, email).
   * Liens vers les rubriques hors périmètre (commandes, adresses, paramètres) qui affichent le SnackBar officiel.
   * Outil de test pédagogique « Simuler session expirée » pour vérifier le bon comportement de l'app si le jeton expire sans perdre le contenu de son panier.
-  * Bouton de déconnexion ouvrant une boîte de dialogue de confirmation.### 1. SplashScreen (/splash)
+  * Bouton de déconnexion ouvrant une boîte de dialogue de confirmation.
+### 1. SplashScreen (/splash)
 * **Route** : /splash (route initiale au démarrage).
 * **Affichage & Scénario d'animation** :
   - Dégradé vertical doux (AppColors.primaryDark -> AppColors.primary -> AppColors.primaryLight) avec cercles translucides (blobs) organiques dérivant en continu.

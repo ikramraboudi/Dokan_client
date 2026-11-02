@@ -63,7 +63,7 @@ class AppColors {
   static const Color textOnDark    = Color(0xFFFFFFFF); // Texte contrasté sur fond sombre ou coloré
 
   // --- États et retours visuels (Succès, Avertissement, Erreur) ---
-  static const Color success       = Color(0xFF2E9E6B); // Validation, code promo appliqué, en stock
+  static const Color success       = Color(0xFF2E9E6B); // Validation, confirmation, en stock
   static const Color successSoft   = Color(0xFFE2F4EB); // Fond teinté du message de succès
   static const Color warning       = Color(0xFFE0A030); // Stock limité, alerte non bloquante
   static const Color error         = Color(0xFFD64545); // Erreurs de formulaire, rupture de stock, échec

@@ -41,7 +41,7 @@ lib/
 ├── data/
 │   ├── mock/
 │   │   ├── mock_auth_repository.dart        <- Simulation de connexion/inscription avec latence
-│   │   ├── mock_cart_repository.dart        <- Gestionnaire en mémoire du panier & code promo
+│   │   ├── mock_cart_repository.dart        <- Gestionnaire en mémoire du panier & totaux réactifs
 │   │   ├── mock_catalog_repository.dart     <- 7 catégories et ~35 produits simulés avec filtres
 │   │   └── mock_favorites_repository.dart   <- Gestionnaire en mémoire de la liste de favoris
 │   ├── models/
@@ -212,7 +212,7 @@ lib/
 * **Rôle** : Dialogue modale de filtrage avec `RangeSlider` pour le prix (0 à 300 DT), choix de catégorie via `ChoiceChip` et interrupteur « En stock uniquement ».
 
 #### `lib/core/ui/price_summary.dart`
-* **Rôle** : Encadré récapitulatif calculant le sous-total, la déduction d'un code promo, les frais de livraison et le total final.
+* **Rôle** : Encadré récapitulatif calculant le sous-total, les frais de livraison et le total final TTC.
 
 #### `lib/core/ui/auth_required_dialog.dart`
 * **Rôle** : Boîte de dialogue non cumulable informant un visiteur qu'une action nécessite un compte, avec enregistrement de l'action en attente et redirection vers la connexion ou l'inscription.
@@ -250,7 +250,7 @@ lib/
 * **Rôle** : `FavoritesNotifier` gère la liste réactive des favoris avec notification en temps réel de tous les écrans qui l'écoutent.
 
 #### `lib/data/mock/mock_cart_repository.dart`
-* **Rôle** : `CartNotifier` gère les ajouts, modifications de quantité, application du code promo `Dokan10` (-10 %) et restauration d'un article supprimé (*Undo*).
+* **Rôle** : `CartNotifier` gère les ajouts, modifications de quantité, calcul réactif des totaux et restauration d'un article supprimé (*Undo*).
 
 ---
 
@@ -266,7 +266,7 @@ lib/
 * `lib/feature/auth/register_screen.dart` : Écran d'inscription avec case à cocher des conditions générales d'utilisation.
 * `lib/feature/auth/forgot_password_screen.dart` : Demande d'e-mail de réinitialisation avec bascule vers un écran de confirmation bienveillant.
 * `lib/feature/favorites/favorites_screen.dart` : Écran alternatif affichant une invite de connexion pour le visiteur ou la grille dynamique pour le client connecté.
-* `lib/feature/cart/cart_screen.dart` : Gestion du panier d'achat, saisie du code promo, récapitulatif chiffré et bouton de passage de commande conditionné au statut de connexion.
+* `lib/feature/cart/cart_screen.dart` : Gestion du panier d'achat, modification des quantités, récapitulatif chiffré et bouton de passage de commande conditionné au statut de connexion.
 * `lib/feature/profile/profile_screen.dart` : Écran de bienvenue avec boutons de connexion pour le visiteur, ou affichage du profil, simulateur d'expiration de session et déconnexion sécurisée pour le client.
 
 ---

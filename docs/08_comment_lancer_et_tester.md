@@ -53,7 +53,7 @@ Pour faire une démonstration fluide devant un enseignant ou un jury, mémorisez
 | :--- | :--- | :--- |
 | **Compte Démo Valide** | `demo@Dokan.com` / `Demo1234` | Connexion instantanée avec le profil client "Amine Ben Salem". |
 | **Compte Test d'Échec** | `fail@Dokan.com` / n'importe quel mot de passe | Affichage d'un message d'erreur d'identifiants incorrects. |
-| **Code Promotionnel Panier** | `Dokan10` | Applique immédiatement **10 % de réduction** sur le montant du panier. |
+| **Promotions Panier** | Gérées par l'Admin | Le Client n'écrit pas de code promo (total = sous-total + port). |
 | **Test d'Erreur Réseau** | Taper `#error` dans la recherche | Déclenche l'écran d'erreur avec bouton « Réessayer ». |
 | **Test de Recherche Vide** | Taper `#empty` dans la recherche | Déclenche l'écran « Aucun résultat trouvé ». |
 | **Boutons hors périmètre** | Tout bouton de commande finale, avis, profil | Déclenche le SnackBar officiel : *« Cette fonctionnalité sera disponible prochainement. »* |
@@ -96,7 +96,7 @@ Pour faire une démonstration fluide devant un enseignant ou un jury, mémorisez
    * Aller dans l'onglet Panier.
    * Vérifier que l'article ajouté en mode visiteur est toujours présent !
    * Augmenter sa quantité de 1 à 2 : observer le recalcul immédiat du sous-total et du total.
-   * Saisir le code promo `Dokan10` et cliquer sur « Appliquer » : observer l'apparition de la ligne de remise verte et la baisse du total TTC.
+   * Vérifier le total du panier : sous-total + frais de port (7 DT, ou 0 DT dès 150 DT).
    * Faire glisser l'article vers la gauche ou cliquer sur la corbeille pour le supprimer : un SnackBar avec bouton « Annuler » apparaît. Cliquer sur « Annuler » : l'article réapparaît instantanément à sa place.
    * Cliquer sur « Continuer la commande » : le SnackBar *« Cette fonctionnalité sera disponible prochainement »* s'affiche sans planter.
 4. **Profil Client** :

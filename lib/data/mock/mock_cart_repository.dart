@@ -1,7 +1,7 @@
 /// ============================================================================
-/// RÔLE DU FICHIER : Gestionnaire de panier en mémoire (CartNotifier Riverpod) avec recalcul automatique des totaux et application du code promo.
+/// RÔLE DU FICHIER : Gestionnaire de panier en mémoire (CartNotifier Riverpod) avec recalcul automatique des totaux.
 /// INTERAGIT AVEC : cartProvider, CartScreen, CheckoutScreen, PriceSummary.
-/// POUR L'ORAL : « Le CartNotifier gère l'état du panier en mémoire à 60 FPS et recalcule la remise et le total à chaque modification. »
+/// POUR L'ORAL : « Le CartNotifier gère l'état du panier en mémoire à 60 FPS et recalcule le total à chaque modification. »
 /// ============================================================================
 /// ============================================================================
 /// RÔLE DU FICHIER :
@@ -10,11 +10,10 @@
 ///
 /// COMPORTEMENTS MÉTIER CLÉS :
 /// 1) Maintient le panier d'achat en mémoire vive sans perte lors de la connexion.
-/// 2) Calcule en continu le sous-total brut, les remises de code promo et la livraison.
-/// 3) Code promo de démonstration : `Dokan10` (déduit -10% sur le sous-total).
-/// 4) Frais de livraison forfaitaires de 7 DT, offerts dès 150 DT de commande.
-/// 5) Mécanisme d'annulation (*Undo*) lors de la suppression d'une ligne d'article.
-/// 6) Synchronisation automatique du badge numérique dans la barre d'onglets.
+/// 2) Calcule en continu le sous-total brut et la livraison.
+/// 3) Frais de livraison forfaitaires de 7 DT, offerts dès 150 DT de commande.
+/// 4) Mécanisme d'annulation (*Undo*) lors de la suppression d'une ligne d'article.
+/// 5) Synchronisation automatique du badge numérique dans la barre d'onglets.
 ///
 /// COUCHE DANS L'ARCHITECTURE :
 /// Couche `data/mock/` (Source de Données Panier & Notifier).
@@ -25,14 +24,13 @@
 /// - Dépend de : `data/repositories/cart_repository.dart` et `data/models/cart_item_ui_model.dart`.
 /// ============================================================================
 // DONNÉES FICTIVES
-// TODO Firebase : à migrer (panier persistant Firestore et codes promos dynamiques)
+// TODO Firebase : à migrer (panier persistant Firestore)
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/navigation/main_shell.dart';
 import '../models/cart_item_ui_model.dart';
 import '../models/product_ui_model.dart';
-import '../models/promo_code.dart';
 import '../repositories/cart_repository.dart';
 
 /// ÉTAT IMMUABLE DU PANIER (CartState)
@@ -40,24 +38,8 @@ class CartState {
   /// Liste des articles présents dans le panier.
   final List<CartItemUiModel> items;
 
-  /// Code promotionnel actuellement actif (ex: 'Dokan10').
-  final String? appliedPromoCode;
-
-  /// Pourcentage de réduction appliqué (ex: 10.0 pour -10%).
-  final double discountPercent;
-
-  /// Indique si la vérification du code promo est en cours.
-  final bool isApplyingPromo;
-
-  /// Message d'erreur éventuel lié à la saisie du code promo.
-  final String? promoError;
-
   const CartState({
     this.items = const [],
-    this.appliedPromoCode,
-    this.discountPercent = 0.0,
-    this.isApplyingPromo = false,
-    this.promoError,
   });
 
   /// Indique si le panier ne contient aucun article.
@@ -72,9 +54,6 @@ class CartState {
   /// Sous-total financier brut avant réductions.
   double get subtotal => items.fold(0.0, (sum, i) => sum + i.lineTotal);
 
-  /// Montant déduit grâce au code promo.
-  double get discountAmount => subtotal * (discountPercent / 100.0);
-
   /// Frais de port : 7,000 DT, ou Gratuits (0 DT) dès 150 DT de commande.
   double get deliveryFee {
     if (subtotal == 0) return 0.0;
@@ -82,27 +61,18 @@ class CartState {
     return 7.000;
   }
 
-  /// Montant total final TTC à régler.
+  /// Montant total final TTC à régler (sous-total + frais de livraison).
   double get total {
     if (subtotal == 0) return 0.0;
-    final discounted = subtotal - discountAmount;
-    return (discounted + deliveryFee).clamp(0.0, double.infinity);
+    return (subtotal + deliveryFee).clamp(0.0, double.infinity);
   }
 
   /// Copie immuable avec substitution ciblée.
   CartState copyWith({
     List<CartItemUiModel>? items,
-    String? Function()? appliedPromoCode,
-    double? discountPercent,
-    bool? isApplyingPromo,
-    String? Function()? promoError,
   }) {
     return CartState(
       items: items ?? this.items,
-      appliedPromoCode: appliedPromoCode != null ? appliedPromoCode() : this.appliedPromoCode,
-      discountPercent: discountPercent ?? this.discountPercent,
-      isApplyingPromo: isApplyingPromo ?? this.isApplyingPromo,
-      promoError: promoError != null ? promoError() : this.promoError,
     );
   }
 }
@@ -225,24 +195,13 @@ class CartNotifier extends StateNotifier<CartState> {
   }
 
   /// Retire un article du panier et le renvoie pour alimenter l'action d'annulation (Undo).
-  /// Si le panier devient vide suite à cette suppression, le code promo est retiré automatiquement.
   CartItemUiModel? removeItem(String itemId) {
     final currentItems = List<CartItemUiModel>.from(state.items);
     final index = currentItems.indexWhere((i) => i.id == itemId);
 
     if (index >= 0) {
       final removed = currentItems.removeAt(index);
-      if (currentItems.isEmpty) {
-        // Le panier devient vide : retrait automatique du code promo
-        state = state.copyWith(
-          items: currentItems,
-          appliedPromoCode: () => null,
-          discountPercent: 0.0,
-          promoError: () => null,
-        );
-      } else {
-        state = state.copyWith(items: currentItems);
-      }
+      state = state.copyWith(items: currentItems);
       _updateBadge();
       _repo.removeItem(itemId);
       return removed;
@@ -263,58 +222,7 @@ class CartNotifier extends StateNotifier<CartState> {
     _repo.addItem(item);
   }
 
-  /// SCÉNARIO MÉTIER : APPLICATION D'UN CODE PROMOTIONNEL
-  /// Étape 1 : Nettoyage et vérification de la présence d'un texte.
-  /// Étape 2 : Si vide -> message d'erreur « Saisissez un code promo. ».
-  /// Étape 3 : Normalisation et recherche insensible à la casse dans PromoRules.
-  /// Étape 4 : Si trouvé -> application de la remise (-10%), mise à jour de l'état, retour true.
-  /// Étape 5 : Si non trouvé -> message d'erreur « Ce code promo n'existe pas. », retour false.
-  Future<bool> applyPromoCode(String code) async {
-    final trimmed = code.trim();
-    if (trimmed.isEmpty) {
-      state = state.copyWith(
-        isApplyingPromo: false,
-        promoError: () => 'Saisissez un code promo.',
-      );
-      return false;
-    }
-
-    state = state.copyWith(
-      isApplyingPromo: true,
-      promoError: () => null,
-    );
-
-    // Simulation de délai réseau (300 ms)
-    await Future.delayed(const Duration(milliseconds: 300));
-
-    final promo = PromoRules.find(trimmed);
-    if (promo != null) {
-      state = state.copyWith(
-        appliedPromoCode: () => promo.displayCode,
-        discountPercent: promo.discountValue,
-        isApplyingPromo: false,
-        promoError: () => null,
-      );
-      return true;
-    } else {
-      state = state.copyWith(
-        isApplyingPromo: false,
-        promoError: () => 'Ce code promo n\'existe pas.',
-      );
-      return false;
-    }
-  }
-
-  /// Supprime la remise promotionnelle en cours.
-  void removePromoCode() {
-    state = state.copyWith(
-      appliedPromoCode: () => null,
-      discountPercent: 0.0,
-      promoError: () => null,
-    );
-  }
-
-  /// Réinitialise l'ensemble du panier et retire tout code promotionnel.
+  /// Réinitialise l'ensemble du panier.
   Future<void> clearCart() async {
     state = const CartState();
     _updateBadge();

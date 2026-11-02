@@ -78,8 +78,7 @@
 | Élément à l'écran | Widget / technique Flutter utilisé | Fichier : classe / fonction (lignes approx.) | Pourquoi ce choix | Phrase simple pour l'expliquer au prof |
 |---|---|---|---|---|
 | **Suppression d'article avec geste de glissement** | `Dismissible` avec arrière-plan rouge et icône poubelle | `lib/feature/cart/cart_screen.dart` → `_buildCartItem()` (lignes 180-240) | Permet de supprimer rapidement un article par un glissement vers la gauche | « Le widget `Dismissible` permet la suppression gestuelle et déclenche un `SnackBar` avec bouton "Annuler" pour restaurer l'article en cas d'erreur. » |
-| **Section de saisie du Code Promo** | `Row` avec `TextField`, `ElevatedButton` et encart d'état | `lib/feature/cart/cart_screen.dart` → `_buildPromoSection()` (lignes 280-360) | Gère la validation insensible à la casse et affiche la confirmation verte avec bouton "Retirer" | « C'est un bloc interactif qui normalise le texte, vérifie la remise avec `PromoRules` et affiche un badge vert avec le montant économisé. » |
-| **Fermeture automatique du clavier** | `FocusScope.of(context).unfocus()` | `lib/feature/cart/cart_screen.dart` → méthode `_applyPromo()` (lignes 110-140) | Dégage la vue sur le récapitulatif dès que le code est validé | « Dès que l'utilisateur clique sur "Appliquer", nous appelons `unfocus()` pour replier le clavier virtuel. » |
+| **Récapitulatif financier réactif** | `PriceSummary` (`Container`, `Column`, `Row`, `Divider`) | `lib/core/ui/price_summary.dart` (lignes 30-140) | Calcule et affiche en direct le sous-total, les frais de livraison et le total TTC | « Le composant `PriceSummary` calcule les montants à partir de `cartState` et applique la gratuité de livraison dès 150 DT. » |
 
 ---
 

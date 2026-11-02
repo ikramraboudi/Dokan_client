@@ -241,18 +241,18 @@
 ---
 
 ### Fiche 11 : Écran Panier (`CartScreen`)
-* **Rôle de la page** : Gestion des articles sélectionnés, application de codes promotionnels et calcul des montants.
+* **Rôle de la page** : Gestion des articles sélectionnés, ajustement réactif des quantités et calcul des montants.
 * **Fichier** : `lib/feature/cart/cart_screen.dart` (`CartScreen`).
-* **Ce que l'utilisateur voit** : Liste des articles avec photo, nom, quantité modifiable (+/-), bouton poubelle ou geste de glissement (`Dismissible`), champ de code promo avec bouton « Appliquer », récapitulatif `PriceSummary` (Sous-total, Remise, Frais de port, Total), et bouton « Continuer la commande ».
-* **Ce qu'il peut faire** : Ajuster les quantités, supprimer un article (avec possibilité d'annulation via SnackBar), saisir « Dokan10 », valider la commande.
+* **Ce que l'utilisateur voit** : Liste des articles avec photo, nom, option choisie, prix, quantité modifiable (+/-), bouton poubelle, récapitulatif `PriceSummary` (Sous-total, Livraison estimée, Total TTC), et barre inférieure fixe avec bouton « Continuer la commande ».
+* **Ce qu'il peut faire** : Ajuster les quantités (1 à 10), supprimer un article (avec possibilité d'annulation immédiate via le SnackBar *Undo*), vider le panier en un clic, continuer vers la commande.
 * **Interactions et navigation** :
   - *Source* : Onglet 4 du `MainShell` (`/cart`).
-  - *Cibles* : `/checkout` (si client), `AuthRequiredDialog` (si visiteur).
-* **Données utilisées** : `cartProvider` (`CartNotifier`), `PromoRules.find()`.
-* **États gérés** : Panier vide (illustration sac vide et bouton vers accueil), code promo invalide/expiré/vide/succès.
-* **Fonctionnalité précise** : Cette page sert d'entonnoir d'achat (« checkout funnel ») pour préparer et vérifier la commande avant paiement.
-* **Question probable du prof** : *« Comment fonctionne l'application de votre code promo Dokan10 ? »*
-  - **Réponse simple** : *« Le code saisi est nettoyé des espaces avec `.trim()` et comparé sans tenir compte de la casse (`toUpperCase`). Le modèle `PromoRules` vérifie s'il existe et applique instantanément une remise de 10% sur le sous-total, recalculant le total en direct. »*
+  - *Cibles* : `/checkout` (si client connecté), `AuthRequiredDialog` (si visiteur).
+* **Données utilisées** : `cartProvider` (`CartNotifier`).
+* **États gérés** : Panier vide (`EmptyState` invitant à découvrir les produits), panier garni.
+* **Fonctionnalité précise** : Cette page sert d'entonnoir d'achat (« checkout funnel ») pour préparer et vérifier son panier avant de finaliser la commande.
+* **Question probable du prof** : *« Pourquoi n'y a-t-il pas de champ code promo dans l'application Client ? »*
+  - **Réponse simple** : *« Les promotions et remises sont gérées de manière centralisée par l'application Admin pour des raisons de sécurité métier. Le Client n'écrit jamais de code promo arbitraire (il écrit `promoCode: null` et `discount: 0`). Si l'Admin applique une remise sur une commande, le Client l'affiche fidèlement en lecture seule dans le suivi de commande. »*
 
 ---
 

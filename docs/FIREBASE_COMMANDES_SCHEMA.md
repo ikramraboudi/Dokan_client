@@ -24,8 +24,8 @@ Ce document constitue la **spécification d'interopérabilité officielle** part
 | `items` | `array<map>` | Oui | Client | Lignes d'articles commandés (voir schéma d'un item ci-dessous) |
 | `itemCount` | `number` | Oui | Client | Quantité physique totale d'articles (`sum(quantity)`) |
 | `subtotal` | `number` | Oui | Client | Montant brut hors réductions (en Dinars Tunisiens) |
-| `discount` | `number` | Oui | Client | Montant total déduit par code promo (0 si aucun) |
-| `promoCode` | `string` \| `null` | Non | Client | Code promo utilisé (ex: `"DOKAN10"` ou `null`) |
+| `discount` | `number` | Oui | Admin (Client écrit 0) | Montant total déduit par une promotion éventuelle. Les promotions sont gérées par l'app Admin ; le Client écrit toujours 0 |
+| `promoCode` | `string` \| `null` | Non | Admin (Client écrit null) | Code promo éventuel renseigné par l'Admin. Le Client n'écrit jamais de code promo (écrit `null`) |
 | `deliveryFee` | `number` | Oui | Client | Frais d'expédition (ex: 7.000 ou 0.000) |
 | `total` | `number` | Oui | Client | Montant final TTC à régler à la livraison |
 | `currency` | `string` | Oui | Client | Monnaie officielle (`"TND"`) |
@@ -141,10 +141,10 @@ Ce document constitue la **spécification d'interopérabilité officielle** part
   ],
   "itemCount": 1,
   "subtotal": 89.900,
-  "discount": 8.990,
-  "promoCode": "DOKAN10",
+  "discount": 0,
+  "promoCode": null,
   "deliveryFee": 7.000,
-  "total": 87.910,
+  "total": 96.900,
   "currency": "TND",
   "deliveryAddress": {
     "recipientName": "Mohamed Ben Salah",
