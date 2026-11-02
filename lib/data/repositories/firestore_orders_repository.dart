@@ -1,21 +1,7 @@
 /// ============================================================================
 /// RÔLE DU FICHIER : Repository Firestore gérant la création atomique (WriteBatch), la relecture des prix, l'écoute snapshots() et l'annulation en transaction.
-/// INTERAGIT AVEC : CheckoutScreen, MyOrdersScreen, OrderDetailScreen.
-/// POUR L'ORAL : « Ce repository est le cœur du flux de commande : il relit les prix dans Firestore, crée la commande avec WriteBatch et gère l'annulation en transaction. »
-/// ============================================================================
-/// ============================================================================
-/// RÔLE DU FICHIER :
-/// Implémentation Firestore concrète du repository des commandes Dokan.
-/// Gère la création atomique, la re-vérification des prix côté serveur,
-/// l'écoute en flux continu (Stream) et l'annulation sécurisée en transaction.
-///
-/// COUCHE DANS L'ARCHITECTURE :
-/// Couche data/repositories/ (Source de Données Distante / Firestore).
-///
-/// RELATIONS ET DÉPENDANCES :
-/// - Injecté par : `ordersRepositoryProvider` et `myOrdersStreamProvider`.
-/// - Dépend de : cloud_firestore, flutter_riverpod, order_model.dart,
-///   order_status.dart, cart_item_ui_model.dart, orders_repository.dart.
+/// INTERAGIT AVEC : CheckoutScreen, MyOrdersScreen, OrderDetailScreen, coupons.
+/// POUR L'ORAL : « Ce repository est le cœur du flux de commande : il relit les prix dans Firestore, applique les coupons de manière atomique avec WriteBatch et gère l'annulation en transaction. »
 /// ============================================================================
 library;
 
@@ -67,6 +53,8 @@ class FirestoreOrdersRepository implements OrdersRepository {
     required List<CartItemUiModel> cartItems,
     required OrderDeliveryAddress deliveryAddress,
     required double deliveryFee,
+    String? promoCode,
+    double discountAmount = 0.0,
   }) async {
     if (cartItems.isEmpty) {
       throw ArgumentError('Le panier ne peut pas être vide.');
@@ -125,17 +113,18 @@ class FirestoreOrdersRepository implements OrdersRepository {
 
     // ────────────────────────────────────────────────────────────────────────
     // ÉTAPE 2 : CALCUL DES MONTANTS FINANCIERS DÉFINITIFS
-    // Total = sous-total des articles vérifiés + frais de livraison.
-    // Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo.
+    // Total = sous-total des articles vérifiés - réduction coupon + frais de livraison.
     // ────────────────────────────────────────────────────────────────────────
+    final cleanPromo = (promoCode != null && promoCode.trim().isNotEmpty)
+        ? promoCode.trim().toUpperCase()
+        : null;
+    final effectiveDiscount = cleanPromo != null ? discountAmount : 0.0;
+
     final calculatedTotal =
-        (calculatedSubtotal + deliveryFee).clamp(0.0, double.infinity);
+        (calculatedSubtotal - effectiveDiscount + deliveryFee).clamp(0.0, double.infinity);
 
     final displayNumber = OrderUiModel.generateDisplayNumber();
 
-    // NOTE TECHNIQUE : FieldValue.serverTimestamp() n'est pas autorisé dans
-    // un élément de tableau (array) Firestore. On utilise Timestamp.now()
-    // pour la première entrée de statusHistory, et serverTimestamp() pour createdAt.
     final initialHistory = [
       StatusHistoryEntry(
         status: OrderStatus.pending,
@@ -156,9 +145,8 @@ class FirestoreOrdersRepository implements OrdersRepository {
       'items': verifiedItems.map((i) => i.toMap()).toList(),
       'itemCount': verifiedItems.fold<int>(0, (acc, i) => acc + i.quantity),
       'subtotal': calculatedSubtotal,
-      // Les promotions sont gérées par l'app Admin ; le Client n'écrit jamais de code promo.
-      'discount': 0,
-      'promoCode': null,
+      'discount': effectiveDiscount,
+      'promoCode': cleanPromo,
       'deliveryFee': deliveryFee,
       'total': calculatedTotal,
       'currency': 'TND',
@@ -174,10 +162,37 @@ class FirestoreOrdersRepository implements OrdersRepository {
 
     // ────────────────────────────────────────────────────────────────────────
     // ÉTAPE 3 : ÉCRITURE ATOMIQUE DANS FIRESTORE
-    // TODO : le stock est géré par l'Admin / une Cloud Function (pas côté Client).
+    // Enregistrement de la commande et incrément des statistiques du coupon
     // ────────────────────────────────────────────────────────────────────────
     final batch = _firestore.batch();
     batch.set(newDoc, orderData);
+
+    // Si un coupon a été appliqué, mettre à jour atomiquement coupons/{cleanCode}
+    if (cleanPromo != null) {
+      DocumentReference<Map<String, dynamic>>? couponRef;
+      final directDoc = await _firestore.collection('coupons').doc(cleanPromo).get();
+      if (directDoc.exists) {
+        couponRef = directDoc.reference;
+      } else {
+        final querySnap = await _firestore
+            .collection('coupons')
+            .where('code', isEqualTo: cleanPromo)
+            .limit(1)
+            .get();
+        if (querySnap.docs.isNotEmpty) {
+          couponRef = querySnap.docs.first.reference;
+        }
+      }
+
+      if (couponRef != null) {
+        batch.update(couponRef, {
+          'currentUsageCount': FieldValue.increment(1),
+          'usedByUsers': FieldValue.arrayUnion([userId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
     await batch.commit();
 
     return OrderUiModel(
@@ -191,8 +206,8 @@ class FirestoreOrdersRepository implements OrdersRepository {
       items: verifiedItems,
       itemCount: verifiedItems.fold<int>(0, (acc, i) => acc + i.quantity),
       subtotal: calculatedSubtotal,
-      discount: 0.0,
-      promoCode: null,
+      discount: effectiveDiscount,
+      promoCode: cleanPromo,
       deliveryFee: deliveryFee,
       total: calculatedTotal,
       currency: 'TND',
@@ -238,28 +253,36 @@ class FirestoreOrdersRepository implements OrdersRepository {
         throw Exception('Commande introuvable.');
       }
 
-      final data = snapshot.data() ?? {};
-      final currentStatus = data['status'] as String? ?? '';
+      final data = snapshot.data();
+      final currentStatusStr = data?['status'] as String?;
+      final currentStatus = OrderStatus.fromString(currentStatusStr);
 
-      // 3) Contrôle d'état : annulation autorisée uniquement si encore 'pending'
-      if (currentStatus != OrderStatus.pending.value) {
-        throw Exception(
-          'Seule une commande encore "En attente" peut être annulée.',
+      // 3) Règle métier : seule une commande au statut "pending" peut être annulée par le client
+      if (currentStatus != OrderStatus.pending) {
+        throw StateError(
+          'Impossible d\'annuler une commande déjà prise en charge (statut actuel : ${currentStatus.label}).',
         );
       }
 
-      final rawHistory = data['statusHistory'];
-      List<dynamic> history = rawHistory is List ? List.from(rawHistory) : [];
-      // 4) Ajout du jalon d'annulation dans l'historique chronologique
-      history.add({
+      // 4) Préparation du nouvel historique avec le statut annulé
+      final rawHistory = data?['statusHistory'];
+      List<Map<String, dynamic>> updatedHistory = [];
+      if (rawHistory is List) {
+        updatedHistory = rawHistory
+            .whereType<Map<String, dynamic>>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+
+      updatedHistory.add({
         'status': OrderStatus.cancelled.value,
         'at': Timestamp.now(),
       });
 
-      // 5) Mise à jour atomique du statut et horodatage serveur
+      // 5) Mise à jour atomique du statut et de l'historique
       transaction.update(docRef, {
         'status': OrderStatus.cancelled.value,
-        'statusHistory': history,
+        'statusHistory': updatedHistory,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     });

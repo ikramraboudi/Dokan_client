@@ -228,6 +228,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               subtotal: cart.subtotal,
               deliveryFee: cart.deliveryFee,
               total: cart.total,
+              discount: cart.discountAmount,
+              promoCode: cart.appliedPromoCode,
             ),
             const SizedBox(height: AppDimens.space32),
           ],
@@ -710,6 +712,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         cartItems: cart.items,
         deliveryAddress: addressSnapshot,
         deliveryFee: cart.deliveryFee,
+        promoCode: cart.appliedPromoCode,
+        discountAmount: cart.discountAmount,
       );
 
       // 4) Le panier n'est vidé QU'APRÈS confirmation de Firestore

@@ -3,18 +3,6 @@
 /// INTERAGIT AVEC : firestore_orders_repository.dart, ordersRepositoryProvider.
 /// POUR L'ORAL : « OrdersRepository isole nos écrans de commande de l'implémentation Firestore concrète. »
 /// ============================================================================
-/// ============================================================================
-/// RÔLE DU FICHIER :
-/// Interface abstraite définissant le contrat de gestion des commandes Dokan.
-/// Stockage dans Firestore sous la collection globale `orders/{orderId}`.
-///
-/// COUCHE DANS L'ARCHITECTURE :
-/// Couche data/repositories/ (Contrats Abstraits).
-///
-/// RELATIONS ET DÉPENDANCES :
-/// - Implémenté par : lib/data/repositories/firestore_orders_repository.dart.
-/// - Dépend de : data/models/order_model.dart, data/models/cart_item_ui_model.dart.
-/// ============================================================================
 library;
 
 import '../models/cart_item_ui_model.dart';
@@ -33,7 +21,7 @@ class ProductUnavailableException implements Exception {
 
 abstract class OrdersRepository {
   /// Crée une commande de façon atomique dans Firestore après vérification
-  /// en direct des prix et de la disponibilité des produits.
+  /// en direct des prix, de la disponibilité des produits et application des promotions.
   Future<OrderUiModel> createOrder({
     required String userId,
     required String customerName,
@@ -41,6 +29,8 @@ abstract class OrdersRepository {
     required List<CartItemUiModel> cartItems,
     required OrderDeliveryAddress deliveryAddress,
     required double deliveryFee,
+    String? promoCode,
+    double discountAmount = 0.0,
   });
 
   /// Écoute en temps réel toutes les commandes du client (tri antichronologique).

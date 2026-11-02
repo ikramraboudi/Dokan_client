@@ -1,7 +1,7 @@
 /// ============================================================================
-/// RÔLE DU FICHIER : Écran Panier réactif avec gestion des quantités, suppression avec annulation et redirection sécurisée.
+/// RÔLE DU FICHIER : Écran Panier réactif avec gestion des quantités, suppression avec annulation, code promo Firestore et redirection sécurisée.
 /// INTERAGIT AVEC : cartProvider, sessionProvider, CheckoutScreen, PriceSummary.
-/// POUR L'ORAL : « Le panier permet la modification instantanée des quantités, la suppression avec annulation et invite le visiteur à se connecter. »
+/// POUR L'ORAL : « Le panier permet la modification instantanée des quantités, l'application de coupons Firestore en temps réel et invite le visiteur à se connecter. »
 /// ============================================================================
 library;
 
@@ -20,7 +20,7 @@ import '../../core/ui/price_summary.dart';
 import '../../core/ui/quantity_selector.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/models/cart_item_ui_model.dart';
-
+import '../../services/auth_service.dart';
 
 ///  Dokan — ÉCRAN DU PANIER COMPLET
 
@@ -32,10 +32,17 @@ class CartScreen extends ConsumerStatefulWidget {
 }
 
 class _CartScreenState extends ConsumerState<CartScreen> {
+  final TextEditingController _promoController = TextEditingController();
+
+  @override
+  void dispose() {
+    _promoController.dispose();
+    super.dispose();
+  }
+
   void _onCheckoutPressed() {
     final session = ref.read(sessionProvider);
     if (session.isGuest) {
-      // Visiteur : invite de connexion avec reprise automatique vers le passage de commande
       AuthRequiredDialog.show(
         context,
         ref,
@@ -45,7 +52,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         },
       );
     } else {
-      // Client connecté : transition vers le passage de commande
       context.push(AppRoutes.checkout);
     }
   }
@@ -70,6 +76,18 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     );
   }
 
+  void _applyPromoCode() {
+    FocusScope.of(context).unfocus();
+    if (ref.read(cartProvider).isApplyingPromo) return;
+    final code = _promoController.text.trim();
+    if (code.isEmpty) return;
+    final currentUserId = AuthService().currentUser?.uid;
+    ref.read(cartProvider.notifier).applyPromoCode(
+          code,
+          userId: currentUserId,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartProvider);
@@ -81,6 +99,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           if (cartState.isNotEmpty)
             TextButton(
               onPressed: () {
+                _promoController.clear();
                 ref.read(cartProvider.notifier).clearCart();
               },
               child: const Text('Vider'),
@@ -95,34 +114,177 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               buttonText: 'Découvrir les produits',
               onAction: () => context.go(AppRoutes.home),
             )
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(AppDimens.space16),
-                    children: [
-                      // Liste des articles
-                      ...List.generate(cartState.items.length, (index) {
-                        final item = cartState.items[index];
-                        return _buildCartItemCard(item, index);
-                      }),
-                      const SizedBox(height: AppDimens.space20),
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.space16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Liste des articles
+                  ...List.generate(cartState.items.length, (index) {
+                    final item = cartState.items[index];
+                    return _buildCartItemCard(item, index);
+                  }),
+                  const SizedBox(height: AppDimens.space16),
 
-                      // Récapitulatif des prix
-                      PriceSummary(
-                        subtotal: cartState.subtotal,
-                        deliveryFee: cartState.deliveryFee,
-                        total: cartState.total,
+                  // Section Code Promotionnel
+                  _buildPromoSection(cartState),
+                  const SizedBox(height: AppDimens.space20),
+
+                  // Récapitulatif des prix
+                  PriceSummary(
+                    subtotal: cartState.subtotal,
+                    deliveryFee: cartState.deliveryFee,
+                    total: cartState.total,
+                    discount: cartState.discountAmount,
+                    promoCode: cartState.appliedPromoCode,
+                  ),
+                  const SizedBox(height: AppDimens.space24),
+                ],
+              ),
+            ),
+      bottomNavigationBar:
+          cartState.isEmpty ? null : _buildBottomCheckoutBar(cartState),
+    );
+  }
+
+  /// Encadré de gestion des codes promotionnels
+  Widget _buildPromoSection(CartState cartState) {
+    if (cartState.appliedPromoCode != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimens.space16,
+          vertical: AppDimens.space12,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.successSoft,
+          borderRadius: BorderRadius.circular(AppDimens.radius12),
+          border: Border.all(color: AppColors.success),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.success,
+              size: 22,
+            ),
+            const SizedBox(width: AppDimens.space12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Code ${cartState.appliedPromoCode} appliqué',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Économie : ${AppConfig.formatPrice(cartState.discountAmount)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.error,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.space8,
+                  vertical: AppDimens.space4,
+                ),
+              ),
+              icon: const Icon(Icons.close_rounded, size: 16),
+              label: const Text(
+                'Retirer',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+              onPressed: () {
+                ref.read(cartProvider.notifier).removePromoCode();
+                _promoController.clear();
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimens.radius16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Code promotionnel',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppDimens.space8),
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: TextField(
+                    controller: _promoController,
+                    textCapitalization: TextCapitalization.characters,
+                    style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                    decoration: const InputDecoration(
+                      hintText: 'Ex. PROMO70',
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: AppDimens.space12,
+                        vertical: 10,
                       ),
-                      const SizedBox(height: AppDimens.space24),
-                    ],
+                    ),
                   ),
                 ),
-
-                // Barre fixe inférieure avec bouton Continuer
-                _buildBottomCheckoutBar(cartState),
-              ],
+              ),
+              const SizedBox(width: AppDimens.space12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(100, 48),
+                ),
+                onPressed: cartState.isApplyingPromo ? null : _applyPromoCode,
+                child: cartState.isApplyingPromo
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.onPrimary,
+                        ),
+                      )
+                    : const Text('Appliquer'),
+              ),
+            ],
+          ),
+          if (cartState.promoError != null) ...[
+            const SizedBox(height: AppDimens.space8),
+            Text(
+              cartState.promoError!,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.error,
+                fontWeight: FontWeight.w500,
+              ),
             ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -184,7 +346,6 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         ),
                       ),
                     ),
-                    // Bouton supprimer avec Semantics
                     Semantics(
                       label: 'Supprimer ${item.name} du panier',
                       button: true,

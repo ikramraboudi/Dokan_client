@@ -1,13 +1,13 @@
 /// ============================================================================
-/// RÔLE DU FICHIER : Bloc récapitulatif financier présentant sous-total, frais de livraison et total TTC.
+/// RÔLE DU FICHIER : Bloc récapitulatif financier présentant sous-total, remise coupon, frais de livraison et total TTC.
 /// INTERAGIT AVEC : CartScreen, CheckoutScreen.
-/// POUR L'ORAL : « PriceSummary garantit un calcul financier rigoureux et cohérent entre le panier et le passage de commande. »
+/// POUR L'ORAL : « PriceSummary garantit un calcul financier rigoureux et cohérent entre le panier et le passage de commande, avec affichage clair des réductions. »
 /// ============================================================================
 /// ============================================================================
 /// RÔLE DU FICHIER :
 /// Encadré de synthèse financière de la commande (`PriceSummary`).
-/// Affiche la ventilation des coûts du panier : sous-total brut, frais de livraison
-/// estimés (ou "Gratuite" dès le seuil atteint), et le total général TTC.
+/// Affiche la ventilation des coûts du panier : sous-total brut, remise éventuelle,
+/// frais de livraison estimés (ou "Gratuite" dès le seuil atteint), et le total général TTC.
 ///
 /// COUCHE DANS L'ARCHITECTURE :
 /// Couche `core/ui/` (Composant Récapitulatif Financier).
@@ -36,11 +36,19 @@ class PriceSummary extends StatelessWidget {
   /// Montant final toutes taxes comprises à régler.
   final double total;
 
+  /// Montant de la réduction appliquée via code promotionnel (0.0 par défaut).
+  final double discount;
+
+  /// Code promotionnel appliqué (null si aucun).
+  final String? promoCode;
+
   const PriceSummary({
     super.key,
     required this.subtotal,
     required this.deliveryFee,
     required this.total,
+    this.discount = 0.0,
+    this.promoCode,
   });
 
   @override
@@ -70,6 +78,18 @@ class PriceSummary extends StatelessWidget {
             value: AppConfig.formatPrice(subtotal),
           ),
           const SizedBox(height: AppDimens.space8),
+
+          // Ligne Remise (affichée uniquement si un code promo est appliqué)
+          if (discount > 0) ...[
+            _buildRow(
+              label: promoCode != null && promoCode!.isNotEmpty
+                  ? 'Remise ($promoCode)'
+                  : 'Remise',
+              value: '- ${AppConfig.formatPrice(discount)}',
+              valueColor: AppColors.success,
+            ),
+            const SizedBox(height: AppDimens.space8),
+          ],
 
           // Ligne 2 : Frais de port estimés
           _buildRow(
