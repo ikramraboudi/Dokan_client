@@ -54,13 +54,18 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   String _currentSort = 'relevance';
 
   static const List<String> _categories = [
-    'Vêtements et mode',
-    'Chaussures et accessoires',
-    'Beauté et soins',
-    'Électronique et technologie',
-    'Maison et décoration',
-    'Sport et loisirs',
-    'Enfants et bébé',
+    'electromenager',
+    'vetements',
+    'chaussures',
+    'smartphones',
+    'techs',
+    'maison&cuisine',
+    'electronique',
+    'accessoires',
+    'beaute&soins',
+    'sport&air',
+    'jouets&enfants',
+    'papeterie&bureau',
   ];
 
   @override

@@ -25,25 +25,94 @@ class FirestoreCatalogRepository implements CatalogRepository {
 
   @override
   Future<List<CategoryUiModel>> getCategories() async {
-    // Basic fallback category list
-    return const [
+    List<ProductUiModel> allProducts = [];
+    try {
+      final snapshot = await _productsRef.get();
+      allProducts =
+          snapshot.docs.map((d) => ProductUiModel.fromFirestore(d)).toList();
+    } catch (_) {
+      // Fallback si hors ligne
+    }
+
+    int countFor(String cat) {
+      final target = cat.toLowerCase();
+      return allProducts
+          .where((p) => p.categoryName.toLowerCase() == target)
+          .length;
+    }
+
+    return [
       CategoryUiModel(
-        id: 'cat_all',
-        name: 'Tous',
-        icon: Icons.grid_view_rounded,
-        productCount: 0,
+        id: 'cat_electromenager',
+        name: 'electromenager',
+        icon: Icons.kitchen_rounded,
+        productCount: countFor('electromenager'),
       ),
       CategoryUiModel(
-        id: 'cat_electronics',
-        name: 'Électronique',
-        icon: Icons.devices_rounded,
-        productCount: 0,
-      ),
-      CategoryUiModel(
-        id: 'cat_fashion',
-        name: 'Mode',
+        id: 'cat_vetements',
+        name: 'vetements',
         icon: Icons.checkroom_rounded,
-        productCount: 0,
+        productCount: countFor('vetements'),
+      ),
+      CategoryUiModel(
+        id: 'cat_chaussures',
+        name: 'chaussures',
+        icon: Icons.hiking_rounded,
+        productCount: countFor('chaussures'),
+      ),
+      CategoryUiModel(
+        id: 'cat_smartphones',
+        name: 'smartphones',
+        icon: Icons.smartphone_rounded,
+        productCount: countFor('smartphones'),
+      ),
+      CategoryUiModel(
+        id: 'cat_techs',
+        name: 'techs',
+        icon: Icons.computer_rounded,
+        productCount: countFor('techs'),
+      ),
+      CategoryUiModel(
+        id: 'cat_maison_cuisine',
+        name: 'maison&cuisine',
+        icon: Icons.soup_kitchen_rounded,
+        productCount: countFor('maison&cuisine'),
+      ),
+      CategoryUiModel(
+        id: 'cat_electronique',
+        name: 'electronique',
+        icon: Icons.devices_rounded,
+        productCount: countFor('electronique'),
+      ),
+      CategoryUiModel(
+        id: 'cat_accessoires',
+        name: 'accessoires',
+        icon: Icons.watch_rounded,
+        productCount: countFor('accessoires'),
+      ),
+      CategoryUiModel(
+        id: 'cat_beaute_soins',
+        name: 'beaute&soins',
+        icon: Icons.spa_rounded,
+        productCount: countFor('beaute&soins'),
+      ),
+      CategoryUiModel(
+        id: 'cat_sport_air',
+        name: 'sport&air',
+        icon: Icons.fitness_center_rounded,
+        productCount: countFor('sport&air'),
+      ),
+      CategoryUiModel(
+        id: 'cat_jouets_enfants',
+        name: 'jouets&enfants',
+        icon: Icons.toys_rounded,
+        productCount: countFor('jouets&enfants'),
+      ),
+      CategoryUiModel(
+        id: 'cat_papeterie_bureau',
+        name: 'papeterie&bureau',
+        icon: Icons.menu_book_rounded,
+        productCount: countFor('papeterie&bureau'),
       ),
     ];
   }
