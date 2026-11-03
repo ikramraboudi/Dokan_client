@@ -34,6 +34,7 @@ import '../config/app_config.dart';
 import '../../data/models/product_ui_model.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
+import 'quick_add_button.dart';
 
 /// Carte produit réutilisable de Dokan.
 class ProductCard extends StatelessWidget {
@@ -244,6 +245,13 @@ class ProductCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ),
+
+                  // Bouton d'ajout rapide au panier ou compteur de quantité
+                  Positioned(
+                    bottom: AppDimens.space8,
+                    right: AppDimens.space8,
+                    child: QuickAddButton(product: product),
                   ),
                 ],
               ),

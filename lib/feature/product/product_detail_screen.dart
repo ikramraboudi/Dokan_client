@@ -18,6 +18,7 @@ import '../../core/ui/quantity_selector.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/mock/mock_catalog_repository.dart';
 import '../../data/mock/mock_favorites_repository.dart';
+import '../../data/models/cart_item_ui_model.dart';
 import '../../data/models/product_ui_model.dart';
 
 /// Provider pour récupérer le produit par identifiant
@@ -86,26 +87,49 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
-  void _onAddToCart(ProductUiModel product) {
+  void _onAddToCart(ProductUiModel product, CartItemUiModel? existingCartItem) {
     if (!product.isInStock) return;
 
-    ref.read(cartProvider.notifier).addProduct(
-          product,
-          quantity: _quantity,
-          variant: _selectedVariant,
+    if (existingCartItem != null) {
+      if (existingCartItem.quantity >= 10) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Quantité maximale atteinte (10 unités).'),
+            duration: Duration(seconds: 2),
+          ),
         );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Article ajouté au panier.'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+        return;
+      }
+      final newQty = (existingCartItem.quantity + 1).clamp(1, 10);
+      ref.read(cartProvider.notifier).updateQuantity(existingCartItem.id, newQty);
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.name} mis à jour ($newQty au panier).'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ref.read(cartProvider.notifier).addProduct(
+            product,
+            quantity: _quantity,
+            variant: _selectedVariant,
+          );
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${product.name} ajouté au panier ($_quantity).'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final productAsync = ref.watch(productDetailProvider(widget.productId));
+    final cartState = ref.watch(cartProvider);
 
     return Scaffold(
       appBar: const AppTopBar(
@@ -134,6 +158,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           }
 
           final isInStock = product.isInStock;
+
+          // Détection de l'article déjà présent dans le panier pour ce produit (et cette variante)
+          final compositeId = '${product.id}_${_selectedVariant ?? ''}';
+          final existingCartItem = cartState.items.where((i) {
+            if (product.variants != null && product.variants!.isNotEmpty) {
+              return i.id == compositeId;
+            }
+            return i.productId == product.id;
+          }).firstOrNull;
+
+          // Si le produit est déjà dans le panier, afficher sa quantité réelle du panier
+          final currentQuantity = existingCartItem?.quantity ?? _quantity;
 
           return Column(
             children: [
@@ -290,7 +326,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               const SizedBox(height: AppDimens.space24),
                             ],
 
-                            // Sélecteur de quantité
+                            // Sélecteur de quantité synchronisé avec le panier
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -299,12 +335,21 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   style: Theme.of(context).textTheme.titleMedium,
                                 ),
                                 QuantitySelector(
-                                  quantity: _quantity,
+                                  quantity: currentQuantity,
                                   enabled: isInStock,
                                   onChanged: (newQty) {
-                                    setState(() {
-                                      _quantity = newQty;
-                                    });
+                                    if (existingCartItem != null) {
+                                      // Produit déjà dans le panier : mise à jour instantanée du panier
+                                      ref.read(cartProvider.notifier).updateQuantity(
+                                            existingCartItem.id,
+                                            newQty,
+                                          );
+                                    } else {
+                                      // Produit pas encore dans le panier : sélection locale avant ajout
+                                      setState(() {
+                                        _quantity = newQty;
+                                      });
+                                    }
                                   },
                                 ),
                               ],
@@ -344,6 +389,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                       data: (list) => list.any((p) => p.id == widget.productId),
                       orElse: () => false,
                     ),
+                existingCartItem,
               ),
             ],
           );
@@ -462,7 +508,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     );
   }
 
-  Widget _buildBottomAction(ProductUiModel product, bool isInStock, bool isFavorite) {
+  Widget _buildBottomAction(
+    ProductUiModel product,
+    bool isInStock,
+    bool isFavorite,
+    CartItemUiModel? existingCartItem,
+  ) {
     return Container(
       padding: const EdgeInsets.all(AppDimens.space16),
       decoration: const BoxDecoration(
@@ -512,10 +563,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             // Bouton Ajouter au panier (désactivé si indisponible)
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: isInStock ? () => _onAddToCart(product) : null,
+                onPressed: isInStock ? () => _onAddToCart(product, existingCartItem) : null,
                 icon: const Icon(Icons.add_shopping_cart_rounded),
                 label: Text(
-                  isInStock ? 'Ajouter au panier' : 'Article indisponible',
+                  isInStock
+                      ? (existingCartItem != null
+                          ? 'Ajouter encore au panier'
+                          : 'Ajouter au panier')
+                      : 'Article indisponible',
                 ),
               ),
             ),

@@ -220,3 +220,12 @@
 
 #### Q40 : Quel a été votre plus grand défi technique sur ce projet ?
 * **Réponse (30s)** : *« Le plus grand défi a été de synchroniser le cycle de vie du flux de commande entre la gestion d'état locale Riverpod et le temps réel asynchrone de Firestore, tout en veillant à l'intégrité financière (relecture des prix, calcul exact de la livraison et écriture atomique WriteBatch) et à une ergonomie fluide sans blocage d'interface. »*
+
+#### Q41 : Comment fonctionne le composant d'ajout rapide (`QuickAddButton`) sans causer de re-renders inutiles sur les listes de produits ?
+* **Réponse (30s)** : *« `ProductCard` reste un `StatelessWidget` pur et délègue l'ajout à `QuickAddButton` qui est un `ConsumerStatefulWidget`. Ce sous-widget utilise `ref.watch(cartProvider.select(...))` pour observer uniquement la quantité de son propre produit (`productId`). Ainsi, modifier la quantité d'un article ne reconstruit QUE sa pastille sans recalculer toute la grille ni la carte produit parente. »*
+* **Emplacement** : `lib/core/ui/quick_add_button.dart` et `lib/core/ui/product_card.dart`.
+
+#### Q42 : Comment fonctionne l'interrogation et la validation des coupons Firestore dans le panier ?
+* **Réponse (30s)** : *« La méthode `applyPromoCode` interroge la collection `coupons` avec `where('code', isEqualTo: cleanCode).limit(1)`. Si le document existe, `CouponModel.validate()` vérifie l'expiration (`endDate`), le seuil minimal (`minCartAmount`), la restriction premier achat (`isFirstOrderOnly` via `orders.count()`) et le quota (`oncePerUser`, `singleUse`, `totalLimit`). La remise en pourcentage plafonnée ou fixe est ensuite déduite automatiquement du total. »*
+* **Emplacement** : `lib/data/mock/mock_cart_repository.dart` (`applyPromoCode()`) et `lib/data/models/coupon_model.dart`.
+

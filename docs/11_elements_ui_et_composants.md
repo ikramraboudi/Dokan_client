@@ -118,3 +118,15 @@
 | **Chronologie verticale (Timeline)** | `Column` alternant cercles numérotés et `Container` verticaux (barres de liaison) | `lib/feature/orders/order_detail_screen.dart` → `_buildTimelineCard()` (lignes 392-498) | Retrace l'historique d'acheminement certifié par Firestore (`statusHistory`) | « Nous parcourons la liste chronologique `statusHistory` pour dessiner une ligne continue reliant chaque étape horodatée. » |
 | **Carte Livreur assigné** | `Container` avec avatar, nom, téléphone et bouton de copie | `lib/feature/orders/order_detail_screen.dart` → `_buildDriverCard()` (lignes 501-570) | Permet au client de joindre directement le coursier en tournée | « Dès que l'administrateur renseigne le livreur dans Firestore, cette carte apparaît avec un bouton copiant son numéro dans le presse-papiers (`Clipboard`). » |
 | **Bouton d'annulation sous condition** | `OutlinedButton` rouge conditionné par `order.status == OrderStatus.pending` | `lib/feature/orders/order_detail_screen.dart` (lignes 220-235) | Empêche l'annulation si la commande est déjà en cours de préparation ou expédiée | « Le bouton n'apparaît que si la commande est encore "En attente" et déclenche une transaction Firestore atomique. » |
+
+---
+
+## 11. Composant d'Ajout Rapide et Compteur (`lib/core/ui/quick_add_button.dart`)
+
+| Élément à l'écran | Widget / technique Flutter utilisé | Fichier : classe / fonction (lignes approx.) | Pourquoi ce choix | Phrase simple pour l'expliquer au prof |
+|---|---|---|---|---|
+| **Bouton d'ajout rapide (Panier = 0)** | `Material` avec `CircleBorder` et `InkWell` (icône chariot `+`), surface translucide | `lib/core/ui/quick_add_button.dart` → `_buildAddCircleButton()` | Permet l'achat immédiat en 1 clic sans devoir ouvrir la fiche détaillée | « C'est un bouton tactile semi-transparent placé en bas à droite de l'image qui ajoute directement l'article au panier. » |
+| **Pastille compteur animée (− N +)** | `AnimatedSwitcher` + `ScaleTransition` avec `TweenSequence` (rebond 1.0 -> 1.18 -> 1.0) | `lib/core/ui/quick_add_button.dart` → `_buildCounterPill()` | Transforme le bouton d'ajout en pastille de contrôle de quantité avec feedback tactile | « Quand l'article est dans le panier, le bouton mute en pastille interactive avec retour haptique et animation de rebond. » |
+| **Feuille de variantes pour options** | `showModalBottomSheet` avec `ChoiceChip` et `QuantitySelector` | `lib/core/ui/quick_add_button.dart` → `_VariantBottomSheet` | Permet de choisir taille/couleur sans quitter la page active si le produit a des options | « Pour les articles avec déclinaisons, l'appui ouvre une feuille modale évitant la navigation lourde vers la fiche détaillée. » |
+| **Zone tactile ergonomique (≥ 48 dp)** | `SizedBox(width: AppDimens.minTouchTarget, height: AppDimens.minTouchTarget)` | `lib/core/ui/quick_add_button.dart` | Respecte les standards d'accessibilité Material Design pour éviter les clics manqués | « Le visuel fait 36-38 dp mais sa zone interactive réelle est de 48x48 dp pour un confort tactile optimal. » |
+

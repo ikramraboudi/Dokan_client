@@ -241,18 +241,18 @@
 ---
 
 ### Fiche 11 : Écran Panier (`CartScreen`)
-* **Rôle de la page** : Gestion des articles sélectionnés, ajustement réactif des quantités et calcul des montants.
+* **Rôle de la page** : Gestion des articles sélectionnés, ajustement réactif des quantités, application de coupons Firestore en temps réel et calcul des montants.
 * **Fichier** : `lib/feature/cart/cart_screen.dart` (`CartScreen`).
-* **Ce que l'utilisateur voit** : Liste des articles avec photo, nom, option choisie, prix, quantité modifiable (+/-), bouton poubelle, récapitulatif `PriceSummary` (Sous-total, Livraison estimée, Total TTC), et barre inférieure fixe avec bouton « Continuer la commande ».
-* **Ce qu'il peut faire** : Ajuster les quantités (1 à 10), supprimer un article (avec possibilité d'annulation immédiate via le SnackBar *Undo*), vider le panier en un clic, continuer vers la commande.
+* **Ce que l'utilisateur voit** : Liste déroulante des articles avec photo, nom, option choisie, prix, sélecteur numérique de quantité (+/-), bouton poubelle avec annulation (Undo), section code promotionnel Firestore, récapitulatif `PriceSummary` (Sous-total, Remise coupon, Livraison estimée, Total TTC), et barre inférieure fixe avec bouton « Continuer la commande ».
+* **Ce qu'il peut faire** : Ajuster les quantités (1 à 10), supprimer un article (avec possibilité d'annulation immédiate via le SnackBar *Undo*), saisir et valider un code promo Firestore (ex: `PROMO70`, `BIENVENUE10`), retirer un coupon appliqué, vider le panier en un clic, continuer vers la commande.
 * **Interactions et navigation** :
-  - *Source* : Onglet 4 du `MainShell` (`/cart`).
+  - *Source* : Onglet 4 du `MainShell` (`/cart`) ou ajout direct via le bouton `QuickAddButton` sur les cartes produits.
   - *Cibles* : `/checkout` (si client connecté), `AuthRequiredDialog` (si visiteur).
-* **Données utilisées** : `cartProvider` (`CartNotifier`).
-* **États gérés** : Panier vide (`EmptyState` invitant à découvrir les produits), panier garni.
+* **Données utilisées** : `cartProvider` (`CartNotifier`), collection Cloud Firestore `coupons`.
+* **États gérés** : Panier vide (`EmptyState` invitant à découvrir les produits), panier garni, validation de coupon en cours (`isApplyingPromo`), message d'erreur de coupon (`promoError`), récapitulatif avec remise appliquée.
 * **Fonctionnalité précise** : Cette page sert d'entonnoir d'achat (« checkout funnel ») pour préparer et vérifier son panier avant de finaliser la commande.
-* **Question probable du prof** : *« Pourquoi n'y a-t-il pas de champ code promo dans l'application Client ? »*
-  - **Réponse simple** : *« Les promotions et remises sont gérées de manière centralisée par l'application Admin pour des raisons de sécurité métier. Le Client n'écrit jamais de code promo arbitraire (il écrit `promoCode: null` et `discount: 0`). Si l'Admin applique une remise sur une commande, le Client l'affiche fidèlement en lecture seule dans le suivi de commande. »*
+* **Question probable du prof** : *« Comment fonctionne la validation des codes promo dans le panier ? »*
+  - **Réponse simple** : *« L'utilisateur saisit son code qui est interrogé directement dans la collection Firestore `coupons`. Le repository vérifie si le code est actif, non expiré, si le sous-total respecte le `minCartAmount`, si l'usage n'est pas dépassé (`oncePerUser`, `singleUse`, `totalLimit`), et si le code n'est pas restreint à une première commande. Si tout est valide, la réduction (% plafonné ou montant fixe) est appliquée instantanément au total. »*
 
 ---
 

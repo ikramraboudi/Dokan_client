@@ -114,36 +114,40 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               buttonText: 'Découvrir les produits',
               onAction: () => context.go(AppRoutes.home),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimens.space16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Liste des articles
-                  ...List.generate(cartState.items.length, (index) {
-                    final item = cartState.items[index];
-                    return _buildCartItemCard(item, index);
-                  }),
-                  const SizedBox(height: AppDimens.space16),
+          : Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(AppDimens.space16),
+                    children: [
+                      // Liste des articles
+                      ...List.generate(cartState.items.length, (index) {
+                        final item = cartState.items[index];
+                        return _buildCartItemCard(item, index);
+                      }),
+                      const SizedBox(height: AppDimens.space16),
 
-                  // Section Code Promotionnel
-                  _buildPromoSection(cartState),
-                  const SizedBox(height: AppDimens.space20),
+                      // Section Code Promotionnel
+                      _buildPromoSection(cartState),
+                      const SizedBox(height: AppDimens.space20),
 
-                  // Récapitulatif des prix
-                  PriceSummary(
-                    subtotal: cartState.subtotal,
-                    deliveryFee: cartState.deliveryFee,
-                    total: cartState.total,
-                    discount: cartState.discountAmount,
-                    promoCode: cartState.appliedPromoCode,
+                      // Récapitulatif des prix
+                      PriceSummary(
+                        subtotal: cartState.subtotal,
+                        deliveryFee: cartState.deliveryFee,
+                        total: cartState.total,
+                        discount: cartState.discountAmount,
+                        promoCode: cartState.appliedPromoCode,
+                      ),
+                      const SizedBox(height: AppDimens.space24),
+                    ],
                   ),
-                  const SizedBox(height: AppDimens.space24),
-                ],
-              ),
+                ),
+
+                // Barre fixe inférieure avec bouton Continuer
+                _buildBottomCheckoutBar(cartState),
+              ],
             ),
-      bottomNavigationBar:
-          cartState.isEmpty ? null : _buildBottomCheckoutBar(cartState),
     );
   }
 
@@ -245,9 +249,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     decoration: const InputDecoration(
                       hintText: 'Ex. PROMO70',
+                      isDense: true,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: AppDimens.space12,
-                        vertical: 10,
+                        vertical: 12,
                       ),
                     ),
                   ),
