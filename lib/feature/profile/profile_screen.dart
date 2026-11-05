@@ -5,6 +5,7 @@
 /// ============================================================================
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,15 +19,6 @@ import '../../services/auth_service.dart';
 ///  Dokan — ÉCRAN PROFIL ( VISITEUR VS CLIENT)
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
-
-  void _showComingSoonSnackBar(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Cette fonctionnalité sera disponible prochainement.'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
 
   void _confirmLogout(BuildContext context, WidgetRef ref) {
     final authService = AuthService();
@@ -67,17 +59,36 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
+
+    // 1. Pendant la restauration de la session au démarrage : spinner, jamais d'écran client
+    if (session.isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppTopBar(title: 'Mon profil'),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    // 2. Visiteur (non connecté) : écran de bienvenue uniquement
+    if (session.isGuest || session.user == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const AppTopBar(title: 'Mon profil'),
+        body: _buildGuestView(context),
+      );
+    }
+
+    // 3. Client connecté : écran profil complet
     return Scaffold(
-      appBar: const AppTopBar(
-        title: 'Mon profil',
-      ),
-      body: session.isGuest
-          ? _buildGuestView(context)
-          : _buildClientView(context, ref, session.user!),
+      backgroundColor: AppColors.background,
+      appBar: const AppTopBar(title: 'Mon profil'),
+      body: _buildClientView(context, ref, session.user!),
     );
   }
 
-  /// Vue pour le visiteur
+  /// Vue d'accueil pour le visiteur non connecté (aucun menu, aucun nom/email, aucune donnée)
   Widget _buildGuestView(BuildContext context) {
     return Center(
       child: SingleChildScrollView(
@@ -95,21 +106,25 @@ class ProfileScreen extends ConsumerWidget {
                 color: AppColors.primarySoft,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.person_outline_rounded,
-                size: 48,
-                color: AppColors.primary,
+              child: const Center(
+                child: Text(
+                  '👋',
+                  style: TextStyle(fontSize: 44),
+                ),
               ),
             ),
             const SizedBox(height: AppDimens.space24),
             Text(
               'Bienvenue sur Dokan',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
             ),
             const SizedBox(height: AppDimens.space8),
             const Text(
-              'Connectez-vous pour gérer votre compte, vos favoris et vos commandes.',
+              'Connectez-vous pour accéder à votre profil',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -118,14 +133,20 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppDimens.space32),
-            ElevatedButton(
-              onPressed: () => context.push(AppRoutes.login),
-              child: const Text('Se connecter'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => context.push(AppRoutes.login),
+                child: const Text('Se connecter'),
+              ),
             ),
             const SizedBox(height: AppDimens.space12),
-            OutlinedButton(
-              onPressed: () => context.push(AppRoutes.register),
-              child: const Text('Créer un compte'),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => context.push(AppRoutes.register),
+                child: const Text('Créer un compte'),
+              ),
             ),
           ],
         ),
@@ -187,6 +208,15 @@ class ProfileScreen extends ConsumerWidget {
                         color: AppColors.textSecondary,
                       ),
                     ),
+                    if (user.phone != null && (user.phone as String).isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        user.phone as String,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -195,12 +225,12 @@ class ProfileScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppDimens.space24),
 
-        // Raccourcis hors périmètre avec SnackBar prochainement
+        // Menus du compte
         _buildMenuTile(
           context,
           icon: Icons.person_outline_rounded,
           title: 'Modifier le profil',
-          onTap: () => _showComingSoonSnackBar(context),
+          onTap: () => context.push(AppRoutes.editProfile),
         ),
         _buildMenuTile(
           context,
@@ -218,42 +248,46 @@ class ProfileScreen extends ConsumerWidget {
           context,
           icon: Icons.settings_outlined,
           title: 'Paramètres et aide',
-          onTap: () => _showComingSoonSnackBar(context),
+          onTap: () => context.push(AppRoutes.settingsAndHelp),
         ),
 
-        const SizedBox(height: AppDimens.space16),
-        // Outil de simulation de session expirée (§6)
-        Container(
-          margin: const EdgeInsets.only(bottom: AppDimens.space16),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceAlt,
-            borderRadius: BorderRadius.circular(AppDimens.radius12),
-          ),
-          child: ListTile(
-            leading: const Icon(
-              Icons.timer_outlined,
-              color: AppColors.warning,
-            ),
-            title: const Text(
-              'Simuler session expirée',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-            subtitle: const Text(
-              'Test du hook onSessionExpired sans perte du panier',
-              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-            ),
-            trailing: const Icon(Icons.play_arrow_rounded, color: AppColors.warning),
-            onTap: () {
-              ref.read(sessionProvider.notifier).simulateSessionExpired();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Votre session a expiré. Connectez-vous pour continuer.'),
-                  duration: Duration(seconds: 3),
+        // Outil de simulation de session expirée (visible uniquement en mode debug)
+        if (kDebugMode) ...[
+          const SizedBox(height: AppDimens.space16),
+          Container(
+            margin: const EdgeInsets.only(bottom: AppDimens.space16),
+            child: Material(
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(AppDimens.radius12),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                leading: const Icon(
+                  Icons.timer_outlined,
+                  color: AppColors.warning,
                 ),
-              );
-            },
+                title: const Text(
+                  'Simuler session expirée',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text(
+                  'Test du hook onSessionExpired sans perte du panier',
+                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                ),
+                trailing: const Icon(Icons.play_arrow_rounded, color: AppColors.warning),
+                onTap: () {
+                  ref.read(sessionProvider.notifier).simulateSessionExpired();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Votre session a expiré. Connectez-vous pour continuer.'),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
-        ),
+        ],
+        const SizedBox(height: AppDimens.space16),
 
         // Bouton de déconnexion
         OutlinedButton.icon(
@@ -279,27 +313,30 @@ class ProfileScreen extends ConsumerWidget {
       }) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimens.space8),
-      decoration: BoxDecoration(
+      child: Material(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimens.radius12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.textPrimary, size: 22),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radius12),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: Icon(icon, color: AppColors.textPrimary, size: 22),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
           ),
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
+          onTap: onTap,
         ),
-        trailing: const Icon(
-          Icons.chevron_right_rounded,
-          color: AppColors.textSecondary,
-          size: 20,
-        ),
-        onTap: onTap,
       ),
     );
   }

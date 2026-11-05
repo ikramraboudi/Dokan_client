@@ -25,7 +25,7 @@
 /// ============================================================================
 library;
 
-import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/user_summary.dart';
 
@@ -83,6 +83,10 @@ class SessionState {
 }
 
 
+/// Écouteur global pour réévaluer les redirections GoRouter lorsque la session change.
+final ValueNotifier<SessionState> sessionStateNotifier =
+    ValueNotifier<SessionState>(const SessionState(isLoading: true));
+
 /// NOTIFIER DE SESSION (SessionNotifier)
 ///
 /// MOT TECHNIQUE - StateNotifier :
@@ -90,8 +94,16 @@ class SessionState {
 /// pour modifier l'état de façon contrôlée et notifier tous les widgets écouteurs.
 
 class SessionNotifier extends StateNotifier<SessionState> {
-  SessionNotifier() : super(const SessionState());
+  SessionNotifier({SessionState? initialState})
+      : super(initialState ?? const SessionState(isLoading: true)) {
+    sessionStateNotifier.value = state;
+  }
 
+  @override
+  set state(SessionState value) {
+    super.state = value;
+    sessionStateNotifier.value = value;
+  }
 
   /// SCÉNARIO MÉTIER : CONNEXION RÉUSSIE ET REPRISE D'ACTION
   /// 1) L'utilisateur valide ses identifiants avec succès.
@@ -117,7 +129,18 @@ class SessionNotifier extends StateNotifier<SessionState> {
 
   /// Déconnexion du client : réinitialise la session à l'état visiteur anonyme.
   void logout() {
-    state = const SessionState();
+    state = const SessionState(isLoading: false);
+  }
+
+  /// Met à jour les informations du profil utilisateur connecté dans l'état de session.
+  void updateProfile({required String fullName, String? phone}) {
+    if (state.user != null) {
+      final updated = state.user!.copyWith(
+        fullName: fullName,
+        phone: phone,
+      );
+      state = state.copyWith(user: () => updated);
+    }
   }
 
   /// Mémorise une action protégée lorsqu'un visiteur clique sur une fonctionnalité restreinte.

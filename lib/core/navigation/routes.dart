@@ -51,6 +51,14 @@ class AppRoutes {
   static const String addAddress        = '/addresses/add';
   static const String editAddress       = '/addresses/edit';
 
+  // --- Profil, paramètres, aide et mentions légales ---
+  static const String editProfile      = '/profile/edit';
+  static const String changePassword   = '/profile/change-password';
+  static const String settingsAndHelp  = '/settings';
+  static const String faq              = '/help/faq';
+  static const String terms            = '/legal/terms';
+  static const String privacy          = '/legal/privacy';
+
   /// FONCTIONNALITÉ :
   /// Construit l'URL paramétrée pour ouvrir la fiche détaillée d'un produit précis.
   ///

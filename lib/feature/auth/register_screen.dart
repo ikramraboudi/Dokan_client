@@ -5,9 +5,12 @@
 /// ============================================================================
 library;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/navigation/routes.dart';
 import '../../core/session/session_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
@@ -38,12 +41,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  late final TapGestureRecognizer _termsRecognizer;
+  late final TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()
+      ..onTap = () => context.push(AppRoutes.terms);
+    _privacyRecognizer = TapGestureRecognizer()
+      ..onTap = () => context.push(AppRoutes.privacy);
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
     super.dispose();
   }
 
@@ -214,11 +231,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   value: _acceptTerms,
                   activeColor: AppColors.primary,
                   controlAffinity: ListTileControlAffinity.leading,
-                  title: const Text(
-                    'J\'accepte les conditions générales d\'utilisation et la politique de confidentialité de Dokan.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                  title: Text.rich(
+                    TextSpan(
+                      text: 'J\'accepte les ',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'conditions générales d\'utilisation',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          recognizer: _termsRecognizer,
+                        ),
+                        const TextSpan(text: ' et la '),
+                        TextSpan(
+                          text: 'politique de confidentialité',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          recognizer: _privacyRecognizer,
+                        ),
+                        const TextSpan(text: ' de Dokan.'),
+                      ],
                     ),
                   ),
                   onChanged: _isLoading

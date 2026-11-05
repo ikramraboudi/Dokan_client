@@ -65,13 +65,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ? firebaseUser.displayName!
           : email.split('@').first;
 
+      String? phone;
+      if (firebaseUser != null) {
+        try {
+          final userData = await _authService.fetchUserData(firebaseUser.uid);
+          if (userData != null && userData['phone'] != null) {
+            phone = userData['phone'] as String?;
+          }
+        } catch (_) {}
+      }
+
       final userSummary = UserSummary(
         fullName: displayName,
         email: firebaseUser?.email ?? email,
+        phone: phone,
       );
 
       // 3) Mise à jour de la session Riverpod et reprise de l'action en attente
       ref.read(sessionProvider.notifier).loginSuccess(userSummary);
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

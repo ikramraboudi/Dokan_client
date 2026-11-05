@@ -101,4 +101,16 @@ class Validators {
     }
     return null;
   }
+
+  /// FONCTIONNALITÉ :
+  /// Valide la saisie d'un numéro de téléphone tunisien (au moins 8 chiffres).
+  static String? phone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Le numéro de téléphone est obligatoire.';
+    }
+    if (value.trim().length < 8) {
+      return 'Numéro de téléphone incomplet.';
+    }
+    return null;
+  }
 }

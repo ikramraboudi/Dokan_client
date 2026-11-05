@@ -35,7 +35,12 @@ import '../../feature/catalog/search_screen.dart';
 import '../../feature/favorites/favorites_screen.dart';
 import '../../feature/home/home_screen.dart';
 import '../../feature/product/product_detail_screen.dart';
+import '../../feature/profile/change_password_screen.dart';
+import '../../feature/profile/edit_profile_screen.dart';
+import '../../feature/profile/faq_screen.dart';
+import '../../feature/profile/legal_screen.dart';
 import '../../feature/profile/profile_screen.dart';
+import '../../feature/profile/settings_and_help_screen.dart';
 import '../../feature/splash/splash_screen.dart';
 import '../../feature/address/add_edit_address_screen.dart';
 import '../../feature/address/addresses_screen.dart';
@@ -43,6 +48,7 @@ import '../../feature/checkout/checkout_screen.dart';
 import '../../feature/checkout/order_confirmation_screen.dart';
 import '../../feature/orders/my_orders_screen.dart';
 import '../../feature/orders/order_detail_screen.dart';
+import '../session/session_provider.dart';
 import 'main_shell.dart';
 import 'routes.dart';
 
@@ -60,6 +66,36 @@ final GlobalKey<NavigatorState> _rootNavigatorKey =
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: AppRoutes.splash,
+  refreshListenable: sessionStateNotifier,
+  redirect: (context, state) {
+    final session = sessionStateNotifier.value;
+    final path = state.uri.path;
+
+    // Pendant le chargement initial de session au démarrage, ne rien intercepter
+    if (session.isLoading) return null;
+
+    // Routes protégées réservées strictement aux clients connectés
+    final isProtectedRoute = path == AppRoutes.editProfile ||
+        path == AppRoutes.changePassword ||
+        path == AppRoutes.settingsAndHelp ||
+        path == AppRoutes.myOrders ||
+        path.startsWith('/orders') ||
+        path == AppRoutes.addresses ||
+        path.startsWith('/addresses') ||
+        path == AppRoutes.checkout;
+
+    // Exceptions publiques explicites (accessibles aux visiteurs sans connexion)
+    final isPublicException = path == AppRoutes.terms ||
+        path == AppRoutes.privacy ||
+        path == AppRoutes.faq;
+
+    if (session.isGuest && isProtectedRoute && !isPublicException) {
+      // Redirige le visiteur non connecté vers l'écran d'accueil du profil
+      return AppRoutes.profile;
+    }
+
+    return null;
+  },
   routes: [
     // --- Écran de démarrage (Splash Screen) ---
     // Affiché en plein écran au lancement pendant 3 secondes
@@ -172,47 +208,36 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
 
-    // --- Écrans du flux de commande, adresses et suivi ---
+    // --- Écrans du profil, sécurité, paramètres et aide ---
     GoRoute(
-      path: AppRoutes.checkout,
+      path: AppRoutes.editProfile,
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const CheckoutScreen(),
+      builder: (context, state) => const EditProfileScreen(),
     ),
     GoRoute(
-      path: '${AppRoutes.orderConfirmation}/:id',
+      path: AppRoutes.changePassword,
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => OrderConfirmationScreen(
-        orderId: state.pathParameters['id'] ?? '',
-      ),
+      builder: (context, state) => const ChangePasswordScreen(),
     ),
     GoRoute(
-      path: AppRoutes.myOrders,
+      path: AppRoutes.settingsAndHelp,
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const MyOrdersScreen(),
+      builder: (context, state) => const SettingsAndHelpScreen(),
     ),
     GoRoute(
-      path: '${AppRoutes.myOrders}/:id',
+      path: AppRoutes.faq,
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => OrderDetailScreen(
-        orderId: state.pathParameters['id'] ?? '',
-      ),
+      builder: (context, state) => const FaqScreen(),
     ),
     GoRoute(
-      path: AppRoutes.addresses,
+      path: AppRoutes.terms,
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const AddressesScreen(),
+      builder: (context, state) => const LegalScreen(type: LegalType.terms),
     ),
     GoRoute(
-      path: AppRoutes.addAddress,
+      path: AppRoutes.privacy,
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const AddEditAddressScreen(),
-    ),
-    GoRoute(
-      path: '${AppRoutes.editAddress}/:id',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => AddEditAddressScreen(
-        addressId: state.pathParameters['id'],
-      ),
+      builder: (context, state) => const LegalScreen(type: LegalType.privacy),
     ),
 
     // COQUILLE DE NAVIGATION PERSISTANTE À 5 ONGLETS

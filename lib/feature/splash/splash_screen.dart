@@ -50,6 +50,7 @@
 library;
 
 import 'dart:math' as math;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -60,6 +61,7 @@ import '../../core/navigation/routes.dart';
 import '../../core/session/session_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/ui/dokan_logo.dart';
+import '../../data/models/user_summary.dart';
 
 // ─── Modèles de données internes ─────────────────────────────────────────────
 
@@ -220,8 +222,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       }
     });
 
-    // Lancement de la vérification de session et respect de la durée minimale
-    _checkSession();
+    // Lancement de la vérification de session après le premier frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _checkSession();
+      }
+    });
   }
 
   void _buildAnimations() {
@@ -311,12 +317,37 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _verifyFirebaseAuth() async {
     try {
       final auth = FirebaseAuth.instance;
-      await auth.authStateChanges().first.timeout(
+      final firebaseUser = await auth.authStateChanges().first.timeout(
         const Duration(seconds: 2),
         onTimeout: () => null,
       );
+      if (firebaseUser != null && mounted) {
+        String? phone;
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(firebaseUser.uid)
+              .get();
+          phone = doc.data()?['phone'] as String?;
+        } catch (_) {}
+        final displayName = (firebaseUser.displayName != null &&
+                firebaseUser.displayName!.isNotEmpty)
+            ? firebaseUser.displayName!
+            : (firebaseUser.email?.split('@').first ?? 'Client');
+        ref.read(sessionProvider.notifier).loginSuccess(
+              UserSummary(
+                fullName: displayName,
+                email: firebaseUser.email ?? '',
+                phone: phone,
+              ),
+            );
+      } else if (mounted) {
+        ref.read(sessionProvider.notifier).logout();
+      }
     } catch (_) {
-      // Ignoré si Firebase n'est pas configuré ou en test unitaire
+      if (mounted) {
+        ref.read(sessionProvider.notifier).logout();
+      }
     }
   }
 

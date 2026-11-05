@@ -46,6 +46,13 @@ class AppConfig {
   /// À modifier ici pour mettre à jour le slogan sur tout l'écran splash.
   static const String appTagline = 'Tout ce dont vous avez besoin, livré chez vous.';
 
+  // ─── Coordonnées du support client ─────────────────────────────────────────
+  // À renseigner avec les vraies coordonnées de Dokan.
+  // Laisser vide pour masquer le canal correspondant dans l'interface.
+  static const String supportEmail = '';
+  static const String supportPhone = '';
+  static const String supportWhatsApp = '';
+
   /// FONCTIONNALITÉ :
   /// Formate un montant numérique décimal en une chaîne textuelle conforme aux
   /// standards tunisiens (séparateur décimal virgule et 3 chiffres après la virgule).

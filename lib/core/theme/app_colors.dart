@@ -89,4 +89,29 @@ class AppColors {
   static const Color statusDeliveredSoft    = Color(0xFFDCFCE7);
   static const Color statusCancelled        = Color(0xFF6B7280); // Gris doux (Annulée)
   static const Color statusCancelledSoft    = Color(0xFFF3F4F6);
+
+  // --- Palette pastel harmonieuse pour les rubriques FAQ et pages interactives ---
+  // 8 paires de tons chaleureux (couleur forte pour pastilles/emojis + fond doux)
+  // [0] Menthe, [1] Ciel, [2] Pêche, [3] Lilas, [4] Rose, [5] Citron, [6] Sauge, [7] Corail
+  static const List<Color> pastelAccents = [
+    Color(0xFF1F9E89), // 0: Menthe
+    Color(0xFF2B8EC9), // 1: Ciel
+    Color(0xFFE57E3B), // 2: Pêche
+    Color(0xFF8B6AC7), // 3: Lilas
+    Color(0xFFD85D83), // 4: Rose
+    Color(0xFFD49A1F), // 5: Citron
+    Color(0xFF5B8C61), // 6: Sauge
+    Color(0xFFD8574B), // 7: Corail
+  ];
+
+  static const List<Color> pastelAccentsSoft = [
+    Color(0xFFE2F6F1), // 0: Menthe douce
+    Color(0xFFE5F3FB), // 1: Ciel doux
+    Color(0xFFFDF0E7), // 2: Pêche douce
+    Color(0xFFF1EDF9), // 3: Lilas doux
+    Color(0xFFFAECF1), // 4: Rose doux
+    Color(0xFFFCF5E4), // 5: Citron doux
+    Color(0xFFEBF3EC), // 6: Sauge douce
+    Color(0xFFFAECEB), // 7: Corail doux
+  ];
 }

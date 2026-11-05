@@ -27,10 +27,27 @@ class UserSummary {
   /// Adresse e-mail du compte client (ex: "demo@Dokan.com").
   final String email;
 
+  /// Numéro de téléphone du client (ex: "21000000").
+  final String? phone;
+
   const UserSummary({
     required this.fullName,
     required this.email,
+    this.phone,
   });
+
+  /// Copie immuable avec substitution ciblée.
+  UserSummary copyWith({
+    String? fullName,
+    String? email,
+    String? phone,
+  }) {
+    return UserSummary(
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+    );
+  }
 
   // MOT TECHNIQUE - Surcharge operator == et hashCode :
   // Permet de comparer deux instances de UserSummary par leur contenu
@@ -41,8 +58,9 @@ class UserSummary {
       other is UserSummary &&
           runtimeType == other.runtimeType &&
           fullName == other.fullName &&
-          email == other.email;
+          email == other.email &&
+          phone == other.phone;
 
   @override
-  int get hashCode => fullName.hashCode ^ email.hashCode;
+  int get hashCode => fullName.hashCode ^ email.hashCode ^ (phone?.hashCode ?? 0);
 }
