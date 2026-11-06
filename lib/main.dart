@@ -22,9 +22,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:workmanager/workmanager.dart';
+import 'app.dart';
 import 'firebase_options.dart';
+import 'services/local_order_tracker_service.dart';
 
 /// Fonction principale (point d'entrée Dart).
 ///
@@ -41,6 +43,14 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialisation de WorkManager pour le suivi périodique en arrière-plan (mode 100% gratuit)
+  try {
+    Workmanager().initialize(dokanWorkmanagerCallbackDispatcher);
+  } catch (e) {
+    debugPrint('Workmanager initialization bypass: $e');
+  }
+
   runApp(
     const ProviderScope(
       child: DokanApp(),

@@ -5,7 +5,9 @@
 /// ============================================================================
 library;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/config/app_config.dart';
@@ -14,18 +16,21 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_top_bar.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_service.dart';
+import '../orders/notification_permission_dialog.dart';
 import 'support_bottom_sheet.dart';
 
-class SettingsAndHelpScreen extends StatefulWidget {
+class SettingsAndHelpScreen extends ConsumerStatefulWidget {
   final AuthService? authService;
 
   const SettingsAndHelpScreen({super.key, this.authService});
 
   @override
-  State<SettingsAndHelpScreen> createState() => _SettingsAndHelpScreenState();
+  ConsumerState<SettingsAndHelpScreen> createState() =>
+      _SettingsAndHelpScreenState();
 }
 
-class _SettingsAndHelpScreenState extends State<SettingsAndHelpScreen> {
+class _SettingsAndHelpScreenState extends ConsumerState<SettingsAndHelpScreen> {
   late final AuthService _authService;
   String _versionInfo = '1.0.0';
 
@@ -96,9 +101,20 @@ class _SettingsAndHelpScreenState extends State<SettingsAndHelpScreen> {
                     subtitle: 'Gérer vos lieux de réception',
                     onTap: () => context.push(AppRoutes.addresses),
                   ),
+                  const Divider(height: 1, indent: 56, endIndent: 16),
+                  _buildListTile(
+                    icon: Icons.notifications_none_rounded,
+                    title: 'Notifications de commande',
+                    subtitle: 'Alertes en direct sur vos livraisons',
+                    onTap: () => _handleNotificationsTap(context),
+                  ),
                 ],
               ),
             ),
+            const SizedBox(height: AppDimens.space12),
+
+            // Carte d'optimisation batterie « Pour ne rien rater »
+            _buildBatteryOptimizationCard(),
             const SizedBox(height: AppDimens.space24),
 
             // ── Section 2 : AIDE ET ASSISTANCE ──────────────────────────────
@@ -272,5 +288,230 @@ class _SettingsAndHelpScreenState extends State<SettingsAndHelpScreen> {
       ),
       onTap: onTap,
     );
+  }
+
+  Widget _buildBatteryOptimizationCard() {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimens.radius16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppDimens.radius12),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.bolt_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: AppDimens.space12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pour ne rien rater',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Pour recevoir vos alertes même lorsque l\'application est fermée, désactivez l\'optimisation de batterie pour Dokan (Paramètres › Applications › Dokan › Batterie › Non restreinte).',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleNotificationsTap(BuildContext context) async {
+    final notifService = ref.read(notificationServiceProvider);
+    final isGranted = await notifService.isPermissionGranted();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (!mounted) return;
+
+    if (isGranted) {
+      showDialog(
+        context: this.context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radius20),
+          ),
+          backgroundColor: AppColors.surface,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  color: AppColors.successSoft,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: AppColors.success,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: AppDimens.space16),
+              const Text(
+                'Notifications actives',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: AppDimens.space8),
+              const Text(
+                'Les alertes de suivi de commande et d\'arrivée du coursier sont bien activées sur votre téléphone.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: AppDimens.space16),
+              Container(
+                padding: const EdgeInsets.all(AppDimens.space12),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(AppDimens.radius12),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.bolt_rounded, size: 18, color: AppColors.primary),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Pour ne rien rater même app fermée, désactivez l\'optimisation de batterie pour Dokan.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppDimens.space20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimens.radius12),
+                    ),
+                  ),
+                  child: const Text('Compris'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      final activated = await NotificationPermissionDialog.show(
+        this.context,
+        notificationService: notifService,
+        userId: uid,
+      );
+
+      if (!activated && mounted) {
+        showDialog(
+          context: this.context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radius20),
+            ),
+            backgroundColor: AppColors.surface,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: const BoxDecoration(
+                    color: AppColors.statusPendingSoft,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.notifications_off_outlined,
+                    color: AppColors.warning,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space16),
+                const Text(
+                  'Activer dans les réglages',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space8),
+                const Text(
+                  'Pour recevoir les alertes sur votre commande en direct, activez les notifications dans :\n\n'
+                  'Paramètres du téléphone › Applications › Dokan › Notifications.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radius12),
+                      ),
+                    ),
+                    child: const Text('J\'ai compris'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
   }
 }

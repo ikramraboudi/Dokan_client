@@ -25,9 +25,12 @@
 /// ============================================================================
 library;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/user_summary.dart';
+import '../../services/local_order_tracker_service.dart';
+import '../../services/notification_service.dart';
 
 
 /// ÉTAT IMMUABLE DE LA SESSION (SessionState)
@@ -94,8 +97,16 @@ final ValueNotifier<SessionState> sessionStateNotifier =
 /// pour modifier l'état de façon contrôlée et notifier tous les widgets écouteurs.
 
 class SessionNotifier extends StateNotifier<SessionState> {
-  SessionNotifier({SessionState? initialState})
-      : super(initialState ?? const SessionState(isLoading: true)) {
+  final NotificationService? _notificationService;
+  final LocalOrderTrackerService? _localOrderTrackerService;
+
+  SessionNotifier({
+    SessionState? initialState,
+    NotificationService? notificationService,
+    LocalOrderTrackerService? localOrderTrackerService,
+  })  : _notificationService = notificationService,
+        _localOrderTrackerService = localOrderTrackerService,
+        super(initialState ?? const SessionState(isLoading: true)) {
     sessionStateNotifier.value = state;
   }
 
@@ -112,7 +123,7 @@ class SessionNotifier extends StateNotifier<SessionState> {
   ///    cette action est exécutée immédiatement UNE SEULE FOIS.
   /// 4) `pendingProtectedAction` est remis à null pour empêcher tout double déclenchement.
 
-  void loginSuccess(UserSummary user) {
+  void loginSuccess(UserSummary user, {String? userId}) {
     final pending = state.pendingProtectedAction;
     state = state.copyWith(
       user: () => user,
@@ -121,14 +132,52 @@ class SessionNotifier extends StateNotifier<SessionState> {
       pendingProtectedAction: () => null,
     );
 
+    // Enregistrement sécurisé du token FCM si permission déjà accordée
+    String? uid = userId;
+    if (uid == null) {
+      try {
+        uid = FirebaseAuth.instance.currentUser?.uid;
+      } catch (_) {}
+    }
+
+    if (uid != null && uid.isNotEmpty) {
+      // Démarrage du suivi local gratuit des commandes (temps réel + WorkManager)
+      _localOrderTrackerService?.startTracking(uid);
+
+      if (_notificationService != null) {
+        _notificationService.isPermissionGranted().then((granted) {
+          if (granted) {
+            _notificationService.registerDeviceToken(uid!);
+          }
+        });
+      }
+    }
+
     // Reprise sécurisée de l'action protégée sans doublon
     if (pending != null) {
       pending();
     }
   }
 
-  /// Déconnexion du client : réinitialise la session à l'état visiteur anonyme.
-  void logout() {
+  /// Déconnexion du client : réinitialise la session à l'état visiteur anonyme,
+  /// arrête le suivi des commandes et supprime le token de notification de ce terminal.
+  void logout({String? userId}) {
+    String? uid = userId;
+    if (uid == null) {
+      try {
+        uid = FirebaseAuth.instance.currentUser?.uid;
+      } catch (_) {}
+    }
+
+    if (uid != null && uid.isNotEmpty) {
+      // Arrêt du suivi local et nettoyage
+      _localOrderTrackerService?.stopTracking(uid);
+
+      if (_notificationService != null) {
+        _notificationService.unregisterDeviceToken(uid);
+      }
+    }
+
     state = const SessionState(isLoading: false);
   }
 
@@ -175,5 +224,10 @@ class SessionNotifier extends StateNotifier<SessionState> {
 /// Provider global de session accessible via `ref.watch(sessionProvider)`.
 final sessionProvider =
     StateNotifierProvider<SessionNotifier, SessionState>((ref) {
-  return SessionNotifier();
+  final notifService = ref.watch(notificationServiceProvider);
+  final trackerService = ref.watch(localOrderTrackerServiceProvider);
+  return SessionNotifier(
+    notificationService: notifService,
+    localOrderTrackerService: trackerService,
+  );
 });

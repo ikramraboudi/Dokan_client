@@ -23,6 +23,8 @@ library;
 
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import '../../core/utils/tunisia_regions.dart';
 import 'order_status.dart';
 
 /// Ligne d'article commandé (copie figée / snapshot au moment de l'achat).
@@ -125,18 +127,54 @@ class DriverInfo {
   final String? driverId;
   final String name;
   final String phone;
+  final String? assignedVehiclePlate;
+  final String? vehicleType;
 
   const DriverInfo({
     this.driverId,
     required this.name,
     required this.phone,
+    this.assignedVehiclePlate,
+    this.vehicleType,
   });
 
-  factory DriverInfo.fromMap(Map<String, dynamic> map) {
+  /// Indique s'il s'agit d'un camion officiel Dokan (camion / truck)
+  bool get isTruck {
+    final t = (vehicleType ?? '').toLowerCase().trim();
+    return t.contains('camion') || t.contains('truck');
+  }
+
+  /// Libellé du véhicule officiel (Camion officiel ou Voiture officielle)
+  String get vehicleLabel => isTruck ? 'Camion officiel' : 'Voiture officielle';
+
+  /// Émoji du véhicule officiel Dokan (aucun véhicule personnel)
+  String get vehicleEmoji => isTruck ? '🚚' : '🚗';
+
+  /// Icône Flutter officielle
+  IconData get vehicleIcon =>
+      isTruck ? Icons.local_shipping_rounded : Icons.directions_car_rounded;
+
+  factory DriverInfo.fromMap(
+    Map<String, dynamic> map, {
+    String? fallbackPlate,
+    String? fallbackType,
+  }) {
+    final plate = map['assignedVehiclePlate'] as String? ??
+        map['driverVehiclePlate'] as String? ??
+        map['vehiclePlate'] as String? ??
+        map['plate'] as String? ??
+        fallbackPlate;
+    final type = map['vehicleType'] as String? ??
+        map['driverVehicleType'] as String? ??
+        map['type'] as String? ??
+        fallbackType;
+
     return DriverInfo(
       driverId: map['driverId'] as String?,
       name: map['name'] as String? ?? '',
       phone: map['phone'] as String? ?? '',
+      assignedVehiclePlate: plate,
+      vehicleType: type,
     );
   }
 
@@ -145,6 +183,9 @@ class DriverInfo {
       if (driverId != null) 'driverId': driverId,
       'name': name,
       'phone': phone,
+      if (assignedVehiclePlate != null)
+        'assignedVehiclePlate': assignedVehiclePlate,
+      if (vehicleType != null) 'vehicleType': vehicleType,
     };
   }
 }
@@ -197,11 +238,27 @@ class OrderUiModel {
   final double total;
   final String currency;
   final OrderDeliveryAddress deliveryAddress;
+
+  /// Ville de destination (ex: "Nabeul", "Sousse", "Tunis").
+  final String city;
+
+  /// Région logistique Dokan ('nord' | 'centre' | 'sud').
+  final String regionId;
+
   final String deliveryMode;
   final String paymentMethod;
   final String paymentStatus;
   final Timestamp? estimatedDelivery;
   final DriverInfo? driver;
+
+  /// Matricule officiel du véhicule assigné au niveau racine du document.
+  final String? driverVehiclePlate;
+
+  /// Type de véhicule officiel Dokan ('camion' | 'voiture').
+  final String? driverVehicleType;
+
+  final Timestamp? driverArrivedAt;
+  final String? cancelledBy;
   final Timestamp createdAt;
   final Timestamp updatedAt;
 
@@ -222,14 +279,71 @@ class OrderUiModel {
     required this.total,
     this.currency = 'TND',
     required this.deliveryAddress,
+    this.city = 'Tunis',
+    this.regionId = 'nord',
     this.deliveryMode = 'standard',
     this.paymentMethod = 'cash_on_delivery',
     this.paymentStatus = 'unpaid',
     this.estimatedDelivery,
     this.driver,
+    this.driverVehiclePlate,
+    this.driverVehicleType,
+    this.driverArrivedAt,
+    this.cancelledBy,
     required this.createdAt,
     required this.updatedAt,
   });
+
+  /// Matricule officiel du véhicule Dokan (priorité aux infos du livreur puis racine).
+  String? get effectiveVehiclePlate {
+    if (driver?.assignedVehiclePlate != null &&
+        driver!.assignedVehiclePlate!.trim().isNotEmpty) {
+      return driver!.assignedVehiclePlate!.trim();
+    }
+    if (driverVehiclePlate != null && driverVehiclePlate!.trim().isNotEmpty) {
+      return driverVehiclePlate!.trim();
+    }
+    return null;
+  }
+
+  /// Type de véhicule officiel Dokan (camion ou voiture).
+  String? get effectiveVehicleType {
+    if (driver?.vehicleType != null &&
+        driver!.vehicleType!.trim().isNotEmpty) {
+      return driver!.vehicleType!.trim();
+    }
+    if (driverVehicleType != null && driverVehicleType!.trim().isNotEmpty) {
+      return driverVehicleType!.trim();
+    }
+    return null;
+  }
+
+  /// Libellé officiel du véhicule (Camion officiel ou Voiture officielle).
+  String get vehicleLabel {
+    final type = (effectiveVehicleType ?? '').toLowerCase().trim();
+    return (type.contains('camion') || type.contains('truck'))
+        ? 'Camion officiel'
+        : 'Voiture officielle';
+  }
+
+  /// Émoji du véhicule officiel Dokan (🚚 ou 🚗).
+  String get vehicleEmoji {
+    final type = (effectiveVehicleType ?? '').toLowerCase().trim();
+    return (type.contains('camion') || type.contains('truck')) ? '🚚' : '🚗';
+  }
+
+  /// Icône Flutter officielle Dokan (Camion ou Voiture).
+  IconData get vehicleIcon {
+    final type = (effectiveVehicleType ?? '').toLowerCase().trim();
+    return (type.contains('camion') || type.contains('truck'))
+        ? Icons.local_shipping_rounded
+        : Icons.directions_car_rounded;
+  }
+
+  /// Indique si un livreur ou un véhicule officiel est assigné à la commande.
+  bool get hasDriverOrVehicle =>
+      driver != null ||
+      (effectiveVehiclePlate != null && effectiveVehiclePlate!.isNotEmpty);
 
   /// Génère un numéro de commande lisible de la forme DK-AAMMJJ-XXXX.
   /// (4 caractères alphanumériques sans caractères ambigus 0, O, 1, I).
@@ -271,13 +385,64 @@ class OrderUiModel {
           .toList();
     }
 
-    // Reconstruction de l'adresse
-    final rawAddress = data['deliveryAddress'] as Map<String, dynamic>? ?? {};
-    final address = OrderDeliveryAddress.fromMap(rawAddress);
+    // Reconstruction de l'adresse (tolérant : format Map ou format String)
+    final rawAddress = data['deliveryAddress'];
+    final OrderDeliveryAddress address;
+    if (rawAddress is Map<String, dynamic>) {
+      address = OrderDeliveryAddress.fromMap(rawAddress);
+    } else if (rawAddress is String) {
+      address = OrderDeliveryAddress(
+        recipientName: data['customerName'] as String? ?? '',
+        phone: data['customerPhone'] as String? ?? '',
+        addressLine: rawAddress,
+        city: data['city'] as String? ?? '',
+      );
+    } else {
+      final rawDetails =
+          data['deliveryAddressDetails'] as Map<String, dynamic>? ?? {};
+      address = OrderDeliveryAddress.fromMap(rawDetails);
+    }
+
+    // Région et Ville obligatoires
+    final rawCity = (data['city'] as String?)?.trim();
+    final city = (rawCity != null && rawCity.isNotEmpty)
+        ? rawCity
+        : (address.city.isNotEmpty ? address.city : 'Tunis');
+    final rawRegion = (data['regionId'] as String?)?.trim().toLowerCase();
+    final regionId = (rawRegion != null &&
+            (rawRegion == 'nord' ||
+                rawRegion == 'centre' ||
+                rawRegion == 'sud'))
+        ? rawRegion
+        : TunisiaRegions.getRegionId(city);
+
+    // Extraction des plaques et types de véhicule (racine ou driver)
+    final rootPlate = data['driverVehiclePlate'] as String? ??
+        data['assignedVehiclePlate'] as String? ??
+        data['vehiclePlate'] as String?;
+    final rootType = data['driverVehicleType'] as String? ??
+        data['vehicleType'] as String?;
 
     // Reconstruction du livreur si présent
-    final rawDriver = data['driver'] as Map<String, dynamic>?;
-    final driver = rawDriver != null ? DriverInfo.fromMap(rawDriver) : null;
+    final rawDriver = data['driver'];
+    DriverInfo? driver;
+    if (rawDriver is Map<String, dynamic>) {
+      driver = DriverInfo.fromMap(
+        rawDriver,
+        fallbackPlate: rootPlate,
+        fallbackType: rootType,
+      );
+    } else if (rootPlate != null ||
+        rootType != null ||
+        data['driverName'] != null) {
+      driver = DriverInfo(
+        driverId: data['driverId'] as String?,
+        name: data['driverName'] as String? ?? '',
+        phone: data['driverPhone'] as String? ?? '',
+        assignedVehiclePlate: rootPlate,
+        vehicleType: rootType,
+      );
+    }
 
     final createdAt = data['createdAt'] is Timestamp
         ? data['createdAt'] as Timestamp
@@ -303,11 +468,17 @@ class OrderUiModel {
       total: (data['total'] as num?)?.toDouble() ?? 0.0,
       currency: data['currency'] as String? ?? 'TND',
       deliveryAddress: address,
+      city: city,
+      regionId: regionId,
       deliveryMode: data['deliveryMode'] as String? ?? 'standard',
       paymentMethod: data['paymentMethod'] as String? ?? 'cash_on_delivery',
       paymentStatus: data['paymentStatus'] as String? ?? 'unpaid',
       estimatedDelivery: data['estimatedDelivery'] as Timestamp?,
       driver: driver,
+      driverVehiclePlate: rootPlate,
+      driverVehicleType: rootType,
+      driverArrivedAt: data['driverArrivedAt'] as Timestamp?,
+      cancelledBy: data['cancelledBy'] as String?,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -320,6 +491,14 @@ class OrderUiModel {
       'userId': userId,
       'customerName': customerName,
       'customerPhone': customerPhone,
+      'deliveryAddress': deliveryAddress.addressLine.isNotEmpty
+          ? (deliveryAddress.city.isNotEmpty
+              ? '${deliveryAddress.addressLine}, ${deliveryAddress.city}'
+              : deliveryAddress.addressLine)
+          : deliveryAddress.summary,
+      'city': city,
+      'regionId': regionId,
+      'deliveryAddressDetails': deliveryAddress.toMap(),
       'status': status.value,
       'statusHistory': statusHistory.map((h) => h.toMap()).toList(),
       'items': items.map((i) => i.toMap()).toList(),
@@ -330,12 +509,15 @@ class OrderUiModel {
       'deliveryFee': deliveryFee,
       'total': total,
       'currency': currency,
-      'deliveryAddress': deliveryAddress.toMap(),
       'deliveryMode': deliveryMode,
       'paymentMethod': paymentMethod,
       'paymentStatus': paymentStatus,
       'estimatedDelivery': estimatedDelivery,
       if (driver != null) 'driver': driver!.toMap(),
+      if (effectiveVehiclePlate != null)
+        'driverVehiclePlate': effectiveVehiclePlate,
+      if (effectiveVehicleType != null)
+        'driverVehicleType': effectiveVehicleType,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };

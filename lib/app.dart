@@ -22,17 +22,50 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/config/app_config.dart';
 import 'core/navigation/app_router.dart';
+import 'core/navigation/routes.dart';
+import 'core/session/session_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'services/notification_service.dart';
 
 /// Widget racine de l'application Dokan.
 ///
-/// MOT TECHNIQUE - StatelessWidget :
-/// Widget immuable qui ne possède pas d'état interne variable dans le temps.
-/// Il décrit simplement la structure statique de base.
-class DokanApp extends StatelessWidget {
+/// MOT TECHNIQUE - ConsumerStatefulWidget :
+/// Permet à DokanApp d'initialiser les services applicatifs au démarrage
+/// (comme le NotificationService et l'écoute des notifications FCM).
+class DokanApp extends ConsumerStatefulWidget {
   const DokanApp({super.key});
+
+  @override
+  ConsumerState<DokanApp> createState() => _DokanAppState();
+}
+
+class _DokanAppState extends ConsumerState<DokanApp> {
+  @override
+  void initState() {
+    super.initState();
+    final notifService = ref.read(notificationServiceProvider);
+    notifService.initialize(
+      onNavigateToOrder: (orderId) {
+        final session = sessionStateNotifier.value;
+        if (session.isGuest) {
+          // Visiteur non connecté : redirige vers l'accueil du profil
+          appRouter.go(AppRoutes.profile);
+        } else {
+          // Client connecté : navigation sécurisée vers le détail de la commande
+          try {
+            appRouter.push('${AppRoutes.myOrders}/$orderId');
+          } catch (_) {
+            appRouter.go(AppRoutes.myOrders);
+          }
+        }
+      },
+    );
+    // Demande immédiate de la permission sur Android 13+ pour garantir la réception
+    notifService.requestPermission();
+  }
 
   @override
   Widget build(BuildContext context) {

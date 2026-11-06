@@ -46,6 +46,11 @@ class AppConfig {
   /// À modifier ici pour mettre à jour le slogan sur tout l'écran splash.
   static const String appTagline = 'Tout ce dont vous avez besoin, livré chez vous.';
 
+  /// Active le mode push serveur (Cloud Functions / FCM payant).
+  /// En mode gratuit (valeur par défaut : false), Dokan utilise l'écoute locale Firestore
+  /// en temps réel et WorkManager en tâche de fond, sans nécessiter le plan Blaze payant.
+  static const bool useServerPush = false;
+
   // ─── Coordonnées du support client ─────────────────────────────────────────
   // À renseigner avec les vraies coordonnées de Dokan.
   // Laisser vide pour masquer le canal correspondant dans l'interface.

@@ -18,6 +18,8 @@ import '../../core/ui/app_top_bar.dart';
 import '../../core/utils/validators.dart';
 import '../../data/models/user_summary.dart';
 import '../../services/auth_service.dart';
+import '../../services/notification_service.dart';
+import '../orders/notification_permission_dialog.dart';
 
 
 ///  Dokan — ÉCRAN DE CONNEXION
@@ -82,7 +84,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
 
       // 3) Mise à jour de la session Riverpod et reprise de l'action en attente
-      ref.read(sessionProvider.notifier).loginSuccess(userSummary);
+      ref.read(sessionProvider.notifier).loginSuccess(
+            userSummary,
+            userId: firebaseUser?.uid,
+          );
+
+      // Proposition bienveillante des notifications après connexion réussie
+      if (firebaseUser != null && mounted) {
+        final notifService = ref.read(notificationServiceProvider);
+        final granted = await notifService.isPermissionGranted();
+        if (!granted && mounted) {
+          await NotificationPermissionDialog.show(
+            context,
+            notificationService: notifService,
+            userId: firebaseUser.uid,
+          );
+        } else if (granted) {
+          await notifService.registerDeviceToken(firebaseUser.uid);
+        }
+      }
 
       if (!mounted) return;
 

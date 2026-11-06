@@ -43,15 +43,60 @@ enum OrderStatus {
   /// Conversion tolérante : accepte les conventions des 3 applications (Client, Admin, Livreur).
   static OrderStatus fromString(String? value) {
     if (value == null) return OrderStatus.pending;
-    return switch (value.toLowerCase().trim()) {
-      'en_attente' || 'enattente' || 'pending' => OrderStatus.pending,
-      'confirmed' => OrderStatus.confirmed,
-      'preparing' => OrderStatus.preparing,
-      'in_progress' || 'inprogress' || 'out_for_delivery' || 'outfordelivery' => OrderStatus.outForDelivery,
-      'delivered' => OrderStatus.delivered,
-      'failed' => OrderStatus.failed,
-      'refused' => OrderStatus.refused,
-      'cancelled' || 'canceled' => OrderStatus.cancelled,
+    final s = value
+        .toLowerCase()
+        .trim()
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll(' ', '_')
+        .replaceAll('-', '_');
+
+    return switch (s) {
+      'en_attente' ||
+      'enattente' ||
+      'pending' ||
+      'attente' ||
+      'recue' ||
+      'nouvelle' =>
+        OrderStatus.pending,
+      'confirmed' ||
+      'confirmee' ||
+      'confirme' ||
+      'acceptee' ||
+      'accepte' ||
+      'validee' ||
+      'valide' ||
+      'approuvee' ||
+      'approuve' =>
+        OrderStatus.confirmed,
+      'preparing' ||
+      'en_preparation' ||
+      'enpreparation' ||
+      'preparation' =>
+        OrderStatus.preparing,
+      'in_progress' ||
+      'inprogress' ||
+      'out_for_delivery' ||
+      'outfordelivery' ||
+      'en_livraison' ||
+      'enlivraison' ||
+      'en_route' ||
+      'enroute' =>
+        OrderStatus.outForDelivery,
+      'delivered' ||
+      'livree' ||
+      'livre' ||
+      'terminee' ||
+      'termine' =>
+        OrderStatus.delivered,
+      'failed' || 'echec' => OrderStatus.failed,
+      'refused' || 'refusee' || 'refuse' => OrderStatus.refused,
+      'cancelled' ||
+      'canceled' ||
+      'annulee' ||
+      'annule' =>
+        OrderStatus.cancelled,
       _ => OrderStatus.pending,
     };
   }

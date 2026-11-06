@@ -35,6 +35,7 @@ import '../../data/models/order_model.dart';
 import '../../data/models/order_status.dart';
 import '../../data/repositories/firestore_catalog_repository.dart';
 import '../../data/repositories/firestore_orders_repository.dart';
+import '../../services/local_order_tracker_service.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
   final String orderId;
@@ -50,6 +51,22 @@ class OrderDetailScreen extends ConsumerStatefulWidget {
 
 class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
   bool _isCancelling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      LocalOrderTrackerService.currentlyViewedOrderId = widget.orderId;
+    });
+  }
+
+  @override
+  void dispose() {
+    if (LocalOrderTrackerService.currentlyViewedOrderId == widget.orderId) {
+      LocalOrderTrackerService.currentlyViewedOrderId = null;
+    }
+    super.dispose();
+  }
 
   String _formatDateTime(DateTime dt) {
     const months = [
@@ -84,6 +101,10 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
               Navigator.of(ctx).pop();
               setState(() => _isCancelling = true);
               try {
+                // Enregistrement immédiat dans l'état local pour ne pas auto-notifier le client
+                await ref
+                    .read(localOrderTrackerServiceProvider)
+                    .markOrderCancelledByClient(order.id);
                 await ref
                     .read(ordersRepositoryProvider)
                     .cancelOrder(order.id);
@@ -189,9 +210,9 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 _buildTimelineCard(order),
                 const SizedBox(height: AppDimens.space16),
 
-                // ── 4. INFORMATIONS DU LIVREUR (SI PRÉSENT) ─────────────────
-                if (order.driver != null) ...[
-                  _buildDriverCard(order.driver!),
+                // ── 4. INFORMATIONS DU LIVREUR ET VÉHICULE OFFICIEL ─────────
+                if (order.hasDriverOrVehicle) ...[
+                  _buildDriverCard(order),
                   const SizedBox(height: AppDimens.space16),
                 ],
 
@@ -507,75 +528,166 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
-  Widget _buildDriverCard(DriverInfo driver) {
+  Widget _buildDriverCard(OrderUiModel order) {
+    final driver = order.driver;
+    final plate = order.effectiveVehiclePlate;
+    final driverName = driver != null && driver.name.trim().isNotEmpty
+        ? driver.name.trim()
+        : 'Livreur Dokan';
+    final driverPhone = driver != null && driver.phone.trim().isNotEmpty
+        ? driver.phone.trim()
+        : null;
+
     return Container(
       padding: const EdgeInsets.all(AppDimens.space16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimens.radius16),
-        border: Border.all(color: AppColors.accent, width: 1.5),
+        border: Border.all(color: AppColors.primary, width: 1.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppDimens.space10),
-            decoration: const BoxDecoration(
-              color: AppColors.accentSoft,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.two_wheeler_rounded,
-              color: AppColors.accent,
-              size: 26,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppDimens.space10),
+                decoration: const BoxDecoration(
+                  color: AppColors.primarySoft,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  order.vehicleIcon,
+                  color: AppColors.primary,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: AppDimens.space12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Véhicule officiel Dokan',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    Text(
+                      driverName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (driverPhone != null)
+                      Text(
+                        driverPhone,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (driverPhone != null)
+                IconButton.filled(
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.success,
+                    foregroundColor: AppColors.textOnDark,
+                  ),
+                  icon: const Icon(Icons.phone_rounded),
+                  tooltip: 'Appeler le livreur',
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: driverPhone));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Numéro copié : $driverPhone'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+            ],
           ),
-          const SizedBox(width: AppDimens.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Votre livreur Dokan',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textSecondary,
+          const SizedBox(height: AppDimens.space12),
+          const Divider(height: 1),
+          const SizedBox(height: AppDimens.space12),
+          // Badges : Type de véhicule + Matricule officiel
+          Wrap(
+            spacing: AppDimens.space8,
+            runSpacing: AppDimens.space8,
+            children: [
+              // Badge Type : Camion 🚚 ou Voiture 🚗
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.space10,
+                  vertical: AppDimens.space6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(AppDimens.radius8),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      order.vehicleEmoji,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(width: AppDimens.space6),
+                    Text(
+                      order.vehicleLabel,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Badge Matricule
+              if (plate != null && plate.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space10,
+                    vertical: AppDimens.space6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarySoft,
+                    borderRadius: BorderRadius.circular(AppDimens.radius8),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.pin_rounded,
+                        size: 15,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: AppDimens.space4),
+                      Text(
+                        'Matricule : $plate',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  driver.name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                Text(
-                  driver.phone,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton.filled(
-            style: IconButton.styleFrom(
-              backgroundColor: AppColors.success,
-              foregroundColor: AppColors.textOnDark,
-            ),
-            icon: const Icon(Icons.phone_rounded),
-            tooltip: 'Appeler le livreur',
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: driver.phone));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Numéro copié : ${driver.phone}'),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
+            ],
           ),
         ],
       ),
@@ -704,6 +816,45 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: AppDimens.space8),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.space10,
+              vertical: AppDimens.space4,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(AppDimens.radius8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Région ${order.regionId.toUpperCase()}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const Text(
+                  ' • ',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  order.city,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppDimens.space8),
           Text(

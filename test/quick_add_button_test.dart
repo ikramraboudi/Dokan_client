@@ -151,10 +151,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.tune_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.add_shopping_cart_rounded), findsOneWidget);
 
       // Appui ouvre la bottom sheet
-      await tester.tap(find.byIcon(Icons.tune_rounded));
+      await tester.tap(find.byIcon(Icons.add_shopping_cart_rounded));
       await tester.pumpAndSettle();
 
       expect(find.text('Choisir une option'), findsOneWidget);

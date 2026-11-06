@@ -7,6 +7,7 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/tunisia_regions.dart';
 import '../../services/auth_service.dart';
 import '../models/cart_item_ui_model.dart';
 import '../models/order_model.dart';
@@ -135,11 +136,25 @@ class FirestoreOrdersRepository implements OrdersRepository {
     final newDoc = _ordersRef.doc();
     final nowTimestamp = Timestamp.now();
 
+    final rawCity = deliveryAddress.city.trim();
+    final cleanCity = rawCity.isNotEmpty ? rawCity : 'Tunis';
+    final regionId = TunisiaRegions.getRegionId(cleanCity);
+
+    final addressSummary = deliveryAddress.addressLine.isNotEmpty
+        ? (deliveryAddress.city.isNotEmpty
+            ? '${deliveryAddress.addressLine}, ${deliveryAddress.city}'
+            : deliveryAddress.addressLine)
+        : deliveryAddress.summary;
+
     final orderData = {
       'displayNumber': displayNumber,
       'userId': userId,
       'customerName': customerName.trim(),
       'customerPhone': customerPhone.trim(),
+      'deliveryAddress': addressSummary,
+      'city': cleanCity,
+      'regionId': regionId,
+      'deliveryAddressDetails': deliveryAddress.toMap(),
       'status': OrderStatus.pending.value,
       'statusHistory': initialHistory.map((h) => h.toMap()).toList(),
       'items': verifiedItems.map((i) => i.toMap()).toList(),
@@ -150,7 +165,6 @@ class FirestoreOrdersRepository implements OrdersRepository {
       'deliveryFee': deliveryFee,
       'total': calculatedTotal,
       'currency': 'TND',
-      'deliveryAddress': deliveryAddress.toMap(),
       'deliveryMode': 'standard',
       'paymentMethod': 'cash_on_delivery',
       'paymentStatus': 'unpaid',
@@ -212,6 +226,8 @@ class FirestoreOrdersRepository implements OrdersRepository {
       total: calculatedTotal,
       currency: 'TND',
       deliveryAddress: deliveryAddress,
+      city: cleanCity,
+      regionId: regionId,
       deliveryMode: 'standard',
       paymentMethod: 'cash_on_delivery',
       paymentStatus: 'unpaid',

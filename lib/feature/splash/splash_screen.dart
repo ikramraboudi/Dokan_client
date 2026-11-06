@@ -317,10 +317,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _verifyFirebaseAuth() async {
     try {
       final auth = FirebaseAuth.instance;
-      final firebaseUser = await auth.authStateChanges().first.timeout(
-        const Duration(seconds: 2),
-        onTimeout: () => null,
-      );
+      final firebaseUser = auth.currentUser ??
+          await auth.authStateChanges().first.timeout(
+                const Duration(seconds: 3),
+                onTimeout: () => null,
+              );
       if (firebaseUser != null && mounted) {
         String? phone;
         try {
@@ -340,6 +341,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 email: firebaseUser.email ?? '',
                 phone: phone,
               ),
+              userId: firebaseUser.uid,
             );
       } else if (mounted) {
         ref.read(sessionProvider.notifier).logout();
