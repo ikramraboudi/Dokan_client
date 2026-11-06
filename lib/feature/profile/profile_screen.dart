@@ -5,7 +5,6 @@
 /// ============================================================================
 library;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -250,43 +249,6 @@ class ProfileScreen extends ConsumerWidget {
           title: 'Paramètres et aide',
           onTap: () => context.push(AppRoutes.settingsAndHelp),
         ),
-
-        // Outil de simulation de session expirée (visible uniquement en mode debug)
-        if (kDebugMode) ...[
-          const SizedBox(height: AppDimens.space16),
-          Container(
-            margin: const EdgeInsets.only(bottom: AppDimens.space16),
-            child: Material(
-              color: AppColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(AppDimens.radius12),
-              clipBehavior: Clip.antiAlias,
-              child: ListTile(
-                leading: const Icon(
-                  Icons.timer_outlined,
-                  color: AppColors.warning,
-                ),
-                title: const Text(
-                  'Simuler session expirée',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Test du hook onSessionExpired sans perte du panier',
-                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                ),
-                trailing: const Icon(Icons.play_arrow_rounded, color: AppColors.warning),
-                onTap: () {
-                  ref.read(sessionProvider.notifier).simulateSessionExpired();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Votre session a expiré. Connectez-vous pour continuer.'),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
         const SizedBox(height: AppDimens.space16),
 
         // Bouton de déconnexion

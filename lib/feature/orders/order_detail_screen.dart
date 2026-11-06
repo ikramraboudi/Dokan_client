@@ -202,6 +202,61 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 _buildStatusBanner(order),
                 const SizedBox(height: AppDimens.space16),
 
+                // ── BOUTON SUIVI GPS EN DIRECT (STATUT OUT_FOR_DELIVERY) ─────
+                if (order.status == OrderStatus.outForDelivery) ...[
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.onPrimary,
+                      minimumSize: const Size.fromHeight(50),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radius12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.two_wheeler_rounded, size: 22),
+                    label: const Text(
+                      '🛵 Suivre mon livreur sur la carte',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      context.push('${AppRoutes.myOrders}/${order.id}/tracking');
+                    },
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                ] else if (order.status == OrderStatus.pending ||
+                    order.status == OrderStatus.preparing ||
+                    order.status == OrderStatus.confirmed) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(AppDimens.radius12),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.location_off_outlined,
+                            size: 18, color: AppColors.textSecondary),
+                        SizedBox(width: AppDimens.space8),
+                        Expanded(
+                          child: Text(
+                            'Le suivi GPS en direct s\'activera dès que le livreur sera en route.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                ],
+
                 // ── 2. CARTOUCHE D'IDENTIFIANT & DATE ───────────────────────
                 _buildOrderInfoCard(order, createdDate),
                 const SizedBox(height: AppDimens.space16),
@@ -686,6 +741,23 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                       ),
                     ],
                   ),
+                ),
+              // Action rapide Voir sur la carte
+              if (order.status == OrderStatus.outForDelivery)
+                ActionChip(
+                  avatar: const Icon(Icons.map_outlined,
+                      size: 16, color: AppColors.primary),
+                  label: const Text('Voir sur la carte'),
+                  backgroundColor: AppColors.primarySoft,
+                  side: const BorderSide(color: AppColors.primary),
+                  labelStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                  onPressed: () {
+                    context.push('${AppRoutes.myOrders}/${order.id}/tracking');
+                  },
                 ),
             ],
           ),

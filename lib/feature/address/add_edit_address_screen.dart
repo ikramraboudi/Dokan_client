@@ -19,7 +19,10 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_form_field.dart';
@@ -53,6 +56,11 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
   final _additionalInfoController = TextEditingController();
   final _instructionsController = TextEditingController();
 
+  final MapController _miniMapController = MapController();
+  double? _latitude;
+  double? _longitude;
+  bool _isLocating = false;
+
   bool _isDefault = false;
   bool _isLoading = false;
   bool _isInitialLoading = false;
@@ -83,10 +91,94 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
         _additionalInfoController.text = existing.additionalInfo ?? '';
         _instructionsController.text = existing.deliveryInstructions ?? '';
         _isDefault = existing.isDefault;
+        _latitude = existing.latitude;
+        _longitude = existing.longitude;
       }
     }
     if (mounted) {
       setState(() => _isInitialLoading = false);
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    if (_isLocating) return;
+    setState(() => _isLocating = true);
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Veuillez activer le service de localisation (GPS) sur votre téléphone.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Permission refusée. Vous pouvez pointer votre position manuellement sur la carte.',
+                ),
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'La localisation est bloquée dans vos paramètres. Vous pouvez pointer votre adresse directement sur la carte.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          _latitude = pos.latitude;
+          _longitude = pos.longitude;
+        });
+        _miniMapController.move(LatLng(pos.latitude, pos.longitude), 15.0);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Position GPS actuelle appliquée avec succès.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Impossible d\'obtenir la position : $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLocating = false);
+      }
     }
   }
 
@@ -99,6 +191,7 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
     _zoneController.dispose();
     _additionalInfoController.dispose();
     _instructionsController.dispose();
+    _miniMapController.dispose();
     super.dispose();
   }
 
@@ -134,6 +227,8 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
             ? _instructionsController.text.trim()
             : null,
         isDefault: _isDefault,
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       if (_isEditMode) {
@@ -286,6 +381,10 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
                 ),
                 const SizedBox(height: AppDimens.space16),
 
+                // ── Bloc Position sur la carte (facultatif) ──
+                _buildMapPositionSection(),
+                const SizedBox(height: AppDimens.space16),
+
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   activeThumbColor: AppColors.primary,
@@ -327,6 +426,156 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMapPositionSection() {
+    final hasCoord = _latitude != null && _longitude != null;
+    final initialCenter = hasCoord
+        ? LatLng(_latitude!, _longitude!)
+        : const LatLng(36.8065, 10.1815);
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.location_on_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              const SizedBox(width: AppDimens.space8),
+              const Expanded(
+                child: Text(
+                  'Position sur la carte (facultatif)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              if (hasCoord)
+                IconButton(
+                  tooltip: 'Supprimer la position',
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: AppColors.textSecondary,
+                  ),
+                  onPressed: _isLoading
+                      ? null
+                      : () => setState(() {
+                            _latitude = null;
+                            _longitude = null;
+                          }),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.space4),
+          const Text(
+            'Permet au livreur de vous situer avec une précision GPS sur la carte.',
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppDimens.space12),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              minimumSize: const Size.fromHeight(42),
+            ),
+            onPressed: _isLoading || _isLocating ? null : _getCurrentLocation,
+            icon: _isLocating
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : const Icon(Icons.my_location_rounded, size: 18),
+            label: Text(
+              _isLocating
+                  ? 'Recherche GPS en cours...'
+                  : 'Utiliser ma position actuelle',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(height: AppDimens.space12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimens.radius8),
+            child: SizedBox(
+              height: 180,
+              child: FlutterMap(
+                mapController: _miniMapController,
+                options: MapOptions(
+                  initialCenter: initialCenter,
+                  initialZoom: hasCoord ? 15.0 : 11.0,
+                  onTap: (tapPosition, point) {
+                    setState(() {
+                      _latitude = point.latitude;
+                      _longitude = point.longitude;
+                    });
+                  },
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.Dokan.Dokan_client',
+                  ),
+                  if (hasCoord)
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(_latitude!, _longitude!),
+                          width: 40,
+                          height: 40,
+                          child: const Icon(
+                            Icons.location_on,
+                            size: 38,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppDimens.space6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  hasCoord
+                      ? '📍 Lat: ${_latitude!.toStringAsFixed(4)}, Lon: ${_longitude!.toStringAsFixed(4)} (Touchez pour ajuster)'
+                      : 'Touchez la carte pour pointer votre domicile.',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+              const Text(
+                '© OpenStreetMap',
+                style: TextStyle(fontSize: 9, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -48,6 +48,7 @@ import '../../feature/checkout/checkout_screen.dart';
 import '../../feature/checkout/order_confirmation_screen.dart';
 import '../../feature/orders/my_orders_screen.dart';
 import '../../feature/orders/order_detail_screen.dart';
+import '../../feature/orders/order_tracking_screen.dart';
 import '../session/session_provider.dart';
 import 'main_shell.dart';
 import 'routes.dart';
@@ -187,6 +188,13 @@ final GoRouter appRouter = GoRouter(
       path: '${AppRoutes.myOrders}/:id',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => OrderDetailScreen(
+        orderId: state.pathParameters['id'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '${AppRoutes.myOrders}/:id/tracking',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => OrderTrackingScreen(
         orderId: state.pathParameters['id'] ?? '',
       ),
     ),

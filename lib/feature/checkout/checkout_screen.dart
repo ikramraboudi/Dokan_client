@@ -701,6 +701,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         zone: _selectedAddress!.zone,
         additionalInfo: _selectedAddress!.additionalInfo,
         deliveryInstructions: _selectedAddress!.deliveryInstructions,
+        latitude: _selectedAddress!.latitude,
+        longitude: _selectedAddress!.longitude,
       );
 
       final createdOrder = await repo.createOrder(

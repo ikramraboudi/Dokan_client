@@ -81,6 +81,8 @@ class OrderDeliveryAddress {
   final String? zone;
   final String? additionalInfo;
   final String? deliveryInstructions;
+  final double? latitude;
+  final double? longitude;
 
   const OrderDeliveryAddress({
     required this.recipientName,
@@ -90,7 +92,12 @@ class OrderDeliveryAddress {
     this.zone,
     this.additionalInfo,
     this.deliveryInstructions,
+    this.latitude,
+    this.longitude,
   });
+
+  /// Indique si l'adresse dispose de coordonnées GPS pour le suivi cartographique
+  bool get hasCoordinates => latitude != null && longitude != null;
 
   String get summary => zone != null && zone!.isNotEmpty
       ? '$addressLine, $zone, $city'
@@ -105,6 +112,8 @@ class OrderDeliveryAddress {
       zone: map['zone'] as String?,
       additionalInfo: map['additionalInfo'] as String?,
       deliveryInstructions: map['deliveryInstructions'] as String?,
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -118,6 +127,8 @@ class OrderDeliveryAddress {
       if (additionalInfo != null) 'additionalInfo': additionalInfo,
       if (deliveryInstructions != null)
         'deliveryInstructions': deliveryInstructions,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
     };
   }
 }
@@ -158,6 +169,7 @@ class DriverInfo {
     Map<String, dynamic> map, {
     String? fallbackPlate,
     String? fallbackType,
+    String? fallbackDriverId,
   }) {
     final plate = map['assignedVehiclePlate'] as String? ??
         map['driverVehiclePlate'] as String? ??
@@ -168,9 +180,14 @@ class DriverInfo {
         map['driverVehicleType'] as String? ??
         map['type'] as String? ??
         fallbackType;
+    final id = map['driverId'] as String? ??
+        map['delivererId'] as String? ??
+        map['uid'] as String? ??
+        map['id'] as String? ??
+        fallbackDriverId;
 
     return DriverInfo(
-      driverId: map['driverId'] as String?,
+      driverId: id,
       name: map['name'] as String? ?? '',
       phone: map['phone'] as String? ?? '',
       assignedVehiclePlate: plate,
@@ -345,6 +362,9 @@ class OrderUiModel {
       driver != null ||
       (effectiveVehiclePlate != null && effectiveVehiclePlate!.isNotEmpty);
 
+  /// Identifiant du livreur assigné pour le suivi GPS en temps réel
+  String? get delivererId => driver?.driverId;
+
   /// Génère un numéro de commande lisible de la forme DK-AAMMJJ-XXXX.
   /// (4 caractères alphanumériques sans caractères ambigus 0, O, 1, I).
   static String generateDisplayNumber() {
@@ -422,6 +442,8 @@ class OrderUiModel {
         data['vehiclePlate'] as String?;
     final rootType = data['driverVehicleType'] as String? ??
         data['vehicleType'] as String?;
+    final rootDelivererId = data['driverId'] as String? ??
+        data['delivererId'] as String?;
 
     // Reconstruction du livreur si présent
     final rawDriver = data['driver'];
@@ -431,12 +453,14 @@ class OrderUiModel {
         rawDriver,
         fallbackPlate: rootPlate,
         fallbackType: rootType,
+        fallbackDriverId: rootDelivererId,
       );
     } else if (rootPlate != null ||
         rootType != null ||
+        rootDelivererId != null ||
         data['driverName'] != null) {
       driver = DriverInfo(
-        driverId: data['driverId'] as String?,
+        driverId: rootDelivererId,
         name: data['driverName'] as String? ?? '',
         phone: data['driverPhone'] as String? ?? '',
         assignedVehiclePlate: rootPlate,

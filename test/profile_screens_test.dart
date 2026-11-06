@@ -106,6 +106,7 @@ void main() {
       expect(find.text('Mes commandes'), findsOneWidget);
       expect(find.text('Mes adresses de livraison'), findsOneWidget);
       expect(find.text('Paramètres et aide'), findsOneWidget);
+      expect(find.text('Simuler session expirée'), findsNothing);
     });
 
     test('Redirection GoRouter protège les routes profil pour les visiteurs', () {

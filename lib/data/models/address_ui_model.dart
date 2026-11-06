@@ -32,6 +32,10 @@ class AddressUiModel {
   final bool isDefault;
   final Timestamp? createdAt;
 
+  /// Coordonnées géographiques optionnelles pour le suivi GPS précis
+  final double? latitude;
+  final double? longitude;
+
   const AddressUiModel({
     required this.id,
     required this.recipientName,
@@ -43,7 +47,12 @@ class AddressUiModel {
     this.deliveryInstructions,
     this.isDefault = false,
     this.createdAt,
+    this.latitude,
+    this.longitude,
   });
+
+  /// Indique si l'adresse possède des coordonnées GPS valides
+  bool get hasCoordinates => latitude != null && longitude != null;
 
   /// Libellé résumé sur une ligne (ex: "Avenue Habib Bourguiba, Tunis").
   String get summary => zone != null && zone!.isNotEmpty
@@ -64,6 +73,8 @@ class AddressUiModel {
       deliveryInstructions: data['deliveryInstructions'] as String?,
       isDefault: data['isDefault'] as bool? ?? false,
       createdAt: data['createdAt'] as Timestamp?,
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -79,6 +90,8 @@ class AddressUiModel {
         'additionalInfo': additionalInfo!.trim(),
       if (deliveryInstructions != null && deliveryInstructions!.trim().isNotEmpty)
         'deliveryInstructions': deliveryInstructions!.trim(),
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'isDefault': isDefault,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
     };
@@ -95,6 +108,8 @@ class AddressUiModel {
     String? Function()? deliveryInstructions,
     bool? isDefault,
     Timestamp? createdAt,
+    double? Function()? latitude,
+    double? Function()? longitude,
   }) {
     return AddressUiModel(
       id: id ?? this.id,
@@ -110,6 +125,8 @@ class AddressUiModel {
           : this.deliveryInstructions,
       isDefault: isDefault ?? this.isDefault,
       createdAt: createdAt ?? this.createdAt,
+      latitude: latitude != null ? latitude() : this.latitude,
+      longitude: longitude != null ? longitude() : this.longitude,
     );
   }
 }
