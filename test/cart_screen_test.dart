@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:Dokan_client/feature/cart/cart_screen.dart';
-import 'package:Dokan_client/data/models/product_ui_model.dart';
+import 'package:Dokan_client/data/models/cart_item_ui_model.dart';
 import 'package:Dokan_client/data/mock/mock_cart_repository.dart';
 
 void main() {
@@ -40,20 +40,28 @@ void main() {
 
     testWidgets('Panier avec article : affiche le produit, code promo et récapitulatif',
         (tester) async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final notifier = container.read(cartProvider.notifier);
-      await notifier.addProduct(
-        const ProductUiModel(
-          id: 'prod_1',
-          name: 'Montre Classique',
-          description: 'Description',
-          price: 129.0,
-          imageUrls: [],
-          categoryName: 'Accessoires',
-        ),
+      const item = CartItemUiModel(
+        id: 'c_1',
+        productId: 'prod_1',
+        name: 'Montre Classique',
+        imageUrl: '',
+        unitPrice: 129.0,
+        quantity: 1,
+        poids: 0.3,
       );
+
+      final container = ProviderContainer(
+        overrides: [
+          cartProvider.overrideWith(
+            (ref) => CartNotifier(
+              ref,
+              MockCartRepository(),
+              const CartState(items: [item]),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
 
       await tester.pumpWidget(createTestWidget(container: container));
       await tester.pumpAndSettle();

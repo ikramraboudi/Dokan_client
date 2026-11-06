@@ -36,6 +36,7 @@ class OrderItemUiModel {
   final int quantity;
   final String? variantLabel;
   final double lineTotal;
+  final double poids;
 
   const OrderItemUiModel({
     required this.productId,
@@ -45,17 +46,29 @@ class OrderItemUiModel {
     required this.quantity,
     this.variantLabel,
     required this.lineTotal,
+    this.poids = 0.0,
   });
+
+  /// Poids total calculé de la ligne commandée (poids unitaire × quantité).
+  double get linePoids => poids * quantity;
+
+  /// Alias de linePoids pour conformité avec le payload Firestore
+  double get totalPoids => linePoids;
 
   factory OrderItemUiModel.fromMap(Map<String, dynamic> map) {
     return OrderItemUiModel(
-      productId: map['productId'] as String? ?? '',
+      productId: (map['productId'] as String?) ?? (map['id'] as String?) ?? '',
       name: map['name'] as String? ?? 'Article',
       imageUrl: map['imageUrl'] as String? ?? '',
-      unitPrice: (map['unitPrice'] as num?)?.toDouble() ?? 0.0,
+      unitPrice: (map['unitPrice'] as num?)?.toDouble() ??
+          (map['price'] as num?)?.toDouble() ??
+          0.0,
       quantity: (map['quantity'] as num?)?.toInt() ?? 1,
       variantLabel: map['variantLabel'] as String?,
       lineTotal: (map['lineTotal'] as num?)?.toDouble() ?? 0.0,
+      poids: (map['poids'] as num?)?.toDouble() ??
+          (map['weight'] as num?)?.toDouble() ??
+          0.0,
     );
   }
 
@@ -65,9 +78,12 @@ class OrderItemUiModel {
       'name': name,
       'imageUrl': imageUrl,
       'unitPrice': unitPrice,
+      'price': unitPrice,
       'quantity': quantity,
       if (variantLabel != null) 'variantLabel': variantLabel,
       'lineTotal': lineTotal,
+      'poids': poids,
+      'totalPoids': linePoids,
     };
   }
 }
@@ -276,6 +292,9 @@ class OrderUiModel {
 
   final Timestamp? driverArrivedAt;
   final String? cancelledBy;
+  final double totalPoids;
+  final bool requiresTruck;
+  final String requiredVehicleType;
   final Timestamp createdAt;
   final Timestamp updatedAt;
 
@@ -307,6 +326,9 @@ class OrderUiModel {
     this.driverVehicleType,
     this.driverArrivedAt,
     this.cancelledBy,
+    this.totalPoids = 0.0,
+    this.requiresTruck = false,
+    this.requiredVehicleType = 'voiture',
     required this.createdAt,
     required this.updatedAt,
   });
@@ -475,6 +497,16 @@ class OrderUiModel {
         ? data['updatedAt'] as Timestamp
         : createdAt;
 
+    final totalPoids = (data['totalPoids'] as num?)?.toDouble() ??
+        itemsList.fold<double>(0.0, (acc, item) => acc + item.linePoids);
+    final maxItemPoids = itemsList.isEmpty
+        ? 0.0
+        : itemsList.map((e) => e.poids).reduce((a, b) => a > b ? a : b);
+    final bool requiresTruck = data['requiresTruck'] as bool? ??
+        (totalPoids > 50.0 || maxItemPoids > 30.0);
+    final String requiredVehicleType = data['requiredVehicleType'] as String? ??
+        (requiresTruck ? 'camion' : 'voiture');
+
     return OrderUiModel(
       id: doc.id,
       displayNumber: data['displayNumber'] as String? ?? 'DK-000000-0000',
@@ -503,6 +535,9 @@ class OrderUiModel {
       driverVehicleType: rootType,
       driverArrivedAt: data['driverArrivedAt'] as Timestamp?,
       cancelledBy: data['cancelledBy'] as String?,
+      totalPoids: totalPoids,
+      requiresTruck: requiresTruck,
+      requiredVehicleType: requiredVehicleType,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -532,6 +567,10 @@ class OrderUiModel {
       'promoCode': promoCode,
       'deliveryFee': deliveryFee,
       'total': total,
+      'totalPrice': total,
+      'totalPoids': totalPoids,
+      'requiresTruck': requiresTruck,
+      'requiredVehicleType': requiredVehicleType,
       'currency': currency,
       'deliveryMode': deliveryMode,
       'paymentMethod': paymentMethod,

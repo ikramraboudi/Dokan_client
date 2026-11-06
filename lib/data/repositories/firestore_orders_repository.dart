@@ -94,6 +94,11 @@ class FirestoreOrdersRepository implements OrdersRepository {
       final lineTotal = firestorePrice * item.quantity;
       calculatedSubtotal += lineTotal;
 
+      // Poids officiel Firestore (priorité à data['poids'] puis item.poids)
+      final firestorePoids = (data['poids'] as num?)?.toDouble() ??
+          (data['weight'] as num?)?.toDouble() ??
+          item.poids;
+
       verifiedItems.add(
         OrderItemUiModel(
           productId: item.productId,
@@ -108,14 +113,24 @@ class FirestoreOrdersRepository implements OrdersRepository {
           quantity: item.quantity,
           variantLabel: item.variantLabel,
           lineTotal: lineTotal,
+          poids: firestorePoids,
         ),
       );
     }
 
     // ────────────────────────────────────────────────────────────────────────
-    // ÉTAPE 2 : CALCUL DES MONTANTS FINANCIERS DÉFINITIFS
+    // ÉTAPE 2 : CALCUL DES MONTANTS FINANCIERS DÉFINITIFS & TÉLÉMÉTRIE POIDS
     // Total = sous-total des articles vérifiés - réduction coupon + frais de livraison.
+    // Camion requis si totalPoids > 50 kg OU maxItemPoids > 30 kg.
     // ────────────────────────────────────────────────────────────────────────
+    final totalPoids =
+        verifiedItems.fold<double>(0.0, (acc, i) => acc + i.linePoids);
+    final maxItemPoids = verifiedItems.isEmpty
+        ? 0.0
+        : verifiedItems.map((e) => e.poids).reduce((a, b) => a > b ? a : b);
+    final requiresTruck = totalPoids > 50.0 || maxItemPoids > 30.0;
+    final requiredVehicleType = requiresTruck ? 'camion' : 'voiture';
+
     final cleanPromo = (promoCode != null && promoCode.trim().isNotEmpty)
         ? promoCode.trim().toUpperCase()
         : null;
@@ -151,19 +166,42 @@ class FirestoreOrdersRepository implements OrdersRepository {
       'userId': userId,
       'customerName': customerName.trim(),
       'customerPhone': customerPhone.trim(),
-      'deliveryAddress': addressSummary,
+      'deliveryAddress': {
+        'address': deliveryAddress.addressLine.isNotEmpty
+            ? deliveryAddress.addressLine
+            : addressSummary,
+        'city': cleanCity,
+        'regionId': regionId,
+      },
+      'deliveryAddressText': addressSummary,
       'city': cleanCity,
       'regionId': regionId,
       'deliveryAddressDetails': deliveryAddress.toMap(),
       'status': OrderStatus.pending.value,
       'statusHistory': initialHistory.map((h) => h.toMap()).toList(),
-      'items': verifiedItems.map((i) => i.toMap()).toList(),
+      'items': verifiedItems.map((i) => {
+        'productId': i.productId,
+        'id': i.productId,
+        'name': i.name,
+        'price': i.unitPrice,
+        'unitPrice': i.unitPrice,
+        'quantity': i.quantity,
+        'poids': i.poids,
+        'totalPoids': i.linePoids,
+        'lineTotal': i.lineTotal,
+        'imageUrl': i.imageUrl,
+        if (i.variantLabel != null) 'variantLabel': i.variantLabel,
+      }).toList(),
       'itemCount': verifiedItems.fold<int>(0, (acc, i) => acc + i.quantity),
       'subtotal': calculatedSubtotal,
       'discount': effectiveDiscount,
       'promoCode': cleanPromo,
       'deliveryFee': deliveryFee,
       'total': calculatedTotal,
+      'totalPrice': calculatedTotal,
+      'totalPoids': totalPoids,
+      'requiresTruck': requiresTruck,
+      'requiredVehicleType': requiredVehicleType,
       'currency': 'TND',
       'deliveryMode': 'standard',
       'paymentMethod': 'cash_on_delivery',
@@ -231,6 +269,9 @@ class FirestoreOrdersRepository implements OrdersRepository {
       deliveryMode: 'standard',
       paymentMethod: 'cash_on_delivery',
       paymentStatus: 'unpaid',
+      totalPoids: totalPoids,
+      requiresTruck: requiresTruck,
+      requiredVehicleType: requiredVehicleType,
       createdAt: nowTimestamp,
       updatedAt: nowTimestamp,
     );

@@ -230,6 +230,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               total: cart.total,
               discount: cart.discountAmount,
               promoCode: cart.appliedPromoCode,
+              totalPoids: cart.totalPoids,
             ),
             const SizedBox(height: AppDimens.space32),
           ],

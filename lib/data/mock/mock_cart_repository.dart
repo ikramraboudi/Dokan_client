@@ -86,6 +86,20 @@ class CartState {
     return (subtotal - discountAmount + deliveryFee).clamp(0.0, double.infinity);
   }
 
+  /// Poids total cumulé des articles dans le panier (kg).
+  double get totalPoids => items.fold(0.0, (acc, item) => acc + item.linePoids);
+
+  /// Poids unitaire maximal parmi les articles du panier (kg).
+  double get maxItemPoids =>
+      items.isEmpty ? 0.0 : items.map((e) => e.poids).reduce((a, b) => a > b ? a : b);
+
+  /// Règle métier : camion requis si le poids total dépasse 50.0 kg
+  /// OU si un article individuel dépasse 30.0 kg.
+  bool get requiresTruck => totalPoids > 50.0 || maxItemPoids > 30.0;
+
+  /// Type de véhicule officiel requis ('camion' ou 'voiture').
+  String get requiredVehicleType => requiresTruck ? 'camion' : 'voiture';
+
   /// Copie immuable avec substitution ciblée.
   CartState copyWith({
     List<CartItemUiModel>? items,
@@ -161,7 +175,13 @@ class CartNotifier extends StateNotifier<CartState> {
   final Ref _ref;
   final CartRepository _repo;
 
-  CartNotifier(this._ref, this._repo) : super(const CartState());
+  CartNotifier(this._ref, this._repo, [CartState initialState = const CartState()])
+      : super(initialState);
+
+  double get totalPoids => state.totalPoids;
+  double get maxItemPoids => state.maxItemPoids;
+  bool get requiresTruck => state.requiresTruck;
+  String get requiredVehicleType => state.requiredVehicleType;
 
   /// Met à jour la pastille rouge sur l'icône du panier dans la barre de navigation.
   void _updateBadge() {
@@ -195,6 +215,7 @@ class CartNotifier extends StateNotifier<CartState> {
           name: product.name,
           imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : '',
           unitPrice: product.price,
+          poids: product.poids,
           quantity: quantity.clamp(1, 10),
           variantLabel: variant,
           availability: product.availability,

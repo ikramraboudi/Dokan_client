@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:Dokan_client/feature/product/product_detail_screen.dart';
 import 'package:Dokan_client/data/models/product_ui_model.dart';
+import 'package:Dokan_client/data/models/cart_item_ui_model.dart';
 import 'package:Dokan_client/data/mock/mock_cart_repository.dart';
 
 void main() {
@@ -40,17 +41,34 @@ void main() {
   group('ProductDetailScreen — Synchronisation réactive avec le panier', () {
     testWidgets('Produit déjà à 3 dans le panier : affiche 3 directement dans le détail',
         (tester) async {
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      const initialItem = CartItemUiModel(
+        id: 'c_pots',
+        productId: 'prod_pots',
+        name: 'Set de Casseroles Antiadhésives',
+        imageUrl: 'https://example.com/pots.png',
+        unitPrice: 129.0,
+        quantity: 3,
+        poids: 0.0,
+      );
+
       final container = ProviderContainer(
         overrides: [
           productDetailProvider('prod_pots')
               .overrideWith((ref) => Future.value(testProduct)),
+          cartProvider.overrideWith(
+            (ref) => CartNotifier(
+              ref,
+              MockCartRepository(),
+              const CartState(items: [initialItem]),
+            ),
+          ),
         ],
       );
       addTearDown(container.dispose);
-
-      // Pré-remplir le panier avec 3 unités (comme sur la carte produit)
-      final cartNotifier = container.read(cartProvider.notifier);
-      await cartNotifier.addProduct(testProduct, quantity: 3);
 
       await tester.pumpWidget(createTestWidget(container: container));
       await tester.pumpAndSettle();

@@ -42,6 +42,7 @@ class ProductUiModel {
   final List<String>? variants;
   final bool isNew;
   final bool isPopular;
+  final double poids; // Poids unitaire en kg pour le dispatching des véhicules
 
   const ProductUiModel({
     required this.id,
@@ -58,6 +59,7 @@ class ProductUiModel {
     this.variants,
     this.isNew = false,
     this.isPopular = false,
+    this.poids = 0.0,
   });
 
   /// Indique si l'article bénéficie d'une promotion réelle.
@@ -101,6 +103,13 @@ class ProductUiModel {
       variants: variantsList,
       isNew: data['isNew'] as bool? ?? false,
       isPopular: data['isPopular'] as bool? ?? false,
+      poids: (data['poids'] as num?)?.toDouble() ??
+          (data['weight'] as num?)?.toDouble() ??
+          (data['poidsKg'] as num?)?.toDouble() ??
+          (data['weightKg'] as num?)?.toDouble() ??
+          (data['poids_kg'] as num?)?.toDouble() ??
+          (data['weight_kg'] as num?)?.toDouble() ??
+          0.0,
     );
   }
 
@@ -120,6 +129,43 @@ class ProductUiModel {
       'variants': variants,
       'isNew': isNew,
       'isPopular': isPopular,
+      'poids': poids,
     };
+  }
+
+  ProductUiModel copyWith({
+    String? id,
+    String? name,
+    String? description,
+    List<String>? imageUrls,
+    double? price,
+    double? oldPrice,
+    String? discountLabel,
+    ProductAvailability? availability,
+    String? categoryName,
+    double? rating,
+    int? reviewCount,
+    List<String>? variants,
+    bool? isNew,
+    bool? isPopular,
+    double? poids,
+  }) {
+    return ProductUiModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      imageUrls: imageUrls ?? this.imageUrls,
+      price: price ?? this.price,
+      oldPrice: oldPrice ?? this.oldPrice,
+      discountLabel: discountLabel ?? this.discountLabel,
+      availability: availability ?? this.availability,
+      categoryName: categoryName ?? this.categoryName,
+      rating: rating ?? this.rating,
+      reviewCount: reviewCount ?? this.reviewCount,
+      variants: variants ?? this.variants,
+      isNew: isNew ?? this.isNew,
+      isPopular: isPopular ?? this.isPopular,
+      poids: poids ?? this.poids,
+    );
   }
 }

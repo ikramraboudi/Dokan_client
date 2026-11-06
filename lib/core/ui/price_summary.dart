@@ -42,6 +42,9 @@ class PriceSummary extends StatelessWidget {
   /// Code promotionnel appliqué (null si aucun).
   final String? promoCode;
 
+  /// Poids total de la commande en kg (optionnel).
+  final double? totalPoids;
+
   const PriceSummary({
     super.key,
     required this.subtotal,
@@ -49,6 +52,7 @@ class PriceSummary extends StatelessWidget {
     required this.total,
     this.discount = 0.0,
     this.promoCode,
+    this.totalPoids,
   });
 
   @override
@@ -97,6 +101,15 @@ class PriceSummary extends StatelessWidget {
             value: deliveryFee == 0 ? 'Gratuite' : AppConfig.formatPrice(deliveryFee),
             valueColor: deliveryFee == 0 ? AppColors.success : AppColors.textPrimary,
           ),
+          const SizedBox(height: AppDimens.space8),
+
+          // Ligne Poids total
+          if (totalPoids != null) ...[
+            _buildRow(
+              label: 'Poids total',
+              value: '${totalPoids!.toStringAsFixed(1)} kg',
+            ),
+          ],
 
           const Divider(
             color: AppColors.divider,

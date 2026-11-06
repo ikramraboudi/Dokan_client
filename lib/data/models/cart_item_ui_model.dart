@@ -44,6 +44,9 @@ class CartItemUiModel {
   /// Statut de disponibilité en stock.
   final ProductAvailability availability;
 
+  /// Poids unitaire en kg du produit.
+  final double poids;
+
   const CartItemUiModel({
     required this.id,
     required this.productId,
@@ -53,11 +56,15 @@ class CartItemUiModel {
     required this.quantity,
     this.variantLabel,
     this.availability = ProductAvailability.inStock,
+    this.poids = 0.0,
   });
 
   /// Total calculé pour cette ligne (prix unitaire × quantité).
   // TODO API : Le montant total sera également recalculé et certifié côté backend.
   double get lineTotal => unitPrice * quantity;
+
+  /// Poids total calculé pour cette ligne (poids unitaire × quantité).
+  double get linePoids => poids * quantity;
 
   /// Vrai si l'article est actuellement disponible.
   bool get isInStock => availability != ProductAvailability.outOfStock;
@@ -72,6 +79,7 @@ class CartItemUiModel {
     int? quantity,
     String? variantLabel,
     ProductAvailability? availability,
+    double? poids,
   }) {
     return CartItemUiModel(
       id: id ?? this.id,
@@ -82,6 +90,7 @@ class CartItemUiModel {
       quantity: quantity ?? this.quantity,
       variantLabel: variantLabel ?? this.variantLabel,
       availability: availability ?? this.availability,
+      poids: poids ?? this.poids,
     );
   }
 }

@@ -22,6 +22,7 @@ import '../../data/mock/mock_favorites_repository.dart';
 import '../../data/mock/mock_catalog_repository.dart';
 import '../../data/models/category_ui_model.dart';
 import '../../data/models/product_ui_model.dart';
+import 'widgets/interactive_banner_carousel.dart';
 
 /// Provider pour charger les catégories de l'accueil
 final homeCategoriesProvider = FutureProvider<List<CategoryUiModel>>((ref) async {
@@ -58,35 +59,31 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final PageController _bannerController = PageController();
-  int _activeBannerIndex = 0;
-
-  final List<Map<String, dynamic>> _banners = const [
-    {
-      'title': 'Nouvelle Collection',
-      'subtitle': 'Découvrez les dernières tendances de la saison',
-      'tag': 'NOUVEAU',
-      'colors': [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
-    },
-    {
-      'title': 'Jusqu\'à -30 %',
-      'subtitle': 'Des réductions exceptionnelles sur une large sélection',
-      'tag': 'PROMOTIONS',
-      'colors': [AppColors.primary, AppColors.accent, AppColors.accentSoft],
-    },
-    {
-      'title': 'Maison & Décoration',
-      'subtitle': 'Sublimez vos espaces de vie avec élégance',
-      'tag': 'TENDANCE',
-      'colors': [AppColors.primaryDark, AppColors.primaryLight, AppColors.primarySoft],
-    },
+  late final List<BannerItem> _banners = [
+    BannerItem(
+      title: 'Nouvelle Collection',
+      subtitle: 'Découvrez les dernières tendances de la saison',
+      tag: 'NOUVEAU',
+      colors: const [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
+      onTap: () => context.push(AppRoutes.catalog),
+    ),
+    BannerItem(
+      title: 'Jusqu\'à -30 %',
+      subtitle: 'Des réductions exceptionnelles sur une large sélection',
+      tag: 'PROMOTIONS',
+      colors: const [AppColors.statusOutForDelivery, AppColors.statusPending, AppColors.accent],
+      onTap: () => context.push(AppRoutes.catalog),
+    ),
+    BannerItem(
+      title: 'Maison & Décoration',
+      subtitle: 'Sublimez vos espaces de vie avec élégance',
+      tag: 'TENDANCE',
+      colors: const [AppColors.primaryDark, AppColors.primary, AppColors.info],
+      onTap: () => context.push(
+        '${AppRoutes.catalog}?category=${Uri.encodeComponent('Maison & Décoration')}',
+      ),
+    ),
   ];
-
-  @override
-  void dispose() {
-    _bannerController.dispose();
-    super.dispose();
-  }
 
   void _onProductFavoriteTap(ProductUiModel product) {
     final session = ref.read(sessionProvider);
@@ -215,105 +212,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               const SizedBox(height: AppDimens.space20),
 
-              // --- Carrousel de bannières dégradées peintes en Flutter ---
-              SizedBox(
-                height: 155,
-                child: PageView.builder(
-                  controller: _bannerController,
-                  itemCount: _banners.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _activeBannerIndex = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final banner = _banners[index];
-                    final colors = banner['colors'] as List<Color>;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: colors,
-                          ),
-                          borderRadius: BorderRadius.circular(AppDimens.radius16),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: AppColors.shadow,
-                              blurRadius: 10,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(AppDimens.space20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimens.space8,
-                                vertical: AppDimens.space4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.surface,
-                                borderRadius: BorderRadius.circular(AppDimens.radius8),
-                              ),
-                              child: Text(
-                                banner['tag'] as String,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryDark,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: AppDimens.space8),
-                            Text(
-                              banner['title'] as String,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textOnDark,
-                              ),
-                            ),
-                            const SizedBox(height: AppDimens.space4),
-                            Text(
-                              banner['subtitle'] as String,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.primarySoft,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: AppDimens.space8),
-
-              // Indicateurs de pagination du carrousel
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_banners.length, (index) {
-                  final isActive = _activeBannerIndex == index;
-                  return AnimatedContainer(
-                    duration: AppDimens.animFast,
-                    margin: const EdgeInsets.symmetric(horizontal: AppDimens.space4),
-                    width: isActive ? 20 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: isActive ? AppColors.primary : AppColors.border,
-                      borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-                    ),
-                  );
-                }),
+              // --- Carrousel de bannières interactif (défilement toutes les 2s) ---
+              InteractiveBannerCarousel(
+                banners: _banners,
+                autoScrollInterval: const Duration(seconds: 2),
               ),
               const SizedBox(height: AppDimens.space24),
 

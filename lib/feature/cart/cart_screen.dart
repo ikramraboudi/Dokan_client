@@ -120,6 +120,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   child: ListView(
                     padding: const EdgeInsets.all(AppDimens.space16),
                     children: [
+                      // Bannière d'affectation du véhicule (voiture ou camion)
+                      _buildVehicleBanner(cartState),
+                      const SizedBox(height: AppDimens.space12),
+
                       // Liste des articles
                       ...List.generate(cartState.items.length, (index) {
                         final item = cartState.items[index];
@@ -138,6 +142,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         total: cartState.total,
                         discount: cartState.discountAmount,
                         promoCode: cartState.appliedPromoCode,
+                        totalPoids: cartState.totalPoids,
                       ),
                       const SizedBox(height: AppDimens.space24),
                     ],
@@ -148,6 +153,52 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 _buildBottomCheckoutBar(cartState),
               ],
             ),
+    );
+  }
+
+  /// Bannière d'affectation automatique du véhicule de livraison (Voiture vs Camion)
+  Widget _buildVehicleBanner(CartState cartState) {
+    final isTruck = cartState.requiresTruck;
+    final bgColor = isTruck
+        ? AppColors.warning.withValues(alpha: 0.12)
+        : AppColors.info.withValues(alpha: 0.10);
+    final borderColor = isTruck
+        ? AppColors.warning.withValues(alpha: 0.6)
+        : AppColors.info.withValues(alpha: 0.4);
+    final iconColor = isTruck ? const Color(0xFFE65100) : AppColors.info;
+    final icon = isTruck ? Icons.local_shipping : Icons.directions_car;
+    final message = isTruck
+        ? 'Camion requis : Poids lourd (> 50 kg ou article > 30 kg). Livraison assurée par un camion de service.'
+        : 'Livraison standard en voiture.';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.space16,
+        vertical: AppDimens.space12,
+      ),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(AppDimens.radius12),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, color: iconColor, size: 26),
+          const SizedBox(width: AppDimens.space12),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isTruck ? FontWeight.w600 : FontWeight.w500,
+                color: isTruck ? const Color(0xFFBF360C) : AppColors.textPrimary,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -385,6 +436,42 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     ),
                   ),
                 ],
+
+                // Badge de poids unitaire et total ligne
+                const SizedBox(height: AppDimens.space4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(AppDimens.radius8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.scale_outlined,
+                        size: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        item.poids > 0
+                            ? (item.quantity > 1
+                                ? '${item.quantity} × ${item.poids.toStringAsFixed(1)} kg = ${item.linePoids.toStringAsFixed(1)} kg'
+                                : '${item.poids.toStringAsFixed(1)} kg')
+                            : 'Poids non renseigné',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: AppDimens.space8),
 
                 // Prix et sélecteur de quantité
