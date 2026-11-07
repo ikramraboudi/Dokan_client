@@ -21,6 +21,9 @@ abstract class DelivererLocationRepository {
   /// Flux en temps réel observant la position du livreur.
   Stream<DelivererLocation?> watchDelivererLocation(String delivererId);
 
+  /// Récupère ponctuellement la dernière position connue du livreur (snapshot direct).
+  Future<DelivererLocation?> getDelivererLocation(String delivererId);
+
   /// Récupère le décalage temporel avec le serveur Firebase (en millisecondes).
   Future<int> getServerTimeOffset();
 
@@ -78,6 +81,23 @@ class FirebaseDelivererLocationRepository implements DelivererLocationRepository
       debugPrint('FirebaseDelivererLocationRepository: watch error ($error)');
       return null;
     });
+  }
+
+  @override
+  Future<DelivererLocation?> getDelivererLocation(String delivererId) async {
+    final cleanId = delivererId.trim();
+    if (cleanId.isEmpty) return null;
+    try {
+      final ref = _database.ref('deliverers_live/$cleanId');
+      final snapshot = await ref.get().timeout(const Duration(seconds: 4));
+      final value = snapshot.value;
+      if (value is Map) {
+        return DelivererLocation.fromMap(cleanId, value);
+      }
+    } catch (e) {
+      debugPrint('FirebaseDelivererLocationRepository: getDelivererLocation error ($e)');
+    }
+    return null;
   }
 
   @override
@@ -179,6 +199,26 @@ class MockDelivererLocationRepository implements DelivererLocationRepository {
     });
 
     return _controller.stream;
+  }
+
+  @override
+  Future<DelivererLocation?> getDelivererLocation(String delivererId) async {
+    final nowMillis = DateTime.now().millisecondsSinceEpoch;
+    return DelivererLocation(
+      delivererId: delivererId,
+      delivererName: 'Mourad Trabelsi (Simulé)',
+      latitude: _currentLat,
+      longitude: _currentLon,
+      heading: _currentHeading,
+      speed: _currentSpeed,
+      timestamp: nowMillis,
+      isOnline: _isOnline,
+      currentOrderId: 'ord_mock_123',
+      vehicle: const {
+        'matricule': '215 TN 8877',
+        'type': 'voiture',
+      },
+    );
   }
 
   @override

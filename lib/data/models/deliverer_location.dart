@@ -57,9 +57,10 @@ class DelivererLocation {
   LatLng get latLng => LatLng(latitude, longitude);
 
   /// Vérifie la fraîcheur de la position en comparant l'horodatage au temps serveur.
-  /// Le livreur est considéré en ligne si `isOnline == true` ET l'âge de la position <= maxAgeSeconds (défaut 60 s).
-  bool isFresh({required int serverNowMillis, int maxAgeSeconds = 60}) {
+  /// Le livreur est considéré en ligne si `isOnline == true` ET l'âge de la position <= maxAgeSeconds (défaut 300 s / 5 min).
+  bool isFresh({required int serverNowMillis, int maxAgeSeconds = 300}) {
     if (!isOnline) return false;
+    if (timestamp <= 0) return true; // Horodatage non fourni mais livreur en ligne
     final ageMillis = (serverNowMillis - timestamp).abs();
     return ageMillis <= (maxAgeSeconds * 1000);
   }
@@ -123,7 +124,11 @@ class DelivererLocation {
     final lon = parseDouble(map['longitude'] ?? map['lon'] ?? map['lng']);
     final heading = parseDouble(map['heading']);
     final speed = parseDouble(map['speed']);
-    final timestamp = parseInt(map['timestamp']);
+    var timestamp = parseInt(map['timestamp']);
+    // Conversion automatique si l'horodatage a été écrit en secondes (format UNIX 10 chiffres)
+    if (timestamp > 0 && timestamp < 10000000000) {
+      timestamp *= 1000;
+    }
     final isOnline = map['isOnline'] as bool? ?? true;
     final currentOrderId = map['currentOrderId'] as String?;
 

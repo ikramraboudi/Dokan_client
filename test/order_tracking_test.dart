@@ -360,4 +360,17 @@ void main() {
       expect(firstEvent.vehiclePlate, isNotNull);
     });
   });
+
+  group('8. DelivererLocationRepository - getDelivererLocation pour synchronisation 5s', () {
+    test('MockDelivererLocationRepository supporte getDelivererLocation', () async {
+      final repo = MockDelivererLocationRepository();
+      final loc = await repo.getDelivererLocation('driver_test_5s');
+
+      expect(loc, isNotNull);
+      expect(loc!.delivererId, 'driver_test_5s');
+      expect(loc.latitude, greaterThan(36.0));
+      expect(loc.longitude, greaterThan(10.0));
+      expect(loc.isOnline, isTrue);
+    });
+  });
 }

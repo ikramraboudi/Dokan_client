@@ -56,6 +56,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
   // Abonnements et contrôleurs
   StreamSubscription<DocumentSnapshot>? _orderSubscription;
   StreamSubscription<DelivererLocation?>? _locationSubscription;
+  Timer? _periodicSyncTimer;
 
   // Données de commande
   OrderUiModel? _order;
@@ -74,6 +75,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
   // Contrôle de caméra et auto-suivi
   bool _isAutoTracking = true;
   bool _initialFitDone = false;
+  bool _isMapReady = false;
 
   // Animation fluide d'interpolation du marqueur
   late final AnimationController _markerAnimController;
@@ -110,9 +112,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
 
   @override
   void dispose() {
+    _stopTracking();
     _markerAnimController.dispose();
     _orderSubscription?.cancel();
-    _locationSubscription?.cancel();
     _routingService.dispose();
     _mapController.dispose();
     super.dispose();
@@ -183,37 +185,24 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     }
   }
 
-  /// 2. Écoute de la position en direct dans Realtime Database
+  /// 2. Écoute de la position en direct dans Realtime Database + synchronisation active 5s
   Future<void> _startDelivererTracking(String delivererId) async {
-    await _locationSubscription?.cancel();
+    final cleanId = delivererId.trim();
+    if (cleanId.isEmpty) return;
+
+    _stopTracking();
 
     final repo = ref.read(delivererLocationRepositoryProvider);
     _serverTimeOffset = await repo.getServerTimeOffset();
 
-    _locationSubscription = repo.watchDelivererLocation(delivererId).listen(
+    // 1) Récupération immédiate par snapshot ponctuel (affiche la position sans attendre un événement)
+    _syncDelivererLocation(cleanId);
+
+    // 2) Abonnement en temps réel continu au nœud RTDB
+    _locationSubscription = repo.watchDelivererLocation(cleanId).listen(
       (location) {
-        if (!mounted) return;
-
-        setState(() {
-          _isRtdbError = false;
-          _currentLocation = location;
-        });
-
-        if (location != null && location.latitude != 0.0 && location.longitude != 0.0) {
-          _animateMarkerTo(location);
-          _updateRouteIfNeeded(location);
-
-          // Si l'auto-suivi est actif, recentrage animé de la caméra
-          if (_isAutoTracking) {
-            _mapController.move(location.latLng, _mapController.camera.zoom);
-          }
-
-          // Au tout premier point reçu, cadrage d'ensemble livreur + destination
-          if (!_initialFitDone) {
-            _fitMapBounds(location.latLng);
-            _initialFitDone = true;
-          }
-        }
+        if (!mounted || location == null) return;
+        _handleNewLocation(location);
       },
       onError: (err) {
         if (mounted) {
@@ -223,11 +212,63 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
         }
       },
     );
+
+    // 3) Polling de secours actif toutes les 5 secondes (garantit la mise à jour rapide et le rafraîchissement continu)
+    _periodicSyncTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted) return;
+      _syncDelivererLocation(cleanId);
+    });
+  }
+
+  /// Synchronisation ponctuelle active (exécutée immédiatement et toutes les 5 secondes)
+  Future<void> _syncDelivererLocation(String delivererId) async {
+    try {
+      final repo = ref.read(delivererLocationRepositoryProvider);
+      final loc = await repo.getDelivererLocation(delivererId);
+      if (loc != null && mounted) {
+        _handleNewLocation(loc);
+      }
+    } catch (e) {
+      debugPrint('Sync 5s deliverer location error: $e');
+    }
+  }
+
+  /// Traitement d'un nouveau point GPS reçu (soit par flux RTDB, soit par le timer 5s)
+  void _handleNewLocation(DelivererLocation location) {
+    if (!mounted) return;
+    if (location.latitude == 0.0 && location.longitude == 0.0) return;
+
+    final prevLoc = _currentLocation;
+    setState(() {
+      _isRtdbError = false;
+      _currentLocation = location;
+    });
+
+    // Animation fluide du marqueur orienté selon le cap
+    _animateMarkerTo(location);
+
+    // Recalcul de l'itinéraire OSRM et de l'ETA
+    _updateRouteIfNeeded(location);
+
+    // Cadrage automatique de la caméra
+    if (!_initialFitDone && _isMapReady) {
+      _adaptCameraView();
+      _initialFitDone = true;
+    } else if (_isAutoTracking && _isMapReady) {
+      final distMoved = prevLoc != null
+          ? location.distanceTo(prevLoc.latitude, prevLoc.longitude)
+          : 999.0;
+      if (distMoved >= 3.0) {
+        _centerOnDriver(location.latLng);
+      }
+    }
   }
 
   void _stopTracking() {
     _locationSubscription?.cancel();
     _locationSubscription = null;
+    _periodicSyncTimer?.cancel();
+    _periodicSyncTimer = null;
   }
 
   /// Animation fluide de transition entre la position précédente et la nouvelle
@@ -293,23 +334,80 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
     if (addr != null && addr.hasCoordinates) {
       return LatLng(addr.latitude!, addr.longitude!);
     }
+    final city = _order?.city;
+    if (city != null && city.isNotEmpty) {
+      final cityCoord = _getCityFallbackLatLng(city);
+      if (cityCoord != null) return cityCoord;
+    }
     return null;
   }
 
-  /// Cadre la caméra pour voir à la fois le livreur et l'adresse de destination
-  void _fitMapBounds(LatLng driverPos) {
-    final dest = _getDestinationLatLng();
-    if (dest != null) {
-      final bounds = LatLngBounds.fromPoints([driverPos, dest]);
-      _mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: bounds,
-          padding: const EdgeInsets.all(50.0),
-        ),
-      );
-    } else {
-      _mapController.move(driverPos, 15.0);
+  LatLng? _getCityFallbackLatLng(String city) {
+    final c = city.trim().toLowerCase();
+    if (c.contains('tunis') || c.contains('ariana') || c.contains('ben arous') || c.contains('manouba')) {
+      return const LatLng(36.8065, 10.1815);
     }
+    if (c.contains('nabeul') || c.contains('hammamet')) {
+      return const LatLng(36.4561, 10.7376);
+    }
+    if (c.contains('sousse')) {
+      return const LatLng(35.8256, 10.6084);
+    }
+    if (c.contains('sfax')) {
+      return const LatLng(34.7406, 10.7603);
+    }
+    if (c.contains('monastir')) {
+      return const LatLng(35.7779, 10.8261);
+    }
+    if (c.contains('bizerte')) {
+      return const LatLng(37.2744, 9.8739);
+    }
+    if (c.contains('gabes') || c.contains('gabès')) {
+      return const LatLng(33.8815, 10.0982);
+    }
+    return null;
+  }
+
+  /// Cadre intelligemment la caméra pour voir à la fois le livreur et la destination
+  /// tout en dégageant la carte basse d'informations.
+  void _adaptCameraView({bool force = false}) {
+    if (!_isMapReady || !mounted) return;
+    final driverPos = _interpolatedPos ?? _currentLocation?.latLng;
+    final dest = _getDestinationLatLng();
+
+    if (driverPos != null && driverPos.latitude != 0.0 && driverPos.longitude != 0.0) {
+      if (dest != null && dest.latitude != 0.0 && dest.longitude != 0.0) {
+        final dist = driverPos == dest ? 0.0 : const Distance().as(LengthUnit.Meter, driverPos, dest);
+        if (dist > 60.0) {
+          final bounds = LatLngBounds.fromPoints([driverPos, dest]);
+          _mapController.fitCamera(
+            CameraFit.bounds(
+              bounds: bounds,
+              padding: const EdgeInsets.only(
+                top: 80.0,
+                bottom: 240.0, // Dégage la carte d'informations basse
+                left: 45.0,
+                right: 45.0,
+              ),
+            ),
+          );
+          return;
+        }
+      }
+      final currentZoom = _mapController.camera.zoom;
+      final targetZoom = currentZoom < 14.0 ? 16.0 : currentZoom;
+      _mapController.move(driverPos, targetZoom);
+    } else if (dest != null && dest.latitude != 0.0 && dest.longitude != 0.0) {
+      _mapController.move(dest, 15.0);
+    }
+  }
+
+  /// Recentrage automatique fluide sur le livreur
+  void _centerOnDriver(LatLng driverPos) {
+    if (!_isMapReady || !mounted) return;
+    final currentZoom = _mapController.camera.zoom;
+    final targetZoom = currentZoom < 14.0 ? 16.0 : currentZoom;
+    _mapController.move(driverPos, targetZoom);
   }
 
   /// Détermine l'état courant selon les règles métier
@@ -325,10 +423,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
       return TrackingUiState.cancelled;
     }
 
-    // Pas encore en livraison ou pas de livreur assigné
-    if (_order!.status != OrderStatus.outForDelivery ||
-        _order!.delivererId == null ||
-        _currentLocation == null) {
+    // Si aucun livreur assigné ou aucune position reçue
+    if (_order!.delivererId == null || _currentLocation == null) {
       return TrackingUiState.waitingForDriver;
     }
 
@@ -342,9 +438,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
       return TrackingUiState.driverArrived;
     }
 
-    // Fraîcheur du livreur (isOnline et âge <= 60s)
+    // Fraîcheur du livreur (isOnline et âge <= 300s ou horodatage 0)
     final nowServer = DateTime.now().millisecondsSinceEpoch + _serverTimeOffset;
-    final isFresh = _currentLocation!.isFresh(serverNowMillis: nowServer);
+    final isFresh = _currentLocation!.isFresh(
+      serverNowMillis: nowServer,
+      maxAgeSeconds: 300,
+    );
 
     if (!isFresh) {
       return TrackingUiState.driverOffline;
@@ -439,6 +538,13 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
             options: MapOptions(
               initialCenter: initialCenter,
               initialZoom: 15.0,
+              onMapReady: () {
+                _isMapReady = true;
+                if (_currentLocation != null && !_initialFitDone) {
+                  _adaptCameraView();
+                  _initialFitDone = true;
+                }
+              },
               onPositionChanged: (camera, hasGesture) {
                 // Si l'utilisateur touche la carte, désactiver le suivi auto
                 if (hasGesture && _isAutoTracking) {
@@ -557,9 +663,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
                   elevation: 4,
                   onPressed: () {
                     setState(() => _isAutoTracking = true);
-                    if (driverPos != null) {
-                      _mapController.move(driverPos, 16.0);
-                    }
+                    _adaptCameraView(force: true);
                   },
                   child: Icon(
                     _isAutoTracking

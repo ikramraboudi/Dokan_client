@@ -199,6 +199,9 @@ class DriverInfo {
     final id = map['driverId'] as String? ??
         map['delivererId'] as String? ??
         map['uid'] as String? ??
+        map['userId'] as String? ??
+        map['driverUid'] as String? ??
+        map['delivererUid'] as String? ??
         map['id'] as String? ??
         fallbackDriverId;
 
@@ -427,21 +430,38 @@ class OrderUiModel {
           .toList();
     }
 
-    // Reconstruction de l'adresse (tolérant : format Map ou format String)
+    // Reconstruction de l'adresse (tolérant : format Map ou format String, et fusion des coordonnées)
+    final rawDetails =
+        data['deliveryAddressDetails'] as Map<String, dynamic>? ?? {};
     final rawAddress = data['deliveryAddress'];
     final OrderDeliveryAddress address;
     if (rawAddress is Map<String, dynamic>) {
-      address = OrderDeliveryAddress.fromMap(rawAddress);
+      final merged = Map<String, dynamic>.from(rawDetails)..addAll(rawAddress);
+      if (rawAddress['latitude'] == null && rawDetails['latitude'] != null) {
+        merged['latitude'] = rawDetails['latitude'];
+      }
+      if (rawAddress['longitude'] == null && rawDetails['longitude'] != null) {
+        merged['longitude'] = rawDetails['longitude'];
+      }
+      if (merged['latitude'] == null && data['latitude'] != null) {
+        merged['latitude'] = data['latitude'];
+      }
+      if (merged['longitude'] == null && data['longitude'] != null) {
+        merged['longitude'] = data['longitude'];
+      }
+      address = OrderDeliveryAddress.fromMap(merged);
     } else if (rawAddress is String) {
       address = OrderDeliveryAddress(
         recipientName: data['customerName'] as String? ?? '',
         phone: data['customerPhone'] as String? ?? '',
         addressLine: rawAddress,
         city: data['city'] as String? ?? '',
+        latitude: (rawDetails['latitude'] as num?)?.toDouble() ??
+            (data['latitude'] as num?)?.toDouble(),
+        longitude: (rawDetails['longitude'] as num?)?.toDouble() ??
+            (data['longitude'] as num?)?.toDouble(),
       );
     } else {
-      final rawDetails =
-          data['deliveryAddressDetails'] as Map<String, dynamic>? ?? {};
       address = OrderDeliveryAddress.fromMap(rawDetails);
     }
 
@@ -465,7 +485,10 @@ class OrderUiModel {
     final rootType = data['driverVehicleType'] as String? ??
         data['vehicleType'] as String?;
     final rootDelivererId = data['driverId'] as String? ??
-        data['delivererId'] as String?;
+        data['delivererId'] as String? ??
+        data['driverUid'] as String? ??
+        data['assignedDriverId'] as String? ??
+        (data['driver'] is String ? data['driver'] as String : null);
 
     // Reconstruction du livreur si présent
     final rawDriver = data['driver'];
