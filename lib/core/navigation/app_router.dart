@@ -49,6 +49,7 @@ import '../../feature/checkout/order_confirmation_screen.dart';
 import '../../feature/orders/my_orders_screen.dart';
 import '../../feature/orders/order_detail_screen.dart';
 import '../../feature/orders/order_tracking_screen.dart';
+import '../../feature/orders/review_screen.dart';
 import '../session/session_provider.dart';
 import 'main_shell.dart';
 import 'routes.dart';
@@ -197,6 +198,21 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => OrderTrackingScreen(
         orderId: state.pathParameters['id'] ?? '',
       ),
+    ),
+    GoRoute(
+      path: AppRoutes.orderReview,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final orderId = state.pathParameters['orderId'] ?? '';
+        final productId = state.pathParameters['productId'] ?? '';
+        final extra = state.extra as Map<String, dynamic>?;
+        return ReviewScreen(
+          orderId: orderId,
+          productId: productId,
+          productName: extra?['productName'] as String?,
+          productImageUrl: extra?['productImageUrl'] as String?,
+        );
+      },
     ),
     GoRoute(
       path: AppRoutes.addresses,

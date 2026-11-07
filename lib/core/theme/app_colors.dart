@@ -78,6 +78,14 @@ class AppColors {
   static const Color shimmerHigh   = Color(0xFFF6F4EF); // Brillance de l'animation de chargement
   static const Color star          = Color(0xFFF2B01E); // Étoiles de notation des produits
 
+  // --- Avis clients & Écran de notation (Humeurs réactives) ---
+  static const Color reviewBadBg   = Color(0xFFFBEBEB); // Fond teinte chaude douce (notes 1-2)
+  static const Color reviewBadFg   = Color(0xFFD64545); // Teinte rouge contrastée (notes 1-2)
+  static const Color reviewMidBg   = Color(0xFFFEF7EA); // Fond ambre / sable doux (note 3)
+  static const Color reviewMidFg   = Color(0xFFD97706); // Ambre contrasté (note 3)
+  static const Color reviewGoodBg  = Color(0xFFE8F6F0); // Fond menthe / vert d'eau doux (notes 4-5)
+  static const Color reviewGoodFg  = Color(0xFF1F7A7A); // Vert canard primaire Dokan contrasté (notes 4-5)
+
   // --- Statuts de commande (Dokan - Palette douce et harmonieuse) ---
   static const Color statusPending          = Color(0xFFD97706); // Ambre chaud (En attente)
   static const Color statusPendingSoft      = Color(0xFFFEF3C7);

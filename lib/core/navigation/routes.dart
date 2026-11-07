@@ -48,6 +48,7 @@ class AppRoutes {
   static const String myOrders          = '/orders';
   static const String orderDetail       = '/orders/:id';
   static const String orderTracking     = '/orders/:id/tracking';
+  static const String orderReview       = '/orders/:orderId/review/:productId';
   static const String addresses         = '/addresses';
   static const String addAddress        = '/addresses/add';
   static const String editAddress       = '/addresses/edit';
@@ -59,6 +60,10 @@ class AppRoutes {
   static const String faq              = '/help/faq';
   static const String terms            = '/legal/terms';
   static const String privacy          = '/legal/privacy';
+
+  /// Construit l'URL paramétrée pour ouvrir l'écran d'avis d'un produit d'une commande.
+  static String orderReviewPath(String orderId, String productId) =>
+      '/orders/$orderId/review/$productId';
 
   /// FONCTIONNALITÉ :
   /// Construit l'URL paramétrée pour ouvrir la fiche détaillée d'un produit précis.

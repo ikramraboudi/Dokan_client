@@ -1,23 +1,82 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // =========================================================================
-    // RÈGLES EXISTANTES : CATALOGUE PRODUITS
-    // =========================================================================
-    match /products/{productId} {
-      // Lecture publique autorisée pour tous (visiteurs et clients)
+    // Helper functions pour vérifier les rôles
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == 'admin' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isDeliverer() {
+      return isAuthenticated() && (
+        request.auth.token.role in ['deliverer', 'driver'] ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['deliverer', 'driver', 'livreur'])
+      );
+    }
+
+    // Produits : lecture publique, écriture autorisée
+    match /products/{document=**} {
       allow read: if true;
-      // Écriture réservée à l'application Admin
-      // allow write: if request.auth != null && ... ; // Règle définie par l'Admin
+      allow write: if true;
+    }
+
+    // Profils utilisateurs : le rôle ne peut pas être modifié depuis une app client
+    match /users/{uid} {
+      allow read: if request.auth != null;
+
+      // Inscription : soit l'admin crée le compte (ex. livreur), soit le compte lui-même à l'inscription
+      allow create: if isAdmin() || (
+        request.auth.uid == uid &&
+        request.resource.data.role in ['pending', 'client', 'deliverer', 'livreur']
+      );
+
+      // Modification : soit l'admin, soit l'utilisateur pour ses propres champs (hors rôle)
+      allow update: if isAdmin() || (
+        request.auth.uid == uid &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Commandes : gestion des accès pour les livreurs et autres rôles (compatibilité livreur)
+    match /commandes/{commandeId} {
+      // Un utilisateur connecté peut lire une commande si :
+      // 1. Il est le livreur assigné à cette commande (livreurId == son UID)
+      // 2. OU il est le client qui a passé la commande
+      // 3. OU il est admin
+      allow read: if request.auth != null && (
+        resource.data.livreurId == request.auth.uid ||
+        resource.data.clientId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Le livreur peut uniquement mettre à jour certaines données (ex: le statut de livraison)
+      // sans pouvoir réassigner la commande à quelqu'un d'autre ou changer le client.
+      allow update: if request.auth != null && (
+        (resource.data.livreurId == request.auth.uid && 
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['livreurId', 'clientId'])) ||
+        isAdmin()
+      );
+
+      // La création et la suppression des commandes sont généralement gérées par l'admin ou le backend/app web
+      allow create, delete: if isAdmin();
     }
 
     // =========================================================================
-    // NOUVELLES RÈGLES CLIENT : ADRESSES DE LIVRAISON (users/{uid}/addresses)
+    // NOUVELLES RÈGLES CLIENT : ADRESSES (users/{uid}/addresses)
     // =========================================================================
     match /users/{userId}/addresses/{addressId} {
-      // Un client authentifié gère exclusivement ses propres adresses
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
@@ -25,36 +84,144 @@ service cloud.firestore {
     // NOUVELLES RÈGLES CLIENT : COMMANDES (orders/{orderId})
     // =========================================================================
     match /orders/{orderId} {
-      // 1. LECTURE : Le client peut lire uniquement ses propres commandes
-      // (À COMPLÉTER avec la règle Admin/Livreur : || request.auth.token.role in ['admin', 'driver'])
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // 1. Lecture : client propriétaire OU admin OU livreur assigné
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin() ||
+        resource.data.driverId == request.auth.uid ||
+        resource.data.livreurId == request.auth.uid ||
+        (resource.data.driver != null && resource.data.driver.id == request.auth.uid)
+      );
 
-      // 2. CRÉATION : Un client authentifié peut créer sa propre commande si :
-      // - Son userId correspond à son identifiant Auth
-      // - Le statut initial est obligatoirement 'pending'
-      // - Les champs obligatoires sont présents
-      allow create: if request.auth != null 
-                    && request.resource.data.userId == request.auth.uid
-                    && request.resource.data.status == 'en_attente'
-                    && request.resource.data.total is number
-                    && request.resource.data.items is list
-                    && request.resource.data.items.size() > 0;
+      // 2. Création : client pour sa propre commande OU admin (simulation / gestion)
+      allow create: if request.auth != null && (
+        isAdmin() ||
+        (
+          request.resource.data.userId == request.auth.uid &&
+          request.resource.data.status in ['en_attente', 'pending', 'preparing'] &&
+          request.resource.data.total is number &&
+          request.resource.data.items is list &&
+          request.resource.data.items.size() > 0
+        )
+      );
 
-      // 3. MODIFICATION : Le client peut UNIQUEMENT annuler une commande 'pending'
-      // Il ne peut modifier que status, statusHistory et updatedAt.
-      // Il ne peut jamais modifier le prix, les articles ou le userId.
-      // (À COMPLÉTER avec la règle Admin/Livreur pour l'avancement des statuts)
-      allow update: if request.auth != null 
-                    && resource.data.userId == request.auth.uid
-                    && resource.data.status == 'en_attente'
-                    && request.resource.data.status == 'cancelled'
-                    && request.resource.data.userId == resource.data.userId
-                    && request.resource.data.total == resource.data.total
-                    && request.resource.data.items == resource.data.items
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusHistory', 'updatedAt']);
+      // 3. Modification :
+      // - Admin : confirmation, attribution livreur, changement de statut, annulation
+      // - Livreur assigné : avancement de statut de livraison ('in_progress', 'delivered', 'failed', 'refused')
+      // - Client : annulation si commande en attente ('cancelled')
+      allow update: if request.auth != null && (
+        isAdmin() ||
+        (
+          isDeliverer() && (
+            resource.data.driverId == request.auth.uid ||
+            resource.data.livreurId == request.auth.uid ||
+            (resource.data.driver != null && resource.data.driver.id == request.auth.uid)
+          ) &&
+          request.resource.data.status in ['in_progress', 'delivered', 'failed', 'refused', 'delivering', 'completed']
+        ) ||
+        (
+          resource.data.userId == request.auth.uid &&
+          resource.data.status in ['en_attente', 'pending', 'preparing'] &&
+          request.resource.data.status == 'cancelled' &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.total == resource.data.total &&
+          request.resource.data.items == resource.data.items &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusHistory', 'updatedAt', 'cancelReason'])
+        )
+      );
 
-      // 4. SUPPRESSION : Interdite côté client (préservation de l'historique comptable)
-      allow delete: if false;
+      // 4. Suppression : réservée à l'administrateur
+      allow delete: if isAdmin();
     }
+
+    // =========================================================================
+    // NOUVELLES RÈGLES : COUPONS PROMOTIONNELS (coupons/{couponId})
+    // =========================================================================
+    match /coupons/{couponId} {
+      // 1. Lecture : tout utilisateur connecté peut consulter/vérifier les coupons
+      allow read: if request.auth != null;
+
+      // 2. Création et suppression : strictement réservées à l'administrateur
+      allow create, delete: if isAdmin();
+
+      // 3. Mise à jour :
+      // - Admin a tous les droits
+      // - Client connecté peut uniquement enregistrer son utilisation
+      allow update: if isAdmin() || (
+        request.auth != null &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentUsageCount', 'usedByUsers', 'updatedAt'])
+      );
+    }
+
+    // =========================================================================
+    // NOUVELLES RÈGLES : RÉGIONS DE LIVRAISON (regions/{regionId})
+    // =========================================================================
+    match /regions/{regionId} {
+      // 1. Lecture : tout utilisateur connecté (pour auto-dispatch et adresses)
+      allow read: if request.auth != null;
+
+      // 2. Écriture : réservée exclusivement à l'administrateur
+      allow write: if isAdmin();
+    }
+
+    // =========================================================================
+    // NOUVELLES RÈGLES : PARC VÉHICULES (vehicules/{vehicleId})
+    // =========================================================================
+    match /vehicules/{vehicleId} {
+      // 1. Lecture : tout utilisateur connecté
+      allow read: if request.auth != null;
+
+      // 2. Écriture : réservée exclusivement à l'administrateur
+      allow write: if isAdmin();
+    }
+
+    // =========================================================================
+    // NOUVELLES RÈGLES CLIENT : AVIS POST-LIVRAISON (reviews/{orderId}_{productId})
+    // =========================================================================
+    match /reviews/{reviewId} {
+      // 1. LECTURE PUBLIQUE : Visiteurs et clients peuvent lire tous les avis
+      allow read: if true;
+
+      // 2. CRÉATION : Réservée au client auteur pour un produit d'une commande livrée (ou admin)
+      allow create: if request.auth != null && (
+        isAdmin() ||
+        (
+          request.resource.data.userId == request.auth.uid
+          && reviewId == (request.resource.data.orderId + '_' + request.resource.data.productId)
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && request.resource.data.comment is string
+          && request.resource.data.comment.size() <= 500
+          && get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.userId == request.auth.uid
+          && get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.status == 'delivered'
+          && request.resource.data.keys().hasOnly([
+               'productId', 'orderId', 'userId', 'authorName',
+               'rating', 'comment', 'createdAt', 'updatedAt'
+             ])
+        )
+      );
+
+      // 3. MODIFICATION : Seul l'auteur peut modifier son avis (ou admin)
+      allow update: if request.auth != null && (
+        isAdmin() ||
+        (
+          resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.orderId == resource.data.orderId
+          && request.resource.data.productId == resource.data.productId
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5
+          && request.resource.data.comment is string
+          && request.resource.data.comment.size() <= 500
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'comment', 'updatedAt', 'authorName'])
+        )
+      );
+
+      // 4. SUPPRESSION : L'auteur de l'avis OU l'administrateur (modération)
+      allow delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
   }
 }

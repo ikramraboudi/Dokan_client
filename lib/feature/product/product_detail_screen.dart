@@ -20,6 +20,9 @@ import '../../data/mock/mock_catalog_repository.dart';
 import '../../data/mock/mock_favorites_repository.dart';
 import '../../data/models/cart_item_ui_model.dart';
 import '../../data/models/product_ui_model.dart';
+import '../../data/models/review_model.dart';
+import '../../data/repositories/review_repository.dart';
+import 'widgets/product_reviews_section.dart';
 
 /// Provider pour récupérer le produit par identifiant
 final productDetailProvider =
@@ -212,38 +215,61 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             ),
                             const SizedBox(height: AppDimens.space12),
 
-                            // Note et avis
-                            if (product.rating != null) ...[
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.star_rounded,
-                                    size: 20,
-                                    color: AppColors.star,
-                                  ),
-                                  const SizedBox(width: AppDimens.space4),
-                                  Text(
-                                    product.rating!.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  if (product.reviewCount > 0) ...[
-                                    const SizedBox(width: AppDimens.space4),
-                                    Text(
-                                      '(${product.reviewCount} avis)',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.textSecondary,
+                            // Note et avis réels issus des reviews vérifiées
+                            Builder(
+                              builder: (context) {
+                                final summary = ref.watch(productReviewSummaryProvider(product.id)).valueOrNull;
+                                final myReview = ref.watch(myReviewForProductProvider(product.id)).valueOrNull;
+                                final allReviews = ref.watch(productReviewsStreamProvider(product.id)).valueOrNull ?? const <ReviewUiModel>[];
+
+                                double? avg = summary?.averageRating;
+                                int total = summary?.totalReviews ?? 0;
+
+                                if (total == 0) {
+                                  final combined = <ReviewUiModel>[...allReviews];
+                                  if (myReview != null && !combined.any((r) => r.id == myReview.id)) {
+                                    combined.add(myReview);
+                                  }
+                                  if (combined.isNotEmpty) {
+                                    total = combined.length;
+                                    avg = combined.fold<num>(0, (prev, r) => prev + r.rating).toDouble() / total;
+                                  }
+                                }
+
+                                if (total == 0 || avg == null) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: AppDimens.space16),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.star_rounded,
+                                        size: 20,
+                                        color: AppColors.star,
                                       ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              const SizedBox(height: AppDimens.space16),
-                            ],
+                                      const SizedBox(width: AppDimens.space4),
+                                      Text(
+                                        avg.toStringAsFixed(1).replaceAll('.', ','),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppDimens.space4),
+                                      Text(
+                                        '($total avis)',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
 
                             // Prix, ancien prix et remise
                             Row(
@@ -373,6 +399,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                     height: 1.5,
                                   ),
                             ),
+
+                            const Divider(
+                              color: AppColors.divider,
+                              height: AppDimens.space32,
+                            ),
+
+                            // Section Avis des clients
+                            ProductReviewsSection(product: product),
                           ],
                         ),
                       ),

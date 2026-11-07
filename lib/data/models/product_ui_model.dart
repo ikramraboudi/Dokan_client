@@ -68,6 +68,9 @@ class ProductUiModel {
   /// Indique si l'article peut être commandé (non épuisé).
   bool get isInStock => availability != ProductAvailability.outOfStock;
 
+  /// Première image du produit ou chaîne vide.
+  String get imageUrl => imageUrls.isNotEmpty ? imageUrls.first : '';
+
   // lib/data/models/product_ui_model.dart
 
   /// ── CONVERTISSEUR DEPUIS FIRESTORE ─────────────────────────────────────────

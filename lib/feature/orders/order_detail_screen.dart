@@ -33,8 +33,10 @@ import '../../core/ui/loading_state.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/order_status.dart';
+import '../../data/models/review_model.dart';
 import '../../data/repositories/firestore_catalog_repository.dart';
 import '../../data/repositories/firestore_orders_repository.dart';
+import '../../data/repositories/review_repository.dart';
 import '../../services/local_order_tracker_service.dart';
 
 class OrderDetailScreen extends ConsumerStatefulWidget {
@@ -201,6 +203,12 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                 // ── 1. GRANDE CARTE DE STATUT ACTUEL ────────────────────────
                 _buildStatusBanner(order),
                 const SizedBox(height: AppDimens.space16),
+
+                // ── BANDEAU AVIS CLIENTS APRÈS LIVRAISON ─────────────────────
+                if (order.status == OrderStatus.delivered) ...[
+                  _buildDeliveredReviewBanner(order),
+                  const SizedBox(height: AppDimens.space16),
+                ],
 
                 // ── BOUTON SUIVI GPS EN DIRECT (STATUT OUT_FOR_DELIVERY) ─────
                 if (order.status == OrderStatus.outForDelivery) ...[
@@ -766,7 +774,70 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     );
   }
 
+  Widget _buildDeliveredReviewBanner(OrderUiModel order) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space14),
+      decoration: BoxDecoration(
+        color: AppColors.reviewGoodBg,
+        borderRadius: BorderRadius.circular(AppDimens.radius16),
+        border: Border.all(
+          color: AppColors.reviewGoodFg.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppDimens.space10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.reviewGoodFg.withValues(alpha: 0.15),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
+            child: const Text('🎉', style: TextStyle(fontSize: 22)),
+          ),
+          const SizedBox(width: AppDimens.space12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Votre commande est livrée !',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Donnez votre avis sur vos articles reçus ci-dessous pour aider les autres clients.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildItemsCard(OrderUiModel order) {
+    final reviewsAsync = order.status == OrderStatus.delivered
+        ? ref.watch(orderReviewsStreamProvider(order.id))
+        : null;
+
+    final existingReviews =
+        reviewsAsync?.valueOrNull ?? const <ReviewUiModel>[];
+
     return Container(
       padding: const EdgeInsets.all(AppDimens.space16),
       decoration: BoxDecoration(
@@ -787,72 +858,178 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
           ),
           const Divider(height: AppDimens.space20),
           ...order.items.map((item) {
+            final review = existingReviews
+                .where((r) => r.productId == item.productId)
+                .firstOrNull;
+
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppDimens.space6),
-              child: Row(
+              padding: const EdgeInsets.symmetric(vertical: AppDimens.space8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimens.radius8),
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      color: AppColors.surfaceAlt,
-                      child: item.imageUrl.isNotEmpty
-                          ? Image.network(
-                              item.imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                Icons.image_outlined,
-                                color: AppColors.textHint,
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppDimens.radius8),
+                        child: Container(
+                          width: 50,
+                          height: 50,
+                          color: AppColors.surfaceAlt,
+                          child: item.imageUrl.isNotEmpty
+                              ? Image.network(
+                                  item.imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => const Icon(
+                                    Icons.image_outlined,
+                                    color: AppColors.textHint,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.image_outlined,
+                                  color: AppColors.textHint,
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: AppDimens.space12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
                               ),
-                            )
-                          : const Icon(
-                              Icons.image_outlined,
-                              color: AppColors.textHint,
                             ),
-                    ),
+                            if (item.variantLabel != null)
+                              Text(
+                                'Variante : ${item.variantLabel}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            Text(
+                              '${item.quantity} × ${item.unitPrice.toStringAsFixed(3)} DT',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '${item.lineTotal.toStringAsFixed(3)} DT',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: AppDimens.space12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.name,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+
+                  // Actions avis si commande livrée
+                  if (order.status == OrderStatus.delivered) ...[
+                    const SizedBox(height: AppDimens.space6),
+                    if (review != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.space10,
+                          vertical: AppDimens.space6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.reviewGoodBg,
+                          borderRadius: BorderRadius.circular(AppDimens.radius8),
+                          border: Border.all(
+                            color: AppColors.reviewGoodFg.withValues(alpha: 0.25),
                           ),
                         ),
-                        if (item.variantLabel != null)
-                          Text(
-                            'Variante : ${item.variantLabel}',
-                            style: const TextStyle(
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              size: 16,
+                              color: AppColors.reviewGoodFg,
+                            ),
+                            const SizedBox(width: AppDimens.space6),
+                            Text(
+                              'Avis donné ✅ (${review.rating}/5)',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.reviewGoodFg,
+                              ),
+                            ),
+                            const Spacer(),
+                            InkWell(
+                              onTap: () => context.push(
+                                AppRoutes.orderReviewPath(order.id, item.productId),
+                                extra: {
+                                  'productName': item.name,
+                                  'productImageUrl': item.imageUrl,
+                                },
+                              ),
+                              child: const Text(
+                                'Modifier',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.2,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimens.space12,
+                              vertical: AppDimens.space6,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppDimens.radius8),
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.star_rounded,
+                            size: 16,
+                            color: AppColors.star,
+                          ),
+                          label: const Text(
+                            '⭐ Donner mon avis',
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        Text(
-                          '${item.quantity} × ${item.unitPrice.toStringAsFixed(3)} DT',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                          onPressed: () => context.push(
+                            AppRoutes.orderReviewPath(order.id, item.productId),
+                            extra: {
+                              'productName': item.name,
+                              'productImageUrl': item.imageUrl,
+                            },
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    '${item.lineTotal.toStringAsFixed(3)} DT',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                      ),
+                    ],
+                  ],
                 ],
               ),
             );
