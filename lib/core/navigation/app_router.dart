@@ -49,7 +49,9 @@ import '../../feature/checkout/order_confirmation_screen.dart';
 import '../../feature/orders/my_orders_screen.dart';
 import '../../feature/orders/order_detail_screen.dart';
 import '../../feature/orders/order_tracking_screen.dart';
+import '../../feature/orders/qr_delivery_confirmation_screen.dart';
 import '../../feature/orders/review_screen.dart';
+import '../../data/models/order_model.dart';
 import '../session/session_provider.dart';
 import 'main_shell.dart';
 import 'routes.dart';
@@ -197,6 +199,14 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => OrderTrackingScreen(
         orderId: state.pathParameters['id'] ?? '',
+      ),
+    ),
+    GoRoute(
+      path: '${AppRoutes.myOrders}/:id/scan-qr',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => QrDeliveryConfirmationScreen(
+        orderId: state.pathParameters['id'] ?? '',
+        initialOrder: state.extra as OrderUiModel?,
       ),
     ),
     GoRoute(

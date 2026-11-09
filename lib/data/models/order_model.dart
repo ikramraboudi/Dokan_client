@@ -301,6 +301,10 @@ class OrderUiModel {
   final double totalPoids;
   final bool requiresTruck;
   final String requiredVehicleType;
+  final Timestamp? deliveredAt;
+  final String? deliveryConfirmedBy;
+  final int? driverRating;
+  final String? driverFeedback;
   final Timestamp createdAt;
   final Timestamp updatedAt;
 
@@ -335,9 +339,21 @@ class OrderUiModel {
     this.totalPoids = 0.0,
     this.requiresTruck = false,
     this.requiredVehicleType = 'voiture',
+    this.deliveredAt,
+    this.deliveryConfirmedBy,
+    this.driverRating,
+    this.driverFeedback,
     required this.createdAt,
     required this.updatedAt,
   });
+
+  /// Vrai si la commande est en cours de livraison ou prête pour le scan de réception
+  bool get canBeConfirmedByClient =>
+      status == OrderStatus.outForDelivery ||
+      (status == OrderStatus.confirmed && driver != null);
+
+  /// Vrai si la livraison a été certifiée par le client via QR Code ou PIN
+  bool get isConfirmedByClient => deliveryConfirmedBy != null;
 
   /// Matricule officiel du véhicule Dokan (priorité aux infos du livreur puis racine).
   String? get effectiveVehiclePlate {
@@ -597,6 +613,10 @@ class OrderUiModel {
       totalPoids: totalPoids,
       requiresTruck: requiresTruck,
       requiredVehicleType: requiredVehicleType,
+      deliveredAt: data['deliveredAt'] as Timestamp?,
+      deliveryConfirmedBy: data['deliveryConfirmedBy'] as String?,
+      driverRating: (data['driverRating'] as num?)?.toInt(),
+      driverFeedback: data['driverFeedback'] as String?,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

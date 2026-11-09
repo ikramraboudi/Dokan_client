@@ -363,4 +363,60 @@ class FirestoreOrdersRepository implements OrdersRepository {
       });
     });
   }
+
+  @override
+  Future<void> confirmDelivery({
+    required String orderId,
+    required String confirmationMethod,
+    int? driverRating,
+    String? driverFeedback,
+  }) async {
+    final docRef = _ordersRef.doc(orderId);
+    final snap = await docRef.get();
+
+    final data = snap.data();
+    final rawHistory = data?['statusHistory'];
+    List<Map<String, dynamic>> updatedHistory = [];
+    if (rawHistory is List) {
+      updatedHistory = rawHistory
+          .whereType<Map<String, dynamic>>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+
+    updatedHistory.add({
+      'status': 'livre',
+      'statut': 'livre',
+      'at': Timestamp.now(),
+      'note': confirmationMethod == 'client_qr_scan'
+          ? 'Réception certifiée par scan QR Code livreur'
+          : 'Réception certifiée par code PIN de secours',
+    });
+
+    final updatePayload = <String, dynamic>{
+      'status': 'livre',
+      'statut': 'livre',
+      'deliveredAt': FieldValue.serverTimestamp(),
+      'deliveryConfirmedBy': confirmationMethod,
+      'paymentStatus': 'paid',
+      'statusHistory': updatedHistory,
+      'updatedAt': FieldValue.serverTimestamp(),
+      ...?driverRating != null ? {'driverRating': driverRating} : null,
+      if (driverFeedback != null && driverFeedback.trim().isNotEmpty)
+        'driverFeedback': driverFeedback.trim(),
+    };
+
+    if (snap.exists) {
+      await docRef.update(updatePayload);
+    }
+
+    // Compatibilité si répliqué dans 'commandes'
+    try {
+      final cmdRef = _firestore.collection('commandes').doc(orderId);
+      final cmdSnap = await cmdRef.get();
+      if (cmdSnap.exists) {
+        await cmdRef.update(updatePayload);
+      }
+    } catch (_) {}
+  }
 }

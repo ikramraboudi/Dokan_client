@@ -210,8 +210,88 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
                   const SizedBox(height: AppDimens.space16),
                 ],
 
-                // ── BOUTON SUIVI GPS EN DIRECT (STATUT OUT_FOR_DELIVERY) ─────
-                if (order.status == OrderStatus.outForDelivery) ...[
+                // ── BOUTONS ACTION LIVRAISON : SCANNER QR CODE & SUIVI GPS ──
+                if (order.canBeConfirmedByClient) ...[
+                  // 1. Bouton Confirmer la réception (Scanner QR Livreur)
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F766E),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(52),
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radius12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 24),
+                    label: const Text(
+                      'Confirmer la réception (Scanner QR Livreur)',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    onPressed: () {
+                      context.push(
+                        '${AppRoutes.myOrders}/${order.id}/scan-qr',
+                        extra: order,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+
+                  // 2. Bouton Suivi du livreur sur la carte
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.onPrimary,
+                      minimumSize: const Size.fromHeight(50),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radius12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.two_wheeler_rounded, size: 22),
+                    label: const Text(
+                      '🛵 Suivre mon livreur sur la carte',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      context.push('${AppRoutes.myOrders}/${order.id}/tracking');
+                    },
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                ] else if (order.status == OrderStatus.outForDelivery) ...[
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F766E),
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(52),
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radius12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.qr_code_scanner_rounded, size: 24),
+                    label: const Text(
+                      'Confirmer la réception (Scanner QR Livreur)',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: () {
+                      context.push(
+                        '${AppRoutes.myOrders}/${order.id}/scan-qr',
+                        extra: order,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: AppDimens.space12),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,

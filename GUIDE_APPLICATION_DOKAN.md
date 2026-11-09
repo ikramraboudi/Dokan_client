@@ -901,6 +901,11 @@ sequenceDiagram
    4. Un bandeau supérieur indique le véhicule officiel (`215 TU 8901`), le type (`Voiture officielle` ou `Camion officiel`) et un bouton vert pour appeler directement le livreur.
    5. En bas de l'écran, un compteur dynamique affiche la distance restante (ex: `1,2 km`) et l'heure d'arrivée estimée (ETA, ex: `14:35`).
    6. Dès que le livreur arrive à moins de 50 mètres, une alerte « Le livreur est arrivé à votre porte ! » retentit.
+   7. Le livreur présente son écran affichant son QR Code unique sécurisé (`DOKAN-CONFIRM:{orderId}:{displayNumber}:{total}`).
+   8. Le client tape sur le bouton bien visible « Confirmer la réception (Scanner QR Livreur) » (accessible depuis l'accueil, le suivi de commande ou la carte) :
+      - Il scanne le QR Code avec la caméra (`mobile_scanner`).
+      - En cas d'impossibilité de scanner, il peut saisir le **code PIN de secours à 6 chiffres** calculé selon `((orderId.hashCode.abs() % 900000) + 100000)`.
+      - La commande bascule instantanément au statut officiel `livre` (`paymentStatus: 'paid'`), un dialogue de célébration s'ouvre pour noter le livreur (1 à 5 étoiles) et déposer un avis produit.
 4. **Flux technique** :
 ```mermaid
 sequenceDiagram
@@ -918,7 +923,11 @@ sequenceDiagram
     UI->>UI: Trace Polyline sur FlutterMap
 ```
 5. **Fichiers impliqués** :
-   - `lib/feature/orders/order_tracking_screen.dart` : Écran complet de cartographie avec 8 états métier.
+   - `lib/feature/orders/order_tracking_screen.dart` : Écran complet de cartographie avec 8 états métier et bouton de scan QR réception.
+   - `lib/feature/orders/qr_delivery_confirmation_screen.dart` : Scanner caméra QR Code (mobile_scanner) et boîte modale de saisie du PIN de secours.
+   - `lib/feature/orders/widgets/active_delivery_banner.dart` : Bandeau intelligent d'accueil déclenchant le scan dès qu'une commande est en cours d'acheminement.
+   - `lib/feature/orders/widgets/delivery_success_dialog.dart` : Dialogue festif avec notation 1-5 étoiles du livreur et passerelle vers les avis articles.
+   - `lib/data/models/qr_confirmation_payload.dart` : Parser du protocole `DOKAN-CONFIRM` et algorithme de hachage du code PIN.
    - `lib/data/repositories/deliverer_location_repository.dart` : Écouteur RTDB sous `deliverers_live/{driverId}`.
    - `lib/services/osrm_routing_service.dart` : Calcul routier via API OSRM avec limitation de quota et repli vol d'oiseau.
    - `lib/data/models/deliverer_location.dart` : Structure de la position du livreur.

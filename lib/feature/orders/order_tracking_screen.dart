@@ -13,9 +13,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/navigation/routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_top_bar.dart';
@@ -1085,6 +1087,35 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen>
             ),
           ),
         ],
+
+        const SizedBox(height: AppDimens.space16),
+
+        // Bouton Confirmer la réception (Scanner QR Livreur)
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0F766E),
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(48),
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radius12),
+            ),
+          ),
+          icon: const Icon(Icons.qr_code_scanner_rounded, size: 22),
+          label: const Text(
+            'Confirmer la réception (Scanner QR Livreur)',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          onPressed: () {
+            context.push(
+              '${AppRoutes.myOrders}/${widget.orderId}/scan-qr',
+              extra: _order,
+            );
+          },
+        ),
       ],
     );
   }

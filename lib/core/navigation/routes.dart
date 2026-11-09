@@ -48,6 +48,7 @@ class AppRoutes {
   static const String myOrders          = '/orders';
   static const String orderDetail       = '/orders/:id';
   static const String orderTracking     = '/orders/:id/tracking';
+  static const String orderQrScan       = '/orders/:id/scan-qr';
   static const String orderReview       = '/orders/:orderId/review/:productId';
   static const String addresses         = '/addresses';
   static const String addAddress        = '/addresses/add';

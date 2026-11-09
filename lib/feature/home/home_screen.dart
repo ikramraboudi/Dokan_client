@@ -22,6 +22,7 @@ import '../../data/mock/mock_favorites_repository.dart';
 import '../../data/mock/mock_catalog_repository.dart';
 import '../../data/models/category_ui_model.dart';
 import '../../data/models/product_ui_model.dart';
+import '../orders/widgets/active_delivery_banner.dart';
 import 'widgets/interactive_banner_carousel.dart';
 
 /// Provider pour charger les catégories de l'accueil
@@ -210,7 +211,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: AppDimens.space20),
+
+              // --- Détection de commande en cours de livraison & Scan QR Livreur ---
+              const ActiveDeliveryBanner(),
+
+              const SizedBox(height: AppDimens.space12),
 
               // --- Carrousel de bannières interactif (défilement toutes les 2s) ---
               InteractiveBannerCarousel(

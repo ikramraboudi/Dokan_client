@@ -41,4 +41,13 @@ abstract class OrdersRepository {
 
   /// Annule une commande en attente (autorisé côté client uniquement si status == pending).
   Future<void> cancelOrder(String orderId);
+
+  /// Valide la réception de la commande par le client (via scan QR Code ou code PIN de secours)
+  /// et bascule son statut officiel à "livre".
+  Future<void> confirmDelivery({
+    required String orderId,
+    required String confirmationMethod, // 'client_qr_scan' | 'client_pin_code'
+    int? driverRating,
+    String? driverFeedback,
+  });
 }
