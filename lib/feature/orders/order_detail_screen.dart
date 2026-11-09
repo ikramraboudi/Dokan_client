@@ -335,17 +335,15 @@ class _OrderDetailScreenState extends ConsumerState<OrderDetailScreen> {
     final status = order.status;
     final message = switch (status) {
       OrderStatus.pending =>
-        'Votre commande a bien été reçue et sera confirmée sous peu.',
-      OrderStatus.confirmed =>
-        'Votre commande est confirmée par notre équipe.',
-      OrderStatus.preparing =>
-        'Votre colis est en cours de préparation dans nos entrepôts.',
+        'Commande enregistrée, en attente de validation par l\'admin.',
+      OrderStatus.confirmed || OrderStatus.preparing =>
+        'Commande acceptée et confirmée par l\'admin. Livreur auto-assigné.',
       OrderStatus.outForDelivery =>
-        'Votre colis est entre les mains du livreur, en route vers vous !',
+        'Bon d\'enlèvement scanné au dépôt : colis chargé, la tournée commence !',
       OrderStatus.delivered =>
-        'Votre commande a été livrée avec succès.',
+        'Votre commande vous a été remise en main propre. Merci pour votre confiance !',
       OrderStatus.failed =>
-        'La livraison a échoué. Notre service client va vous contacter.',
+        'Échec de livraison (client injoignable ou adresse erronée). Notre équipe vous contactera.',
       OrderStatus.refused =>
         'Le colis a été refusé à la livraison.',
       OrderStatus.cancelled =>

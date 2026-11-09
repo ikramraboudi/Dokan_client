@@ -22,17 +22,23 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 
 /// Statuts officiels d'une commande Dokan (partagés avec Admin et Livreur).
+/// 1. "en attente" ➡️ Le client vient de passer la commande.
+/// 2. "en cours"   ➡️ L'admin a accepté et confirmé la commande (livreur auto-assigné).
+/// 3. "enleve"     ➡️ Le livreur a scanné le QR Code d'enlèvement (chargé en véhicule).
+/// 4. "livre"      ➡️ Le livreur a remis la commande en main propre.
+/// 5. "annule"     ➡️ Commande annulée (par l'admin ou le client).
+/// 6. "echec"      ➡️ Échec de livraison (client injoignable, adresse erronée, etc.).
 enum OrderStatus {
-  pending('en_attente', 'En attente'),
-  confirmed('confirmed', 'Confirmée'),
-  preparing('preparing', 'En préparation'),
-  outForDelivery('in_progress', 'En livraison'),
-  delivered('delivered', 'Livrée'),
-  failed('failed', 'Échec de livraison'),
-  refused('refused', 'Colis refusé'),
-  cancelled('cancelled', 'Annulée');
+  pending('en attente', 'En attente'),
+  confirmed('en cours', 'En cours'),
+  preparing('en cours', 'En cours'),
+  outForDelivery('enleve', 'En livraison'),
+  delivered('livre', 'Livrée'),
+  failed('echec', 'Échec de livraison'),
+  refused('refuse', 'Colis refusé'),
+  cancelled('annule', 'Annulée');
 
-  /// Valeur textuelle brute stockée dans Firestore.
+  /// Valeur textuelle brute officielle stockée dans Firestore.
   final String value;
 
   /// Libellé officiel affiché à l'utilisateur en français.
@@ -60,6 +66,9 @@ enum OrderStatus {
       'recue' ||
       'nouvelle' =>
         OrderStatus.pending,
+
+      'en_cours' ||
+      'encours' ||
       'confirmed' ||
       'confirmee' ||
       'confirme' ||
@@ -68,13 +77,15 @@ enum OrderStatus {
       'validee' ||
       'valide' ||
       'approuvee' ||
-      'approuve' =>
-        OrderStatus.confirmed,
+      'approuve' ||
       'preparing' ||
       'en_preparation' ||
       'enpreparation' ||
       'preparation' =>
-        OrderStatus.preparing,
+        OrderStatus.confirmed,
+
+      'enleve' ||
+      'enlevee' ||
       'in_progress' ||
       'inprogress' ||
       'out_for_delivery' ||
@@ -84,19 +95,24 @@ enum OrderStatus {
       'en_route' ||
       'enroute' =>
         OrderStatus.outForDelivery,
+
       'delivered' ||
       'livree' ||
       'livre' ||
       'terminee' ||
       'termine' =>
         OrderStatus.delivered,
-      'failed' || 'echec' => OrderStatus.failed,
+
+      'failed' || 'echec' || 'echec_livraison' => OrderStatus.failed,
+
       'refused' || 'refusee' || 'refuse' => OrderStatus.refused,
+
       'cancelled' ||
       'canceled' ||
       'annulee' ||
       'annule' =>
         OrderStatus.cancelled,
+
       _ => OrderStatus.pending,
     };
   }

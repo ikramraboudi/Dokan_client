@@ -17,7 +17,6 @@ import '../../../core/theme/app_dimens.dart';
 import '../../../data/models/product_ui_model.dart';
 import '../../../data/models/review_model.dart';
 import '../../../data/repositories/review_repository.dart';
-import '../../../services/auth_service.dart';
 
 /// Section des avis des clients sur la fiche détaillée d'un produit.
 class ProductReviewsSection extends ConsumerStatefulWidget {
@@ -698,31 +697,4 @@ class _ProductReviewsSectionState extends ConsumerState<ProductReviewsSection> {
     );
   }
 
-  // --- État d'erreur avec bouton réessayer ---
-  Widget _buildErrorState(VoidCallback onRetry) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimens.radius16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline, color: AppColors.textHint, size: 20),
-          const SizedBox(width: AppDimens.space10),
-          const Expanded(
-            child: Text(
-              'Impossible de charger le résumé des avis.',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Réessayer'),
-          ),
-        ],
-      ),
-    );
-  }
 }

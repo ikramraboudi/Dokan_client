@@ -5,7 +5,6 @@
 /// ============================================================================
 library;
 
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,12 +14,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/order_status.dart';
-import '../../data/models/product_ui_model.dart';
 import '../../data/models/review_model.dart';
-import '../../data/repositories/catalog_repository.dart';
 import '../../data/repositories/firestore_catalog_repository.dart';
 import '../../data/repositories/firestore_orders_repository.dart';
-import '../../data/repositories/orders_repository.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../services/auth_service.dart';
 
@@ -104,8 +100,6 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen>
 
   Future<void> _initData() async {
     final repo = ref.read(reviewRepositoryProvider);
-    final authService = AuthService();
-    final user = authService.currentUser;
 
     // 1. Vérification de la commande (doit être delivered)
     try {

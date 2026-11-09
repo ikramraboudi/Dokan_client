@@ -151,19 +151,29 @@ class FirestoreOrdersRepository implements OrdersRepository {
     final newDoc = _ordersRef.doc();
     final nowTimestamp = Timestamp.now();
 
-    final rawCity = deliveryAddress.city.trim();
-    final cleanCity = rawCity.isNotEmpty ? rawCity : 'Tunis';
-    final regionId = TunisiaRegions.getRegionId(cleanCity);
+    final resolved = TunisiaRegions.resolveRegionAndCity(
+      city: deliveryAddress.city,
+      zone: deliveryAddress.zone,
+      addressLine: deliveryAddress.addressLine,
+    );
+    final regionId = resolved.regionId;
+    final cleanCity = resolved.city;
 
     final addressSummary = deliveryAddress.addressLine.isNotEmpty
-        ? (deliveryAddress.city.isNotEmpty
-            ? '${deliveryAddress.addressLine}, ${deliveryAddress.city}'
-            : deliveryAddress.addressLine)
+        ? (deliveryAddress.zone != null && deliveryAddress.zone!.isNotEmpty
+            ? '${deliveryAddress.addressLine}, ${deliveryAddress.zone}, $cleanCity'
+            : (cleanCity.isNotEmpty
+                ? '${deliveryAddress.addressLine}, $cleanCity'
+                : deliveryAddress.addressLine))
         : deliveryAddress.summary;
 
     final orderData = {
       'displayNumber': displayNumber,
+      'status': 'en attente',
+      'statut': 'en attente',
+      'customerId': userId,
       'userId': userId,
+      'clientId': userId,
       'customerName': customerName.trim(),
       'customerPhone': customerPhone.trim(),
       'deliveryAddress': {
@@ -172,12 +182,18 @@ class FirestoreOrdersRepository implements OrdersRepository {
             : addressSummary,
         'city': cleanCity,
         'regionId': regionId,
+        'addressLine': deliveryAddress.addressLine,
+        'zone': deliveryAddress.zone,
+        'summary': addressSummary,
+        'recipientName': deliveryAddress.recipientName,
+        'phone': deliveryAddress.phone,
+        'latitude': deliveryAddress.latitude,
+        'longitude': deliveryAddress.longitude,
       },
       'deliveryAddressText': addressSummary,
       'city': cleanCity,
       'regionId': regionId,
       'deliveryAddressDetails': deliveryAddress.toMap(),
-      'status': OrderStatus.pending.value,
       'statusHistory': initialHistory.map((h) => h.toMap()).toList(),
       'items': verifiedItems.map((i) => {
         'productId': i.productId,
@@ -199,6 +215,7 @@ class FirestoreOrdersRepository implements OrdersRepository {
       'deliveryFee': deliveryFee,
       'total': calculatedTotal,
       'totalPrice': calculatedTotal,
+      'totalAmount': calculatedTotal,
       'totalPoids': totalPoids,
       'requiresTruck': requiresTruck,
       'requiredVehicleType': requiredVehicleType,
@@ -332,13 +349,15 @@ class FirestoreOrdersRepository implements OrdersRepository {
       }
 
       updatedHistory.add({
-        'status': OrderStatus.cancelled.value,
+        'status': 'annule',
+        'statut': 'annule',
         'at': Timestamp.now(),
       });
 
       // 5) Mise à jour atomique du statut et de l'historique
       transaction.update(docRef, {
-        'status': OrderStatus.cancelled.value,
+        'status': 'annule',
+        'statut': 'annule',
         'statusHistory': updatedHistory,
         'updatedAt': FieldValue.serverTimestamp(),
       });

@@ -38,8 +38,8 @@ import '../../services/auth_service.dart';
 enum OrderFilterTab {
   all('Toutes'),
   pending('En attente'),
-  preparing('En préparation'),
-  outForDelivery('En livraison'),
+  preparing('En cours'),
+  outForDelivery('Enlevées'),
   delivered('Livrées'),
   cancelled('Annulées');
 
@@ -792,7 +792,7 @@ class _OrderProgressBar extends StatelessWidget {
     }
 
     final currentStep = status.progressStep; // 0, 1, 2, 3
-    final stepLabels = ['Reçue', 'Préparation', 'En livraison', 'Livrée'];
+    final stepLabels = ['En attente', 'En cours', 'Enlevée', 'Livrée'];
 
     return Column(
       children: [

@@ -268,14 +268,19 @@ class FirestoreReviewRepository implements ReviewRepository {
     required String productId,
   }) async {
     try {
-      // Recherche des commandes livrées de l'utilisateur
+      // Recherche des commandes de l'utilisateur (tolérant 'userId', 'customerId', 'status', 'statut')
       final ordersSnap = await _ordersRef
           .where('userId', isEqualTo: userId)
-          .where('status', isEqualTo: OrderStatus.delivered.value)
           .get();
 
       for (final doc in ordersSnap.docs) {
         final data = doc.data();
+        final rawStatus = (data['status'] as String?) ?? (data['statut'] as String?);
+        final status = OrderStatus.fromString(rawStatus);
+        if (status != OrderStatus.delivered) {
+          continue;
+        }
+
         final items = (data['items'] as List<dynamic>?) ?? [];
         final hasProduct = items.any((item) {
           if (item is Map) {

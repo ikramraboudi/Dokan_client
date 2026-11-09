@@ -27,6 +27,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_form_field.dart';
 import '../../core/ui/app_top_bar.dart';
+import '../../core/utils/tunisia_regions.dart';
 import '../../core/utils/validators.dart';
 import '../../data/models/address_ui_model.dart';
 import '../../data/repositories/firestore_addresses_repository.dart';
@@ -211,15 +212,23 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
 
     try {
       final repo = ref.read(addressesRepositoryProvider);
+      final rawCity = _cityController.text.trim();
+      final rawZone = _zoneController.text.trim();
+      final rawAddressLine = _addressLineController.text.trim();
+
+      final resolved = TunisiaRegions.resolveRegionAndCity(
+        city: rawCity,
+        zone: rawZone.isNotEmpty ? rawZone : null,
+        addressLine: rawAddressLine,
+      );
+
       final address = AddressUiModel(
         id: widget.addressId ?? '',
         recipientName: _recipientController.text.trim(),
         phone: _phoneController.text.trim(),
-        addressLine: _addressLineController.text.trim(),
-        city: _cityController.text.trim(),
-        zone: _zoneController.text.trim().isNotEmpty
-            ? _zoneController.text.trim()
-            : null,
+        addressLine: rawAddressLine,
+        city: resolved.city,
+        zone: rawZone.isNotEmpty ? rawZone : null,
         additionalInfo: _additionalInfoController.text.trim().isNotEmpty
             ? _additionalInfoController.text.trim()
             : null,
@@ -355,12 +364,68 @@ class _AddEditAddressScreenState extends ConsumerState<AddEditAddressScreen> {
                       flex: 2,
                       child: AppFormField(
                         label: 'Région / Quartier',
-                        hint: 'Ex: El Menzah',
+                        hint: 'Ex: El Menzah ou SUD',
                         controller: _zoneController,
                         enabled: !_isLoading,
                       ),
                     ),
                   ],
+                ),
+                AnimatedBuilder(
+                  animation: Listenable.merge([
+                    _cityController,
+                    _zoneController,
+                    _addressLineController,
+                  ]),
+                  builder: (context, _) {
+                    final hasInput = _cityController.text.trim().isNotEmpty ||
+                        _zoneController.text.trim().isNotEmpty ||
+                        _addressLineController.text.trim().isNotEmpty;
+                    if (!hasInput) return const SizedBox.shrink();
+
+                    final resolved = TunisiaRegions.resolveRegionAndCity(
+                      city: _cityController.text.trim(),
+                      zone: _zoneController.text.trim(),
+                      addressLine: _addressLineController.text.trim(),
+                    );
+
+                    return Padding(
+                      padding: const EdgeInsets.only(top: AppDimens.space8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimens.space12,
+                          vertical: AppDimens.space6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radius8),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.local_shipping_outlined,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: AppDimens.space6),
+                            Text(
+                              'Région Dokan : ${resolved.regionId.toUpperCase()} • ${resolved.city}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: AppDimens.space16),
 

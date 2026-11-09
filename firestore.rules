@@ -87,6 +87,8 @@ service cloud.firestore {
       // 1. Lecture : client propriétaire OU admin OU livreur assigné
       allow read: if request.auth != null && (
         resource.data.userId == request.auth.uid ||
+        resource.data.customerId == request.auth.uid ||
+        resource.data.clientId == request.auth.uid ||
         isAdmin() ||
         resource.data.driverId == request.auth.uid ||
         resource.data.livreurId == request.auth.uid ||
@@ -97,8 +99,8 @@ service cloud.firestore {
       allow create: if request.auth != null && (
         isAdmin() ||
         (
-          request.resource.data.userId == request.auth.uid &&
-          request.resource.data.status in ['en_attente', 'pending', 'preparing'] &&
+          (request.resource.data.userId == request.auth.uid || request.resource.data.customerId == request.auth.uid) &&
+          request.resource.data.status in ['en attente', 'en_attente', 'pending', 'en cours', 'preparing'] &&
           request.resource.data.total is number &&
           request.resource.data.items is list &&
           request.resource.data.items.size() > 0
@@ -107,8 +109,8 @@ service cloud.firestore {
 
       // 3. Modification :
       // - Admin : confirmation, attribution livreur, changement de statut, annulation
-      // - Livreur assigné : avancement de statut de livraison ('in_progress', 'delivered', 'failed', 'refused')
-      // - Client : annulation si commande en attente ('cancelled')
+      // - Livreur assigné : avancement de statut de livraison ('in_progress', 'delivered', 'failed', 'refused', 'enleve', 'livre', 'echec')
+      // - Client : annulation si commande en attente ('en attente' -> 'annule')
       allow update: if request.auth != null && (
         isAdmin() ||
         (
@@ -117,16 +119,13 @@ service cloud.firestore {
             resource.data.livreurId == request.auth.uid ||
             (resource.data.driver != null && resource.data.driver.id == request.auth.uid)
           ) &&
-          request.resource.data.status in ['in_progress', 'delivered', 'failed', 'refused', 'delivering', 'completed']
+          request.resource.data.status in ['in_progress', 'delivered', 'failed', 'refused', 'delivering', 'completed', 'en cours', 'enleve', 'livre', 'echec']
         ) ||
         (
-          resource.data.userId == request.auth.uid &&
-          resource.data.status in ['en_attente', 'pending', 'preparing'] &&
-          request.resource.data.status == 'cancelled' &&
-          request.resource.data.userId == resource.data.userId &&
-          request.resource.data.total == resource.data.total &&
-          request.resource.data.items == resource.data.items &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statusHistory', 'updatedAt', 'cancelReason'])
+          (resource.data.userId == request.auth.uid || resource.data.customerId == request.auth.uid) &&
+          resource.data.status in ['en attente', 'en_attente', 'pending', 'preparing'] &&
+          request.resource.data.status in ['annule', 'cancelled'] &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'statut', 'statusHistory', 'updatedAt', 'cancelReason'])
         )
       );
 
@@ -193,12 +192,24 @@ service cloud.firestore {
           && request.resource.data.rating <= 5
           && request.resource.data.comment is string
           && request.resource.data.comment.size() <= 500
-          && get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.userId == request.auth.uid
-          && get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.status == 'delivered'
           && request.resource.data.keys().hasOnly([
                'productId', 'orderId', 'userId', 'authorName',
                'rating', 'comment', 'createdAt', 'updatedAt'
              ])
+          && (
+            !exists(/databases/$(database)/documents/orders/$(request.resource.data.orderId))
+            || (
+              (
+                get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.userId == request.auth.uid
+                || get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.customerId == request.auth.uid
+                || get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.clientId == request.auth.uid
+              )
+              && (
+                get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.status in ['livre', 'livree', 'delivered']
+                || get(/databases/$(database)/documents/orders/$(request.resource.data.orderId)).data.statut in ['livre', 'livree', 'delivered']
+              )
+            )
+          )
         )
       );
 

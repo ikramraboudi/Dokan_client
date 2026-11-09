@@ -69,6 +69,23 @@ class CartItemUiModel {
   /// Vrai si l'article est actuellement disponible.
   bool get isInStock => availability != ProductAvailability.outOfStock;
 
+  /// Sérialisation pour Firestore (`orders.items`).
+  Map<String, dynamic> toMap() {
+    return {
+      'productId': productId,
+      'id': productId,
+      'name': name,
+      'price': unitPrice,
+      'unitPrice': unitPrice,
+      'quantity': quantity,
+      'imageUrl': imageUrl,
+      'lineTotal': lineTotal,
+      'poids': poids,
+      'totalPoids': linePoids,
+      if (variantLabel != null) 'variantLabel': variantLabel,
+    };
+  }
+
   /// Méthode de clonage immuable.
   CartItemUiModel copyWith({
     String? id,

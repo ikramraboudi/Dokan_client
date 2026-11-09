@@ -238,7 +238,9 @@ class StatusHistoryEntry {
 
   factory StatusHistoryEntry.fromMap(Map<String, dynamic> map) {
     return StatusHistoryEntry(
-      status: OrderStatus.fromString(map['status'] as String?),
+      status: OrderStatus.fromString(
+        map['status'] as String? ?? map['statut'] as String?,
+      ),
       at: map['at'] is Timestamp ? map['at'] as Timestamp : Timestamp.now(),
     );
   }
@@ -246,6 +248,7 @@ class StatusHistoryEntry {
   Map<String, dynamic> toMap() {
     return {
       'status': status.value,
+      'statut': status.value,
       'at': at,
     };
   }
@@ -408,8 +411,14 @@ class OrderUiModel {
 
   /// Désérialisation depuis un document Firestore de la collection `orders`.
   factory OrderUiModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? {};
+    return OrderUiModel.fromMap(
+      doc.id,
+      doc.data() as Map<String, dynamic>? ?? {},
+    );
+  }
 
+  /// Désérialisation depuis un identifiant et une Map de données
+  factory OrderUiModel.fromMap(String id, Map<String, dynamic> data) {
     // Reconstruction de l'historique
     final rawHistory = data['statusHistory'];
     List<StatusHistoryEntry> history = [];
@@ -465,18 +474,33 @@ class OrderUiModel {
       address = OrderDeliveryAddress.fromMap(rawDetails);
     }
 
-    // Région et Ville obligatoires
+    // Région et Ville obligatoires avec réconciliation intelligente
     final rawCity = (data['city'] as String?)?.trim();
-    final city = (rawCity != null && rawCity.isNotEmpty)
-        ? rawCity
-        : (address.city.isNotEmpty ? address.city : 'Tunis');
     final rawRegion = (data['regionId'] as String?)?.trim().toLowerCase();
-    final regionId = (rawRegion != null &&
-            (rawRegion == 'nord' ||
-                rawRegion == 'centre' ||
-                rawRegion == 'sud'))
-        ? rawRegion
-        : TunisiaRegions.getRegionId(city);
+    final addressSummaryText = (data['deliveryAddressText'] as String?)?.trim();
+
+    final resolved = TunisiaRegions.resolveRegionAndCity(
+      city: rawCity ?? address.city,
+      zone: address.zone,
+      addressLine: address.addressLine.isNotEmpty
+          ? address.addressLine
+          : addressSummaryText,
+    );
+
+    // Priorité absolue : si la zone ou le texte de l'adresse mentionne explicitement une région ('sud' / 'centre' / 'nord'),
+    // on honore cette volonté pour corriger les commandes existantes où regionId avait été fixé par défaut à 'nord'.
+    final explicitZoneRegion = TunisiaRegions.extractExplicitRegion(address.zone) ??
+        TunisiaRegions.extractExplicitRegion(addressSummaryText);
+
+    final regionId = explicitZoneRegion ??
+        ((rawRegion != null &&
+                (rawRegion == 'nord' ||
+                    rawRegion == 'centre' ||
+                    rawRegion == 'sud'))
+            ? rawRegion
+            : resolved.regionId);
+
+    final city = resolved.city;
 
     // Extraction des plaques et types de véhicule (racine ou driver)
     final rootPlate = data['driverVehiclePlate'] as String? ??
@@ -531,12 +555,21 @@ class OrderUiModel {
         (requiresTruck ? 'camion' : 'voiture');
 
     return OrderUiModel(
-      id: doc.id,
+      id: id,
       displayNumber: data['displayNumber'] as String? ?? 'DK-000000-0000',
-      userId: data['userId'] as String? ?? '',
-      customerName: data['customerName'] as String? ?? '',
-      customerPhone: data['customerPhone'] as String? ?? '',
-      status: OrderStatus.fromString(data['status'] as String?),
+      userId: data['userId'] as String? ??
+          data['customerId'] as String? ??
+          data['clientId'] as String? ??
+          '',
+      customerName: data['customerName'] as String? ??
+          data['clientName'] as String? ??
+          '',
+      customerPhone: data['customerPhone'] as String? ??
+          data['clientPhone'] as String? ??
+          '',
+      status: OrderStatus.fromString(
+        data['status'] as String? ?? data['statut'] as String?,
+      ),
       statusHistory: history,
       items: itemsList,
       itemCount: (data['itemCount'] as num?)?.toInt() ?? itemsList.length,
@@ -544,7 +577,10 @@ class OrderUiModel {
       discount: (data['discount'] as num?)?.toDouble() ?? 0.0,
       promoCode: data['promoCode'] as String?,
       deliveryFee: (data['deliveryFee'] as num?)?.toDouble() ?? 0.0,
-      total: (data['total'] as num?)?.toDouble() ?? 0.0,
+      total: (data['total'] as num?)?.toDouble() ??
+          (data['totalPrice'] as num?)?.toDouble() ??
+          (data['totalAmount'] as num?)?.toDouble() ??
+          0.0,
       currency: data['currency'] as String? ?? 'TND',
       deliveryAddress: address,
       city: city,
