@@ -39,9 +39,9 @@ enum OrderFilterTab {
   all('Toutes'),
   pending('En attente'),
   preparing('En cours'),
-  outForDelivery('Enlevées'),
-  delivered('Livrées'),
-  cancelled('Annulées');
+  outForDelivery('Enlevée'),
+  delivered('Livrée'),
+  cancelled('Annulée');
 
   final String label;
   const OrderFilterTab(this.label);
@@ -347,12 +347,12 @@ class _MyOrdersScreenState extends ConsumerState<MyOrdersScreen> {
     required int countCancelled,
   }) {
     final chips = [
-      (OrderFilterTab.all, 'Toutes', countAll),
-      (OrderFilterTab.pending, 'En attente', countPending),
-      (OrderFilterTab.preparing, 'En préparation', countPreparing),
-      (OrderFilterTab.outForDelivery, 'En livraison', countOutForDelivery),
-      (OrderFilterTab.delivered, 'Livrées', countDelivered),
-      (OrderFilterTab.cancelled, 'Annulées', countCancelled),
+      (OrderFilterTab.all, OrderFilterTab.all.label, countAll),
+      (OrderFilterTab.pending, OrderFilterTab.pending.label, countPending),
+      (OrderFilterTab.preparing, OrderFilterTab.preparing.label, countPreparing),
+      (OrderFilterTab.outForDelivery, OrderFilterTab.outForDelivery.label, countOutForDelivery),
+      (OrderFilterTab.delivered, OrderFilterTab.delivered.label, countDelivered),
+      (OrderFilterTab.cancelled, OrderFilterTab.cancelled.label, countCancelled),
     ];
 
     return SingleChildScrollView(

@@ -71,7 +71,8 @@ void main() {
         },
       });
 
-      expect(orderConfirmedWithDriver.canBeConfirmedByClient, isTrue);
+      // Une commande juste "en cours" (au dépôt) n'est pas encore prête pour le scan de remise
+      expect(orderConfirmedWithDriver.canBeConfirmedByClient, isFalse);
 
       final orderAlreadyDelivered = OrderUiModel.fromMap('order_3', {
         'displayNumber': 'DK-103',

@@ -41,6 +41,12 @@ class CartItemUiModel {
   /// Libellé de l'option ou de la taille sélectionnée (ex: 'Taille : L').
   final String? variantLabel;
 
+  /// Clé de la couleur sélectionnée (ex: 'noir', 'blanc').
+  final String? selectedColor;
+
+  /// Libellé de la taille sélectionnée (ex: 'M', '42').
+  final String? selectedSize;
+
   /// Statut de disponibilité en stock.
   final ProductAvailability availability;
 
@@ -55,6 +61,8 @@ class CartItemUiModel {
     required this.unitPrice,
     required this.quantity,
     this.variantLabel,
+    this.selectedColor,
+    this.selectedSize,
     this.availability = ProductAvailability.inStock,
     this.poids = 0.0,
   });
@@ -68,6 +76,25 @@ class CartItemUiModel {
 
   /// Vrai si l'article est actuellement disponible.
   bool get isInStock => availability != ProductAvailability.outOfStock;
+
+  /// Désérialisation tolérante (panier local ou persistant).
+  factory CartItemUiModel.fromMap(Map<String, dynamic> map) {
+    return CartItemUiModel(
+      id: (map['id'] as String?) ?? '',
+      productId: (map['productId'] as String?) ?? '',
+      name: (map['name'] as String?) ?? '',
+      imageUrl: (map['imageUrl'] as String?) ?? '',
+      unitPrice: (map['unitPrice'] as num?)?.toDouble() ??
+          (map['price'] as num?)?.toDouble() ??
+          0.0,
+      quantity: (map['quantity'] as num?)?.toInt() ?? 1,
+      variantLabel: map['variantLabel'] as String?,
+      selectedColor: map['selectedColor'] as String?,
+      selectedSize: map['selectedSize'] as String?,
+      availability: ProductAvailability.fromString(map['availability'] as String?),
+      poids: (map['poids'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 
   /// Sérialisation pour Firestore (`orders.items`).
   Map<String, dynamic> toMap() {
@@ -83,6 +110,8 @@ class CartItemUiModel {
       'poids': poids,
       'totalPoids': linePoids,
       if (variantLabel != null) 'variantLabel': variantLabel,
+      if (selectedColor != null) 'selectedColor': selectedColor,
+      if (selectedSize != null) 'selectedSize': selectedSize,
     };
   }
 
@@ -95,6 +124,8 @@ class CartItemUiModel {
     double? unitPrice,
     int? quantity,
     String? variantLabel,
+    String? selectedColor,
+    String? selectedSize,
     ProductAvailability? availability,
     double? poids,
   }) {
@@ -106,6 +137,8 @@ class CartItemUiModel {
       unitPrice: unitPrice ?? this.unitPrice,
       quantity: quantity ?? this.quantity,
       variantLabel: variantLabel ?? this.variantLabel,
+      selectedColor: selectedColor ?? this.selectedColor,
+      selectedSize: selectedSize ?? this.selectedSize,
       availability: availability ?? this.availability,
       poids: poids ?? this.poids,
     );

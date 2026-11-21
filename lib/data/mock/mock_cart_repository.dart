@@ -198,8 +198,11 @@ class CartNotifier extends StateNotifier<CartState> {
     ProductUiModel product, {
     int quantity = 1,
     String? variant,
+    String? selectedColor,
+    String? selectedSize,
   }) async {
-    final compositeId = '${product.id}_${variant ?? ''}';
+    final compositeId =
+        '${product.id}_${selectedColor ?? ''}_${selectedSize ?? ''}_${variant ?? ''}';
     final currentItems = List<CartItemUiModel>.from(state.items);
     final existingIndex = currentItems.indexWhere((i) => i.id == compositeId);
 
@@ -218,6 +221,8 @@ class CartNotifier extends StateNotifier<CartState> {
           poids: product.poids,
           quantity: quantity.clamp(1, 10),
           variantLabel: variant,
+          selectedColor: selectedColor,
+          selectedSize: selectedSize,
           availability: product.availability,
         ),
       );

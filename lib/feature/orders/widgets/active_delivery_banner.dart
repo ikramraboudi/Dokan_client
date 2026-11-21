@@ -23,12 +23,12 @@ class ActiveDeliveryBanner extends ConsumerWidget {
 
     return ordersAsync.when(
       data: (orders) {
-        // Recherche de la première commande en cours d'acheminement (En livraison ou En cours avec livreur)
+        // Recherche de la première commande active en cours de livraison (statut officiel "enleve" / outForDelivery)
         final activeOrder = orders.cast<OrderUiModel?>().firstWhere(
               (o) =>
                   o != null &&
-                  (o.status == OrderStatus.outForDelivery ||
-                      (o.status == OrderStatus.confirmed && o.driver != null)),
+                  !o.isConfirmedByClient &&
+                  o.status == OrderStatus.outForDelivery,
               orElse: () => null,
             );
 

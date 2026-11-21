@@ -35,6 +35,8 @@ class OrderItemUiModel {
   final double unitPrice;
   final int quantity;
   final String? variantLabel;
+  final String? selectedColor;
+  final String? selectedSize;
   final double lineTotal;
   final double poids;
 
@@ -45,6 +47,8 @@ class OrderItemUiModel {
     required this.unitPrice,
     required this.quantity,
     this.variantLabel,
+    this.selectedColor,
+    this.selectedSize,
     required this.lineTotal,
     this.poids = 0.0,
   });
@@ -65,6 +69,8 @@ class OrderItemUiModel {
           0.0,
       quantity: (map['quantity'] as num?)?.toInt() ?? 1,
       variantLabel: map['variantLabel'] as String?,
+      selectedColor: map['selectedColor'] as String?,
+      selectedSize: map['selectedSize'] as String?,
       lineTotal: (map['lineTotal'] as num?)?.toDouble() ?? 0.0,
       poids: (map['poids'] as num?)?.toDouble() ??
           (map['weight'] as num?)?.toDouble() ??
@@ -81,6 +87,8 @@ class OrderItemUiModel {
       'price': unitPrice,
       'quantity': quantity,
       if (variantLabel != null) 'variantLabel': variantLabel,
+      if (selectedColor != null) 'selectedColor': selectedColor,
+      if (selectedSize != null) 'selectedSize': selectedSize,
       'lineTotal': lineTotal,
       'poids': poids,
       'totalPoids': linePoids,
@@ -347,10 +355,9 @@ class OrderUiModel {
     required this.updatedAt,
   });
 
-  /// Vrai si la commande est en cours de livraison ou prête pour le scan de réception
+  /// Vrai si la commande est activement en cours de livraison (statut officiel "enleve")
   bool get canBeConfirmedByClient =>
-      status == OrderStatus.outForDelivery ||
-      (status == OrderStatus.confirmed && driver != null);
+      !isConfirmedByClient && status == OrderStatus.outForDelivery;
 
   /// Vrai si la livraison a été certifiée par le client via QR Code ou PIN
   bool get isConfirmedByClient => deliveryConfirmedBy != null;

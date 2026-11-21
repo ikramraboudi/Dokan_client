@@ -28,6 +28,7 @@ import '../../core/session/session_provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_dimens.dart';
 import '../../core/ui/app_top_bar.dart';
+import '../../core/utils/product_options.dart';
 import '../../core/ui/price_summary.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/models/address_ui_model.dart';
@@ -365,6 +366,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           color: AppColors.textPrimary,
                         ),
                       ),
+                      if (item.selectedColor != null || item.selectedSize != null) ...[
+                        ProductVariantIndicator(
+                          colorKey: item.selectedColor,
+                          size: item.selectedSize,
+                        ),
+                        const SizedBox(height: AppDimens.space2),
+                      ],
                       if (item.variantLabel != null)
                         Text(
                           'Variante : ${item.variantLabel}',

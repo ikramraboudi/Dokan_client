@@ -18,6 +18,7 @@ import '../../core/ui/auth_required_dialog.dart';
 import '../../core/ui/empty_state.dart';
 import '../../core/ui/price_summary.dart';
 import '../../core/ui/quantity_selector.dart';
+import '../../core/utils/product_options.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/models/cart_item_ui_model.dart';
 import '../../services/auth_service.dart';
@@ -414,6 +415,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     ),
                   ],
                 ),
+
+                if (item.selectedColor != null || item.selectedSize != null) ...[
+                  ProductVariantIndicator(
+                    colorKey: item.selectedColor,
+                    size: item.selectedSize,
+                  ),
+                  const SizedBox(height: AppDimens.space4),
+                ],
 
                 if (item.variantLabel != null) ...[
                   const SizedBox(height: AppDimens.space4),

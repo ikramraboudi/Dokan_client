@@ -40,6 +40,8 @@ class ProductUiModel {
   final double? rating;
   final int reviewCount;
   final List<String>? variants;
+  final List<String>? colors;
+  final List<String>? sizes;
   final bool isNew;
   final bool isPopular;
   final double poids; // Poids unitaire en kg pour le dispatching des véhicules
@@ -57,6 +59,8 @@ class ProductUiModel {
     this.rating,
     this.reviewCount = 0,
     this.variants,
+    this.colors,
+    this.sizes,
     this.isNew = false,
     this.isPopular = false,
     this.poids = 0.0,
@@ -90,6 +94,16 @@ class ProductUiModel {
       variantsList = (data['variants'] as List).map((e) => e.toString()).toList();
     }
 
+    List<String>? colorsList;
+    if (data['colors'] is List) {
+      colorsList = (data['colors'] as List).map((e) => e.toString()).toList();
+    }
+
+    List<String>? sizesList;
+    if (data['sizes'] is List) {
+      sizesList = (data['sizes'] as List).map((e) => e.toString()).toList();
+    }
+
     return ProductUiModel(
       id: doc.id,
       // Supports both 'name' and 'title' fields from Firestore
@@ -104,6 +118,8 @@ class ProductUiModel {
       rating: (data['rating'] as num?)?.toDouble(),
       reviewCount: (data['reviewCount'] as num?)?.toInt() ?? 0,
       variants: variantsList,
+      colors: colorsList,
+      sizes: sizesList,
       isNew: data['isNew'] as bool? ?? false,
       isPopular: data['isPopular'] as bool? ?? false,
       poids: (data['poids'] as num?)?.toDouble() ??
@@ -130,6 +146,8 @@ class ProductUiModel {
       'rating': rating,
       'reviewCount': reviewCount,
       'variants': variants,
+      if (colors != null) 'colors': colors,
+      if (sizes != null) 'sizes': sizes,
       'isNew': isNew,
       'isPopular': isPopular,
       'poids': poids,
@@ -149,6 +167,8 @@ class ProductUiModel {
     double? rating,
     int? reviewCount,
     List<String>? variants,
+    List<String>? colors,
+    List<String>? sizes,
     bool? isNew,
     bool? isPopular,
     double? poids,
@@ -166,6 +186,8 @@ class ProductUiModel {
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
       variants: variants ?? this.variants,
+      colors: colors ?? this.colors,
+      sizes: sizes ?? this.sizes,
       isNew: isNew ?? this.isNew,
       isPopular: isPopular ?? this.isPopular,
       poids: poids ?? this.poids,

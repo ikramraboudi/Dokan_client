@@ -15,6 +15,7 @@ import '../../core/ui/app_top_bar.dart';
 import '../../core/ui/auth_required_dialog.dart';
 import '../../core/ui/error_state.dart';
 import '../../core/ui/quantity_selector.dart';
+import '../../core/utils/product_options.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/mock/mock_catalog_repository.dart';
 import '../../data/mock/mock_favorites_repository.dart';
@@ -50,6 +51,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   int _activeImageIndex = 0;
   int _quantity = 1;
   String? _selectedVariant;
+  String? _selectedColor;
+  String? _selectedSize;
+  bool _highlightMissingOptions = false;
 
   @override
   void dispose() {
@@ -93,6 +97,47 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   void _onAddToCart(ProductUiModel product, CartItemUiModel? existingCartItem) {
     if (!product.isInStock) return;
 
+    final availableColors = ProductOptions.getColorsForProduct(product);
+    final availableSizes = ProductOptions.getSizesForProduct(product);
+
+    final needsColor = availableColors.isNotEmpty && _selectedColor == null;
+    final needsSize = availableSizes.isNotEmpty && _selectedSize == null;
+
+    if (needsColor && needsSize) {
+      setState(() => _highlightMissingOptions = true);
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez choisir une couleur et une taille.'),
+          backgroundColor: AppColors.error,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    } else if (needsColor) {
+      setState(() => _highlightMissingOptions = true);
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez choisir une couleur.'),
+          backgroundColor: AppColors.error,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    } else if (needsSize) {
+      setState(() => _highlightMissingOptions = true);
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez choisir une taille.'),
+          backgroundColor: AppColors.error,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
     if (existingCartItem != null) {
       if (existingCartItem.quantity >= 10) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -118,6 +163,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             product,
             quantity: _quantity,
             variant: _selectedVariant,
+            selectedColor: _selectedColor,
+            selectedSize: _selectedSize,
           );
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -161,14 +208,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           }
 
           final isInStock = product.isInStock;
+          final availableColors = ProductOptions.getColorsForProduct(product);
+          final availableSizes = ProductOptions.getSizesForProduct(product);
 
-          // Détection de l'article déjà présent dans le panier pour ce produit (et cette variante)
-          final compositeId = '${product.id}_${_selectedVariant ?? ''}';
+          // Détection de l'article déjà présent dans le panier pour ce produit (et cette combinaison)
+          final compositeId =
+              '${product.id}_${_selectedColor ?? ''}_${_selectedSize ?? ''}_${_selectedVariant ?? ''}';
           final existingCartItem = cartState.items.where((i) {
-            if (product.variants != null && product.variants!.isNotEmpty) {
-              return i.id == compositeId;
-            }
-            return i.productId == product.id;
+            return i.id == compositeId;
           }).firstOrNull;
 
           // Si le produit est déjà dans le panier, afficher sa quantité réelle du panier
@@ -351,6 +398,20 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               ),
                               const SizedBox(height: AppDimens.space24),
                             ],
+
+                            // Section Couleur (pour les catégories concernées)
+                            if (availableColors.isNotEmpty)
+                              _buildColorSection(
+                                availableColors,
+                                _highlightMissingOptions && _selectedColor == null,
+                              ),
+
+                            // Section Taille (pour les catégories concernées)
+                            if (availableSizes.isNotEmpty)
+                              _buildSizeSection(
+                                availableSizes,
+                                _highlightMissingOptions && _selectedSize == null,
+                              ),
 
                             // Sélecteur de quantité synchronisé avec le panier
                             Row(
@@ -539,6 +600,181 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           fontWeight: FontWeight.bold,
         ),
       ),
+    );
+  }
+
+  Widget _buildColorSection(List<String> colorKeys, bool isMissing) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Couleur',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            if (isMissing) ...[
+              const SizedBox(width: AppDimens.space8),
+              const Text(
+                '* Requis',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: AppDimens.space12),
+        Wrap(
+          spacing: AppDimens.space12,
+          runSpacing: AppDimens.space12,
+          children: colorKeys.map((key) {
+            final colorDef = ProductOptions.getColor(key);
+            if (colorDef == null) return const SizedBox.shrink();
+
+            final isSelected = _selectedColor == key;
+
+            return Semantics(
+              label: colorDef.name,
+              button: true,
+              selected: isSelected,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedColor = key;
+                  });
+                },
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      curve: Curves.easeInOut,
+                      width: 40,
+                      height: 40,
+                      padding: const EdgeInsets.all(3.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppDimens.radius12),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : Colors.transparent,
+                          width: 2.5,
+                        ),
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colorDef.color,
+                          borderRadius: BorderRadius.circular(AppDimens.radius8),
+                          border: Border.all(
+                            color: colorDef.borderColor ??
+                                (isSelected ? Colors.transparent : AppColors.border),
+                            width: colorDef.borderColor != null ? 1.0 : 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: AppDimens.space24),
+      ],
+    );
+  }
+
+  Widget _buildSizeSection(List<String> sizes, bool isMissing) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Taille',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            if (isMissing) ...[
+              const SizedBox(width: AppDimens.space8),
+              const Text(
+                '* Requis',
+                style: TextStyle(
+                  color: AppColors.error,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: AppDimens.space12),
+        Wrap(
+          spacing: AppDimens.space8,
+          runSpacing: AppDimens.space8,
+          children: sizes.map((size) {
+            final isSelected = _selectedSize == size;
+
+            return Semantics(
+              label: 'Taille $size',
+              button: true,
+              selected: isSelected,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedSize = size;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space12,
+                    vertical: AppDimens.space8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppDimens.radius12),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                      width: isSelected ? 1.5 : 1.0,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.25),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      size,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: AppDimens.space24),
+      ],
     );
   }
 

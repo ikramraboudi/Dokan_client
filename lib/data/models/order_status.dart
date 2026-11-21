@@ -32,7 +32,7 @@ enum OrderStatus {
   pending('en attente', 'En attente'),
   confirmed('en cours', 'En cours'),
   preparing('en cours', 'En cours'),
-  outForDelivery('enleve', 'En livraison'),
+  outForDelivery('enleve', 'Enlevée'),
   delivered('livre', 'Livrée'),
   failed('echec', 'Échec de livraison'),
   refused('refuse', 'Colis refusé'),

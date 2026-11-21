@@ -8,10 +8,13 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../config/app_config.dart';
+import '../navigation/routes.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 import '../ui/quantity_selector.dart';
+import '../utils/product_options.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/models/cart_item_ui_model.dart';
 import '../../data/models/product_ui_model.dart';
@@ -136,7 +139,8 @@ class _QuickAddButtonState extends ConsumerState<QuickAddButton>
     }
 
     final hasVariants =
-        widget.product.variants != null && widget.product.variants!.isNotEmpty;
+        (widget.product.variants != null && widget.product.variants!.isNotEmpty) ||
+        ProductOptions.hasOptions(widget.product);
 
     // Écoute sélective de la quantité cumulée de CE produit dans le panier
     final cartQuantity = ref.watch(
@@ -247,7 +251,13 @@ class _QuickAddButtonState extends ConsumerState<QuickAddButton>
               shadowColor: AppColors.shadow,
               child: InkWell(
                 customBorder: const CircleBorder(),
-                onTap: () => _showVariantSheet(context),
+                onTap: () {
+                  if (ProductOptions.hasOptions(widget.product)) {
+                    context.push(AppRoutes.productDetailPath(widget.product.id));
+                  } else {
+                    _showVariantSheet(context);
+                  }
+                },
                 child: const Padding(
                   padding: EdgeInsets.all(AppDimens.space8),
                   child: Icon(
