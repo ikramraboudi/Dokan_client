@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dokan_client/core/ui/widgets/bounce_nav_bar.dart';
+import 'package:Dokan_client/core/ui/widgets/bounce_nav_bar.dart';
 
 void main() {
   final testItems = [

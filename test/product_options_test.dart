@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dokan_client/core/utils/product_options.dart';
-import 'package:dokan_client/data/mock/mock_cart_repository.dart';
-import 'package:dokan_client/data/models/cart_item_ui_model.dart';
-import 'package:dokan_client/data/models/order_model.dart';
-import 'package:dokan_client/data/models/product_ui_model.dart';
+import 'package:Dokan_client/core/utils/product_options.dart';
+import 'package:Dokan_client/data/mock/mock_cart_repository.dart';
+import 'package:Dokan_client/data/models/cart_item_ui_model.dart';
+import 'package:Dokan_client/data/models/order_model.dart';
+import 'package:Dokan_client/data/models/product_ui_model.dart';
 
 void main() {
   group('1. Correspondance Catégorie -> Options (Groupes A à E et non concernée)', () {
