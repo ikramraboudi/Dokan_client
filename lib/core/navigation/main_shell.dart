@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
+import '../ui/widgets/bounce_nav_bar.dart';
 
 /// PROVIDER DU COMPTEUR D'ARTICLES DANS LE PANIER
 ///
@@ -72,78 +73,48 @@ class MainShell extends ConsumerWidget {
       // Affiche le contenu de l'écran correspondant à l'onglet sélectionné
       body: navigationShell,
 
-      // --- Barre de navigation inférieure Material 3 ---
-      // Fixe en bas de l'écran sur tous les 5 onglets principaux
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _onDestinationSelected,
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primarySoft,
-        destinations: [
+      // --- Barre de navigation flottante style « Bounce » (bulle de verre) ---
+      bottomNavigationBar: BounceBottomNavBar(
+        currentIndex: navigationShell.currentIndex,
+        onTap: _onDestinationSelected,
+        items: [
           // Destination 0 : Accueil
-          const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
+          const BounceNavItem(
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home_rounded,
             label: 'Accueil',
             tooltip: 'Onglet Accueil',
           ),
 
           // Destination 1 : Catégories
-          const NavigationDestination(
-            icon: Icon(Icons.grid_view_outlined),
-            selectedIcon: Icon(Icons.grid_view_rounded, color: AppColors.primary),
+          const BounceNavItem(
+            icon: Icons.grid_view_outlined,
+            selectedIcon: Icons.grid_view_rounded,
             label: 'Catégories',
             tooltip: 'Onglet Catégories',
           ),
 
           // Destination 2 : Favoris
-          const NavigationDestination(
-            icon: Icon(Icons.favorite_outline_rounded),
-            selectedIcon: Icon(Icons.favorite_rounded, color: AppColors.favorite),
+          const BounceNavItem(
+            icon: Icons.favorite_outline_rounded,
+            selectedIcon: Icons.favorite_rounded,
             label: 'Favoris',
             tooltip: 'Onglet Favoris',
           ),
 
-          // Destination 3 : Panier (avec Badge numérique ambre)
-          // MOT TECHNIQUE - Badge :
-          // Composant Material 3 superposant une pastille informative sur une icône.
-          NavigationDestination(
-            icon: cartCount > 0
-                ? Badge(
-                    label: Text(
-                      cartCount > 99 ? '99+' : '$cartCount',
-                      style: const TextStyle(
-                        color: AppColors.onPrimary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    backgroundColor: AppColors.accent,
-                    child: const Icon(Icons.shopping_bag_outlined),
-                  )
-                : const Icon(Icons.shopping_bag_outlined),
-            selectedIcon: cartCount > 0
-                ? Badge(
-                    label: Text(
-                      cartCount > 99 ? '99+' : '$cartCount',
-                      style: const TextStyle(
-                        color: AppColors.onPrimary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    backgroundColor: AppColors.accent,
-                    child: const Icon(Icons.shopping_bag_rounded, color: AppColors.primary),
-                  )
-                : const Icon(Icons.shopping_bag_rounded, color: AppColors.primary),
+          // Destination 3 : Panier (avec Badge numérique ambre réactif)
+          BounceNavItem(
+            icon: Icons.shopping_bag_outlined,
+            selectedIcon: Icons.shopping_bag_rounded,
             label: 'Panier',
             tooltip: 'Onglet Panier',
+            badgeCount: cartCount,
           ),
 
           // Destination 4 : Profil
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded, color: AppColors.primary),
+          const BounceNavItem(
+            icon: Icons.person_outline_rounded,
+            selectedIcon: Icons.person_rounded,
             label: 'Profil',
             tooltip: 'Onglet Profil',
           ),
