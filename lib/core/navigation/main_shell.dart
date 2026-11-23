@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../ui/widgets/bounce_nav_bar.dart';
+import '../ui/widgets/floating_cart_bar.dart';
 
 /// PROVIDER DU COMPTEUR D'ARTICLES DANS LE PANIER
 ///
@@ -67,10 +68,26 @@ class MainShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Écoute réactive du nombre total d'articles présents dans le panier
     final cartCount = ref.watch(cartCountProvider);
+    final currentIndex = navigationShell.currentIndex;
+    final isCartTab = currentIndex == 3;
 
     return Scaffold(
       // Affiche le contenu de l'écran correspondant à l'onglet sélectionné
-      body: navigationShell,
+      body: Stack(
+        children: [
+          navigationShell,
+          // Barre de résumé flottante au-dessus de la barre de navigation
+          if (!isCartTab)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: kNavBarHeight + kNavBottomMargin + 10,
+              child: FloatingCartBar(
+                onTap: () => navigationShell.goBranch(3),
+              ),
+            ),
+        ],
+      ),
 
       // --- Barre de navigation flottante style « Bounce » (bulle de verre) ---
       bottomNavigationBar: BounceBottomNavBar(

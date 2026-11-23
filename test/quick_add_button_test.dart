@@ -116,23 +116,25 @@ void main() {
       await tester.tap(find.byIcon(Icons.add_shopping_cart_rounded));
       await tester.pumpAndSettle();
 
-      // Vérifie transformation en compteur [ - 1 + ]
+      // Vérifie transformation en compteur [ corbeille/moins 1 + ]
       expect(find.text('1'), findsOneWidget);
       expect(find.byIcon(Icons.add_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
 
       // 2. Appui sur '+' -> Incrémentation à 2
       await tester.tap(find.byIcon(Icons.add_rounded));
       await tester.pumpAndSettle();
       expect(find.text('2'), findsOneWidget);
+      expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
 
       // 3. Appui sur '-' -> Décrémentation à 1
       await tester.tap(find.byIcon(Icons.remove_rounded));
       await tester.pumpAndSettle();
       expect(find.text('1'), findsOneWidget);
+      expect(find.byIcon(Icons.delete_outline_rounded), findsOneWidget);
 
-      // 4. Appui sur '-' à 1 -> Retrait de l'article et retour à l'icône
-      await tester.tap(find.byIcon(Icons.remove_rounded));
+      // 4. Appui sur l'icône corbeille à 1 -> Retrait de l'article et retour à l'icône
+      await tester.tap(find.byIcon(Icons.delete_outline_rounded));
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.add_shopping_cart_rounded), findsOneWidget);
       expect(find.text('1'), findsNothing);

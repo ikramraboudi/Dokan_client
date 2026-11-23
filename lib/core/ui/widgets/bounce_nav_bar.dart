@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_dimens.dart';
+import '../animations/cart_fly_animation.dart';
 
 // --- Constantes configurables de style et de géométrie ---
 const double kNavBarHeight = 66.0;
@@ -439,10 +440,13 @@ class _BounceBottomNavBarState extends State<BounceBottomNavBar>
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
-                  Icon(
-                    item.icon,
-                    size: 22,
-                    color: Colors.white.withValues(alpha: 0.85),
+                  KeyedSubtree(
+                    key: item.label == 'Panier' ? CartFlyAnimation.cartNavIconKey : null,
+                    child: Icon(
+                      item.icon,
+                      size: 22,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
                   ),
                   // Badge sur l'icône dans la barre (quand l'onglet n'est pas actif)
                   if (item.badgeCount > 0 && !isSelected)
@@ -583,35 +587,103 @@ class _BounceBottomNavBarState extends State<BounceBottomNavBar>
 
   /// Badge numérique ambre Dokan réutilisable (sur l'icône ou sur la bulle)
   Widget _buildBadge(int count) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-      constraints: const BoxConstraints(
-        minWidth: 18,
-        minHeight: 18,
+    return _BouncingBadge(count: count);
+  }
+}
+
+class _BouncingBadge extends StatefulWidget {
+  final int count;
+
+  const _BouncingBadge({required this.count});
+
+  @override
+  State<_BouncingBadge> createState() => _BouncingBadgeState();
+}
+
+class _BouncingBadgeState extends State<_BouncingBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _bounceController;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.0, end: 1.35)
+            .chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 50,
       ),
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        borderRadius: BorderRadius.circular(AppDimens.radiusFull),
-        border: Border.all(
-          color: Colors.white,
-          width: 1.2,
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.35, end: 1.0)
+            .chain(CurveTween(curve: Curves.bounceOut)),
+        weight: 50,
+      ),
+    ]).animate(_bounceController);
+
+    CartBadgeBounceController.instance.addListener(_onCartBounce);
+  }
+
+  void _onCartBounce() {
+    if (mounted) {
+      _bounceController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _BouncingBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.count != oldWidget.count) {
+      _bounceController.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    CartBadgeBounceController.instance.removeListener(_onCartBounce);
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        constraints: const BoxConstraints(
+          minWidth: 18,
+          minHeight: 18,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+        decoration: BoxDecoration(
+          color: AppColors.accent,
+          borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+          border: Border.all(
+            color: Colors.white,
+            width: 1.2,
           ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          count > 99 ? '99+' : '$count',
-          style: const TextStyle(
-            color: AppColors.onPrimary,
-            fontSize: 9.5,
-            fontWeight: FontWeight.bold,
-            height: 1.0,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            widget.count > 99 ? '99+' : '${widget.count}',
+            style: const TextStyle(
+              color: AppColors.onPrimary,
+              fontSize: 9.5,
+              fontWeight: FontWeight.bold,
+              height: 1.0,
+            ),
           ),
         ),
       ),

@@ -1,51 +1,14 @@
 /// ============================================================================
-/// RÔLE DU FICHIER : Écran d'ouverture animé avec apparition dynamique du logo Dokan, particules, slogan et vérification de session.
-/// INTERAGIT AVEC : AppConfig, sessionProvider, FirebaseAuth, AppRoutes.home.
-/// POUR L'ORAL : « Le splash screen anime la marque Dokan et vérifie si une session Firebase Auth existe sur le téléphone pour reconnecter le client automatiquement. »
-/// ============================================================================
-/// ============================================================================
 /// RÔLE DU FICHIER :
-/// Écran de démarrage animé (Splash Screen) officiel de l'application Dokan.
+/// Écran de démarrage animé (Splash Screen) officiel Dokan.
 ///
-/// OBJECTIFS ET SCÉNARIO :
-/// 1) VÉRIFICATION DE SESSION : vérifie l'état Firebase en arrière-plan sans
-///    bloquer l'interface. En cas d'erreur ou d'absence de réseau, l'utilisateur
-///    est redirigé en mode visiteur de manière transparente.
-/// 2) DURÉE MINIMALE : respecte scrupuleusement la durée minimale configurée
-///    (`AppConfig.splashDuration` = 3 secondes) avant toute navigation.
-/// 3) IDENTITÉ VISUELLE ANIMÉE :
-///    - Fond dégradé vertical (primaryDark -> primary -> primaryLight) avec
-///      blobs organiques translucides dérivant en continu.
-///    - Carte-logo Dokan (widget réutilisable `DokanLogo`) apparaissant avec
-///      rebond élastique (scale 0 -> 1.0), puis pulsation douce continue.
-///    - Lettres du nom « Dokan » apparaissant une à une (décalage de 80 ms,
-///      fondu et glissement vers le haut avec `Interval` sur le contrôleur d'entrée).
-///    - Slogan court et chaleureux (`AppConfig.appTagline`) en fondu.
-///    - Icônes flottantes en arrière-plan (sac, cœur, étiquette, panier, étoile).
-///    - Fine barre de progression discrète en bas suivant l'avancement.
-/// 4) INTERACTIONS :
-///    - Toucher l'écran : émission de petites étincelles colorées (CustomPainter,
-///      max 30 particules, nettoyées automatiquement) avec retour haptique léger.
-///    - Glisser le doigt : effet de parallaxe inversé sur les blobs et icônes.
-///    - Bouton « Passer » discret en haut à droite après 1 seconde.
-/// 5) ACCESSIBILITÉ ET PERFORMANCE :
-///    - Prise en compte de `MediaQuery.disableAnimations` (fallback statique).
-///    - Aucune reconstruction par image (pas de setState à 60 fps).
-///    - Séparation des couches dans des `RepaintBoundary`.
-///    - Respect des contrastes et balises `Semantics`.
-///
-/// COUCHE DANS L'ARCHITECTURE :
-/// Couche `feature/splash/` (Fonctionnalité Splash Screen).
-///
-/// RELATIONS ET DÉPENDANCES :
-/// - Déclaré par : `core/navigation/app_router.dart` comme route initiale.
-/// - Dépend de :
-///   * `core/config/app_config.dart` (`splashDuration`, `appTagline`, `appName`).
-///   * `core/navigation/routes.dart` (`AppRoutes.home`).
-///   * `core/session/session_provider.dart` (`sessionProvider`).
-///   * `core/theme/app_colors.dart` (palette centralisée exclusive).
-///   * `core/ui/dokan_logo.dart` (`DokanLogo`).
-///   * `package:firebase_auth/firebase_auth.dart` pour la session.
+/// SÉQUENCE CINÉMATIQUE (3200 ms) :
+/// 1) 0.0 - 0.9s : Chariot stylisé (CustomPainter) entrant depuis la gauche jusqu'au centre.
+/// 2) 0.9 - 1.6s : 4 objets stylisés (boîte, sac, fruit, étoile) lancés en arc dans le chariot
+///                 avec étincelles blanches à l'impact.
+/// 3) 1.6 - 2.3s : Transformation en panier de livraison avec rebond squash & stretch élastique.
+/// 4) 2.2 - 2.8s : Apparition du texte « Dokan » et slogan « Vos achats, livrés chez vous ».
+/// 5) 2.8 - 3.2s : Voile blanc courbé montant du bas de l'écran révélant l'accueil.
 /// ============================================================================
 library;
 
@@ -56,66 +19,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/config/app_config.dart';
 import '../../core/navigation/routes.dart';
 import '../../core/session/session_provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/ui/dokan_logo.dart';
 import '../../data/models/user_summary.dart';
 
-// ─── Modèles de données internes ─────────────────────────────────────────────
-
-/// Représentation d'une icône flottante d'ambiance en arrière-plan.
-class _FloatingIconData {
-  final IconData icon;
-  final double xFraction;
-  final double yStart;
-  final double travelDistance;
-  final double opacity;
-  final double size;
-  final double phase;
-
-  const _FloatingIconData({
-    required this.icon,
-    required this.xFraction,
-    required this.yStart,
-    required this.travelDistance,
-    required this.opacity,
-    required this.size,
-    required this.phase,
-  });
-}
-
-/// Particule générée lors d'un toucher sur l'écran.
-class _TouchParticle {
-  final Offset position;
-  final double angle;
-  final double speed;
-  final Color color;
-  final double radius;
-  final int createdAt;
-
-  static const int lifetimeMs = 600;
-
-  _TouchParticle({
-    required this.position,
-    required this.angle,
-    required this.speed,
-    required this.color,
-    required this.radius,
-  }) : createdAt = DateTime.now().millisecondsSinceEpoch;
-
-  double get progress {
-    final elapsed = DateTime.now().millisecondsSinceEpoch - createdAt;
-    return (elapsed / lifetimeMs).clamp(0.0, 1.0);
-  }
-
-  bool get isDead => progress >= 1.0;
-
-  double get opacity => (1.0 - progress).clamp(0.0, 1.0);
-}
-
-// ─── Écran Splash Screen ─────────────────────────────────────────────────────
+// --- Constantes configurables ---
+const String kSplashTagline = 'Vos achats, livrés chez vous';
+const int kSplashDurationMs = 3200;
+const int kMinWaitBeforeNavMs = 2800;
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -125,196 +37,178 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
-    with TickerProviderStateMixin {
-  // ─── Contrôleurs d'animation ───────────────────────────────────────────────
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
 
-  /// Contrôleur de la séquence d'entrée (joué une seule fois, durée 2,5 s).
-  late final AnimationController _entryCtrl;
+  // Phases temporelles normalisées (0.0 à 1.0 sur 3200 ms)
+  // 1. Chariot (0.0 -> 0.28)
+  late final Animation<double> _cartSlide;
+  late final Animation<double> _cartTilt;
+  late final Animation<double> _cartWheelRotation;
 
-  /// Contrôleur des mouvements d'ambiance (boucle continue de 4 s aller-retour).
-  late final AnimationController _ambientCtrl;
+  // 2. Objets lancés (0.28 -> 0.50)
+  late final Animation<double> _item1Arc;
+  late final Animation<double> _item2Arc;
+  late final Animation<double> _item3Arc;
+  late final Animation<double> _item4Arc;
 
-  // ─── Animations de la séquence d'entrée ───────────────────────────────────
+  // 3. Panier / sac (0.50 -> 0.72)
+  late final Animation<double> _basketScale;
+  late final Animation<double> _basketSquashX;
+  late final Animation<double> _basketSquashY;
 
-  /// Logo : rebond élastique 0 -> 1.0
-  late final Animation<double> _logoScale;
-
-  /// Logo : pulsation continue douce
-  late final Animation<double> _logoPulse;
-
-  /// Lettres du nom Dokan : opacité et glissement décalés (5 lettres)
-  late final List<Animation<double>> _letterOpacity;
-  late final List<Animation<double>> _letterSlide;
-
-  /// Slogan : fondu d'apparition
+  // 4. Texte Dokan & Slogan (0.68 -> 0.88)
+  late final Animation<double> _textOpacity;
+  late final Animation<double> _textSlide;
   late final Animation<double> _taglineOpacity;
 
-  /// Barre de chargement : fondu d'apparition
-  late final Animation<double> _progressOpacity;
-
-  // ─── États fonctionnels ────────────────────────────────────────────────────
+  // 5. Voile blanc de sortie (0.875 -> 1.0)
+  late final Animation<double> _curvedVeilProgress;
 
   bool _sessionReady = false;
-  bool _skipRequested = false;
+  bool _minDurationPassed = false;
   bool _navigated = false;
-  bool _showSkip = false;
-
-  /// Offset de parallaxe réactif sans setState
-  final ValueNotifier<Offset> _parallaxOffset = ValueNotifier(Offset.zero);
-
-  /// Liste des particules de toucher actives
-  final List<_TouchParticle> _particles = [];
-  final math.Random _rng = math.Random();
-
-  /// Palette des particules (extraite exclusivement de AppColors)
-  static const List<Color> _particleColors = [
-    AppColors.accent,
-    AppColors.primaryLight,
-    AppColors.onPrimary,
-    AppColors.star,
-    AppColors.favoriteSoft,
-  ];
-
-  /// Liste des icônes flottantes d'ambiance (12 éléments discrets)
-  static const List<_FloatingIconData> _floatingIcons = [
-    _FloatingIconData(icon: Icons.shopping_bag_outlined, xFraction: 0.08, yStart: 0.85, travelDistance: 220, opacity: 0.12, size: 30, phase: 0.0),
-    _FloatingIconData(icon: Icons.favorite_border, xFraction: 0.20, yStart: 0.90, travelDistance: 260, opacity: 0.10, size: 24, phase: 0.15),
-    _FloatingIconData(icon: Icons.local_offer_outlined, xFraction: 0.35, yStart: 0.80, travelDistance: 200, opacity: 0.09, size: 26, phase: 0.30),
-    _FloatingIconData(icon: Icons.shopping_cart_outlined, xFraction: 0.50, yStart: 0.88, travelDistance: 240, opacity: 0.11, size: 22, phase: 0.45),
-    _FloatingIconData(icon: Icons.star_outline, xFraction: 0.65, yStart: 0.82, travelDistance: 210, opacity: 0.08, size: 28, phase: 0.10),
-    _FloatingIconData(icon: Icons.card_giftcard_outlined, xFraction: 0.78, yStart: 0.92, travelDistance: 270, opacity: 0.10, size: 24, phase: 0.60),
-    _FloatingIconData(icon: Icons.storefront_outlined, xFraction: 0.90, yStart: 0.78, travelDistance: 190, opacity: 0.09, size: 22, phase: 0.75),
-    _FloatingIconData(icon: Icons.discount_outlined, xFraction: 0.14, yStart: 0.60, travelDistance: 180, opacity: 0.07, size: 18, phase: 0.20),
-    _FloatingIconData(icon: Icons.local_shipping_outlined, xFraction: 0.56, yStart: 0.65, travelDistance: 170, opacity: 0.08, size: 20, phase: 0.85),
-    _FloatingIconData(icon: Icons.redeem_outlined, xFraction: 0.84, yStart: 0.55, travelDistance: 160, opacity: 0.07, size: 18, phase: 0.50),
-    _FloatingIconData(icon: Icons.sell_outlined, xFraction: 0.40, yStart: 0.50, travelDistance: 200, opacity: 0.06, size: 20, phase: 0.35),
-    _FloatingIconData(icon: Icons.loyalty_outlined, xFraction: 0.72, yStart: 0.70, travelDistance: 190, opacity: 0.08, size: 22, phase: 0.65),
-  ];
 
   @override
   void initState() {
     super.initState();
-
-    // Style clair de la barre d'état système sur le fond sombre du splash
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
 
-    // Contrôleur de séquence d'entrée (2500 ms)
-    _entryCtrl = AnimationController(
+    _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: kSplashDurationMs),
     );
 
-    // Contrôleur d'ambiance en boucle continue (4000 ms aller-retour)
-    _ambientCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 4000),
-    )..repeat(reverse: true);
+    _initAnimations();
 
-    _buildAnimations();
-
-    // Démarrage de la séquence d'entrée
-    _entryCtrl.forward();
-
-    // Affichage discret du bouton « Passer » après 1 seconde
-    Future.delayed(const Duration(seconds: 1), () {
+    _ctrl.forward().then((_) {
       if (mounted) {
-        setState(() => _showSkip = true);
+        _minDurationPassed = true;
+        _tryNavigate();
       }
     });
 
-    // Lancement de la vérification de session après le premier frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Seuil minimal pour la navigation
+    Future.delayed(const Duration(milliseconds: kMinWaitBeforeNavMs), () {
       if (mounted) {
-        _checkSession();
+        _minDurationPassed = true;
+        _tryNavigate();
       }
+    });
+
+    // Vérification de session en tâche de fond
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkSession();
     });
   }
 
-  void _buildAnimations() {
-    // 1. Rebond élastique du logo
-    _logoScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+  void _initAnimations() {
+    // Phase 1 : Chariot de gauche à centre
+    _cartSlide = Tween<double>(begin: -1.3, end: 0.0).animate(
       CurvedAnimation(
-        parent: _entryCtrl,
-        curve: const Interval(0.0, 0.40, curve: Curves.elasticOut),
+        parent: _ctrl,
+        curve: const Interval(0.0, 0.28, curve: Curves.easeOutCubic),
       ),
     );
 
-    // 2. Pulsation continue du logo
-    _logoPulse = Tween<double>(begin: 1.0, end: 1.04).animate(
-      CurvedAnimation(parent: _ambientCtrl, curve: Curves.easeInOut),
+    _cartTilt = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 0.0, end: -0.06).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: -0.06, end: 0.04).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 40,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.04, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 30,
+      ),
+    ]).animate(
+      CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.28)),
     );
 
-    // 3. Lettres « D-o-k-a-n » décalées d'environ 80 ms (sur 2500 ms = ~0.032 par lettre)
-    const letterCount = 5;
-    const startOffset = 0.36;
-    const step = 0.06;
-    const window = 0.16;
+    _cartWheelRotation = Tween<double>(begin: 0.0, end: 6.0 * math.pi).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.0, 0.28, curve: Curves.linear),
+      ),
+    );
 
-    _letterOpacity = List.generate(letterCount, (i) {
-      final begin = startOffset + i * step;
-      final end = (begin + window).clamp(0.0, 1.0);
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: _entryCtrl,
-          curve: Interval(begin, end, curve: Curves.easeOut),
-        ),
-      );
-    });
+    // Phase 2 : Objets lancés (0.28 à 0.50)
+    _item1Arc = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.28, 0.36, curve: Curves.easeInOut),
+    );
+    _item2Arc = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.32, 0.40, curve: Curves.easeInOut),
+    );
+    _item3Arc = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.36, 0.44, curve: Curves.easeInOut),
+    );
+    _item4Arc = CurvedAnimation(
+      parent: _ctrl,
+      curve: const Interval(0.40, 0.48, curve: Curves.easeInOut),
+    );
 
-    _letterSlide = List.generate(letterCount, (i) {
-      final begin = startOffset + i * step;
-      final end = (begin + window).clamp(0.0, 1.0);
-      return Tween<double>(begin: 18.0, end: 0.0).animate(
-        CurvedAnimation(
-          parent: _entryCtrl,
-          curve: Interval(begin, end, curve: Curves.easeOut),
-        ),
-      );
-    });
+    // Phase 3 : Panier de livraison rebondissant (0.50 à 0.72)
+    _basketScale = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.50, 0.68, curve: Curves.elasticOut),
+      ),
+    );
 
-    // 4. Slogan en fondu
+    _basketSquashX = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.25), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.25, end: 0.90), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.90, end: 1.0), weight: 40),
+    ]).animate(
+      CurvedAnimation(parent: _ctrl, curve: const Interval(0.50, 0.70)),
+    );
+
+    _basketSquashY = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.75), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.75, end: 1.12), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 1.12, end: 1.0), weight: 40),
+    ]).animate(
+      CurvedAnimation(parent: _ctrl, curve: const Interval(0.50, 0.70)),
+    );
+
+    // Phase 4 : Texte et slogan (0.68 à 0.88)
+    _textOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.68, 0.80, curve: Curves.easeIn),
+      ),
+    );
+
+    _textSlide = Tween<double>(begin: 16.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _ctrl,
+        curve: const Interval(0.68, 0.82, curve: Curves.easeOut),
+      ),
+    );
+
     _taglineOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _entryCtrl,
-        curve: const Interval(0.68, 0.90, curve: Curves.easeIn),
+        parent: _ctrl,
+        curve: const Interval(0.78, 0.90, curve: Curves.easeIn),
       ),
     );
 
-    // 5. Barre de progression en bas
-    _progressOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
+    // Phase 5 : Voile blanc courbé montant (0.875 à 1.0)
+    _curvedVeilProgress = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _entryCtrl,
-        curve: const Interval(0.50, 0.70, curve: Curves.easeIn),
+        parent: _ctrl,
+        curve: const Interval(0.875, 1.0, curve: Curves.easeInOutCubic),
       ),
     );
   }
 
-  /// SCÉNARIO FONCTIONNEL :
-  /// 1. Attend au minimum `AppConfig.splashDuration` (3 secondes).
-  /// 2. Interroge l'état d'authentification Firebase en tâche de fond.
-  /// 3. Navigue vers l'accueil quand les deux conditions sont réunies.
-  /// 4. Si une erreur survient (réseau, absence de config), bascule en mode
-  ///    visiteur sécurisé et continue sans bloquer l'écran.
   Future<void> _checkSession() async {
-    try {
-      await Future.wait([
-        Future.delayed(AppConfig.splashDuration),
-        _verifyFirebaseAuth(),
-      ]);
-    } catch (_) {
-      // En cas d'erreur de session, bascule sécurisée en mode invité
-      if (mounted) {
-        ref.read(sessionProvider.notifier).logout();
-      }
-    } finally {
-      _sessionReady = true;
-      if (mounted && (_skipRequested || !_navigated)) {
-        _navigate();
-      }
-    }
-  }
-
-  Future<void> _verifyFirebaseAuth() async {
     try {
       final auth = FirebaseAuth.instance;
       final firebaseUser = auth.currentUser ??
@@ -322,6 +216,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 const Duration(seconds: 3),
                 onTimeout: () => null,
               );
+
       if (firebaseUser != null && mounted) {
         String? phone;
         try {
@@ -331,10 +226,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               .get();
           phone = doc.data()?['phone'] as String?;
         } catch (_) {}
+
         final displayName = (firebaseUser.displayName != null &&
                 firebaseUser.displayName!.isNotEmpty)
             ? firebaseUser.displayName!
             : (firebaseUser.email?.split('@').first ?? 'Client');
+
         ref.read(sessionProvider.notifier).loginSuccess(
               UserSummary(
                 fullName: displayName,
@@ -350,233 +247,117 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       if (mounted) {
         ref.read(sessionProvider.notifier).logout();
       }
+    } finally {
+      if (mounted) {
+        _sessionReady = true;
+        _tryNavigate();
+      }
     }
   }
 
-  void _onSkipPressed() {
-    _skipRequested = true;
-    if (_sessionReady && mounted && !_navigated) {
-      _navigate();
-    }
-  }
-
-  void _navigate() {
-    if (_navigated || !mounted) return;
+  void _tryNavigate() {
+    if (!_sessionReady || !_minDurationPassed || _navigated || !mounted) return;
     _navigated = true;
 
-    // Rétablissement des icônes sombres de la barre de statut pour l'accueil
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-
-    // Redirection définitive vers l'écran d'accueil
     context.go(AppRoutes.home);
-  }
-
-  // ─── Gestion interactive des particules et du parallaxe ───────────────────
-
-  void _spawnParticles(Offset position) {
-    HapticFeedback.lightImpact();
-
-    _particles.removeWhere((p) => p.isDead);
-
-    final count = 4 + _rng.nextInt(3);
-    if (_particles.length + count > 30) {
-      final excess = (_particles.length + count) - 30;
-      _particles.removeRange(0, excess.clamp(0, _particles.length));
-    }
-
-    for (int i = 0; i < count; i++) {
-      _particles.add(
-        _TouchParticle(
-          position: position,
-          angle: _rng.nextDouble() * 2 * math.pi,
-          speed: 0.8 + _rng.nextDouble() * 1.4,
-          color: _particleColors[_rng.nextInt(_particleColors.length)],
-          radius: 3.0 + _rng.nextDouble() * 3.5,
-        ),
-      );
-    }
-  }
-
-  Future<void> _springBack() async {
-    for (int i = 0; i < 15; i++) {
-      await Future.delayed(const Duration(milliseconds: 16));
-      if (!mounted) return;
-      final c = _parallaxOffset.value;
-      if (c.distance < 0.5) {
-        _parallaxOffset.value = Offset.zero;
-        break;
-      }
-      _parallaxOffset.value = Offset(c.dx * 0.80, c.dy * 0.80);
-    }
   }
 
   @override
   void dispose() {
-    _entryCtrl.dispose();
-    _ambientCtrl.dispose();
-    _parallaxOffset.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
-  // ─── Build principal ───────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    // Accessibilité : si l'utilisateur a désactivé les animations système
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    if (reduceMotion) {
-      return _buildStaticFallback(context);
+    if (MediaQuery.of(context).disableAnimations) {
+      return Scaffold(
+        backgroundColor: AppColors.primary,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 90,
+                height: 90,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: const Icon(
+                  Icons.shopping_bag_rounded,
+                  size: 48,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Dokan',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                kSplashTagline,
+                style: TextStyle(fontSize: 14, color: Colors.white70),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
-    final size = MediaQuery.sizeOf(context);
-
     return Scaffold(
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (details) => _spawnParticles(details.localPosition),
-        onPanUpdate: (details) {
-          final current = _parallaxOffset.value;
-          _parallaxOffset.value = Offset(
-            (current.dx + details.delta.dx * 0.35).clamp(-25.0, 25.0),
-            (current.dy + details.delta.dy * 0.35).clamp(-25.0, 25.0),
-          );
-        },
-        onPanEnd: (_) => _springBack(),
-        child: Stack(
-          children: [
-            // Couche 0 : Dégradé vertical et blobs translucides flottants
-            RepaintBoundary(
-              child: _BackgroundLayer(
-                parallaxOffset: _parallaxOffset,
-                ambientCtrl: _ambientCtrl,
-                screenSize: size,
-              ),
-            ),
-
-            // Couche 1 : Icônes flottantes en arrière-plan
-            RepaintBoundary(
-              child: _FloatingIconsLayer(
-                floatingIcons: _floatingIcons,
-                ambientCtrl: _ambientCtrl,
-                entryCtrl: _entryCtrl,
-                parallaxOffset: _parallaxOffset,
-                screenSize: size,
-              ),
-            ),
-
-            // Couche 2 : Contenu central (Logo + Dokan + Slogan)
-            _buildCenterContent(context, size),
-
-            // Couche 3 : Indicateur discret de chargement
-            _buildProgressBar(),
-
-            // Couche 4 : Bouton « Passer » en haut à droite
-            _buildSkipButton(context),
-
-            // Couche 5 : Particules interactives de toucher
-            RepaintBoundary(
-              child: CustomPaint(
-                painter: _ParticlesPainter(
-                  particles: _particles,
-                  repaint: _ambientCtrl,
-                ),
-                size: Size.infinite,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCenterContent(BuildContext context, Size size) {
-    return Positioned.fill(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          // Logo Dokan avec rebond élastique et pulsation douce
+          // 1. Fond turquoise officiel Dokan (AppColors.primary)
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF288585), // Turquoise lumineux
+                  AppColors.primary,  // Color(0xFF1F7A7A) Identité officielle Dokan
+                  Color(0xFF0D2B2F), // Vert-canard profond / bleu pétrole
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+
+          // 2. Scène animée principale
           AnimatedBuilder(
-            animation: Listenable.merge([_logoScale, _logoPulse]),
+            animation: _ctrl,
             builder: (context, child) {
-              final scale = _logoScale.value * _logoPulse.value;
-              return Transform.scale(
-                scale: scale,
-                child: child,
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Phase 1 & 2 : Chariot stylisé + Objets en vol
+                  if (_ctrl.value < 0.65)
+                    _buildCartAndFlyingItems(),
+
+                  // Phase 3 & 4 : Sac de livraison + Titre Dokan
+                  if (_ctrl.value >= 0.48)
+                    _buildBasketAndLogo(),
+                ],
               );
             },
-            child: Semantics(
-              label: 'Logo Dokan',
-              child: DokanLogo(size: 104),
-            ),
           ),
 
-          const SizedBox(height: 28),
-
-          // Nom officiel « Dokan » : lettres animées + widget textuel pour smoke test
-          Semantics(
-            label: AppConfig.appName,
-            header: true,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Texte de référence masqué garantissant la compatibilité find.text('Dokan')
-                Opacity(
-                  opacity: 0.0,
-                  child: Text(
-                    AppConfig.appName,
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          letterSpacing: 3.0,
-                        ),
-                  ),
-                ),
-                // Lettres apparaissant une par une avec fondu et glissement
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate('Dokan'.length, (i) {
-                    return AnimatedBuilder(
-                      animation: Listenable.merge([_letterOpacity[i], _letterSlide[i]]),
-                      builder: (context, _) {
-                        return Opacity(
-                          opacity: _letterOpacity[i].value,
-                          child: Transform.translate(
-                            offset: Offset(0, _letterSlide[i].value),
-                            child: Text(
-                              'Dokan'[i],
-                              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                    color: AppColors.onPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 3.0,
-                                  ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Slogan court et chaleureux
+          // 3. Voile blanc montant à bord courbé révélant l'accueil
           AnimatedBuilder(
-            animation: _taglineOpacity,
-            builder: (context, _) {
-              return Opacity(
-                opacity: _taglineOpacity.value,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Text(
-                    AppConfig.appTagline,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.onPrimary.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w400,
-                          height: 1.4,
-                        ),
-                  ),
+            animation: _curvedVeilProgress,
+            builder: (context, child) {
+              if (_curvedVeilProgress.value <= 0.001) return const SizedBox.shrink();
+              return ClipPath(
+                clipper: _CurvedRisingClipper(_curvedVeilProgress.value),
+                child: Container(
+                  color: Colors.white,
                 ),
               );
             },
@@ -586,299 +367,345 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     );
   }
 
-  Widget _buildProgressBar() {
-    return Positioned(
-      bottom: 44,
-      left: 60,
-      right: 60,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_entryCtrl, _progressOpacity]),
-        builder: (context, _) {
-          return Opacity(
-            opacity: _progressOpacity.value,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: SizedBox(
-                height: 3,
-                child: LinearProgressIndicator(
-                  value: _entryCtrl.value,
-                  backgroundColor: AppColors.onPrimary.withValues(alpha: 0.15),
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+  /// Construit le chariot stylisé et les 4 objets en vol
+  Widget _buildCartAndFlyingItems() {
+    final size = MediaQuery.of(context).size;
+    final centerX = size.width / 2;
+    final centerY = size.height * 0.44;
 
-  Widget _buildSkipButton(BuildContext context) {
-    return Positioned(
-      top: MediaQuery.paddingOf(context).top + 8,
-      right: 12,
-      child: AnimatedOpacity(
-        opacity: _showSkip ? 1.0 : 0.0,
-        duration: const Duration(milliseconds: 400),
-        child: Semantics(
-          label: "Passer l'introduction",
-          button: true,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-            child: TextButton(
-              onPressed: _showSkip ? _onSkipPressed : null,
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.onPrimary.withValues(alpha: 0.8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              child: const Text(
-                'Passer',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+    final cartFade = (1.0 - ((_ctrl.value - 0.48) / 0.12)).clamp(0.0, 1.0);
+
+    return Opacity(
+      opacity: cartFade,
+      child: Stack(
+        children: [
+          // Chariot se déplaçant horizontalement
+          Positioned(
+            left: centerX + (_cartSlide.value * size.width) - 60,
+            top: centerY - 45,
+            child: Transform.rotate(
+              angle: _cartTilt.value,
+              child: CustomPaint(
+                size: const Size(120, 90),
+                painter: _StylizedCartPainter(
+                  wheelRotation: _cartWheelRotation.value,
                 ),
               ),
             ),
           ),
-        ),
+
+          // 4 Objets volants en cloche
+          if (_item1Arc.value > 0.0)
+            _buildFlyingItem(
+              target: Offset(centerX - 20, centerY + 10),
+              progress: _item1Arc.value,
+              color: const Color(0xFFFFB300), // Boîte dorée
+              isBox: true,
+            ),
+          if (_item2Arc.value > 0.0)
+            _buildFlyingItem(
+              target: Offset(centerX + 5, centerY + 5),
+              progress: _item2Arc.value,
+              color: const Color(0xFFE53935), // Pomme/fruit rouge
+              isFruit: true,
+            ),
+          if (_item3Arc.value > 0.0)
+            _buildFlyingItem(
+              target: Offset(centerX - 10, centerY - 5),
+              progress: _item3Arc.value,
+              color: const Color(0xFF26A69A), // Petit sac vert-d'eau
+              isBag: true,
+            ),
+          if (_item4Arc.value > 0.0)
+            _buildFlyingItem(
+              target: Offset(centerX + 18, centerY + 12),
+              progress: _item4Arc.value,
+              color: const Color(0xFFFFEB3B), // Étoile dorée
+              isStar: true,
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildStaticFallback(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.primaryDark,
-              AppColors.primary,
-              AppColors.primaryLight,
-            ],
-            stops: [0.0, 0.55, 1.0],
+  Widget _buildFlyingItem({
+    required Offset target,
+    required double progress,
+    required Color color,
+    bool isBox = false,
+    bool isFruit = false,
+    bool isBag = false,
+    bool isStar = false,
+  }) {
+    final start = Offset(target.dx + 110, target.dy - 120);
+    final x = start.dx + (target.dx - start.dx) * progress;
+    final arc = -55.0 * 4.0 * progress * (1.0 - progress);
+    final y = start.dy + (target.dy - start.dy) * progress + arc;
+
+    // À l'arrivée (progress > 0.85) : petites étincelles blanches
+    final clampedProgress = progress.clamp(0.0, 1.0);
+    final sparkOpacity = clampedProgress > 0.85
+        ? ((clampedProgress - 0.85) / 0.15).clamp(0.0, 1.0)
+        : 0.0;
+
+    return Positioned(
+      left: x - 10,
+      top: y - 10,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Transform.rotate(
+            angle: clampedProgress * math.pi * 2,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: color,
+                shape: (isFruit || isStar) ? BoxShape.circle : BoxShape.rectangle,
+                borderRadius: isBox ? BorderRadius.circular(4) : (isBag ? BorderRadius.circular(5) : null),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: isStar
+                  ? const Icon(Icons.star_rounded, size: 14, color: Colors.white)
+                  : null,
+            ),
           ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const DokanLogo(size: 104),
-              const SizedBox(height: 28),
-              Semantics(
-                label: AppConfig.appName,
-                header: true,
-                child: Text(
-                  AppConfig.appName,
-                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                        color: AppColors.onPrimary,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 3.0,
-                      ),
+          if (sparkOpacity > 0.0 && sparkOpacity <= 1.0)
+            Positioned(
+              left: -4,
+              top: -4,
+              child: Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(
+                      alpha: (1.0 - sparkOpacity).clamp(0.0, 1.0),
+                    ),
+                    width: 1.5,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  AppConfig.appTagline,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.onPrimary.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w400,
-                        height: 1.4,
-                      ),
-                ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Construit le sac de livraison qui rebondit et le nom Dokan
+  Widget _buildBasketAndLogo() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Panier/sac de livraison rebondissant
+          Transform.scale(
+            scaleX: (math.max(0.0, _basketScale.value) * _basketSquashX.value).clamp(0.0, 3.0),
+            scaleY: (math.max(0.0, _basketScale.value) * _basketSquashY.value).clamp(0.0, 3.0),
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Couche fond dégradé et blobs ────────────────────────────────────────────
-
-class _BackgroundLayer extends StatelessWidget {
-  final ValueNotifier<Offset> parallaxOffset;
-  final AnimationController ambientCtrl;
-  final Size screenSize;
-
-  const _BackgroundLayer({
-    required this.parallaxOffset,
-    required this.ambientCtrl,
-    required this.screenSize,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: screenSize.width,
-      height: screenSize.height,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.primaryDark,
-            AppColors.primary,
-            AppColors.primaryLight,
-          ],
-          stops: [0.0, 0.55, 1.0],
-        ),
-      ),
-      child: ValueListenableBuilder<Offset>(
-        valueListenable: parallaxOffset,
-        builder: (context, parallax, _) {
-          return AnimatedBuilder(
-            animation: ambientCtrl,
-            builder: (context, _) {
-              return CustomPaint(
-                painter: _BlobPainter(
-                  progress: ambientCtrl.value,
-                  parallax: parallax,
-                ),
-                size: screenSize,
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _BlobPainter extends CustomPainter {
-  final double progress;
-  final Offset parallax;
-
-  _BlobPainter({required this.progress, required this.parallax});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..style = PaintingStyle.fill;
-    final wave = math.sin(progress * math.pi);
-
-    final blobs = [
-      (0.15, 0.18, 0.52, AppColors.onPrimary, 18.0),
-      (0.80, 0.75, 0.40, AppColors.primaryLight, 22.0),
-      (0.55, 0.10, 0.30, AppColors.onPrimary, 14.0),
-      (0.20, 0.82, 0.35, AppColors.accent, 20.0),
-    ];
-
-    for (final (cx, cy, radiusFrac, color, amplitude) in blobs) {
-      final dy = wave * amplitude + parallax.dy * 0.5;
-      final dx = parallax.dx * 0.3;
-
-      paint.color = color.withValues(alpha: 0.07 + wave * 0.04);
-      paint.maskFilter = MaskFilter.blur(BlurStyle.normal, size.width * radiusFrac * 0.5);
-
-      canvas.drawCircle(
-        Offset(
-          size.width * cx + dx,
-          size.height * cy + dy,
-        ),
-        size.width * radiusFrac,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BlobPainter old) =>
-      old.progress != progress || old.parallax != parallax;
-}
-
-// ─── Couche icônes flottantes ─────────────────────────────────────────────────
-
-class _FloatingIconsLayer extends StatelessWidget {
-  final List<_FloatingIconData> floatingIcons;
-  final AnimationController ambientCtrl;
-  final AnimationController entryCtrl;
-  final ValueNotifier<Offset> parallaxOffset;
-  final Size screenSize;
-
-  const _FloatingIconsLayer({
-    required this.floatingIcons,
-    required this.ambientCtrl,
-    required this.entryCtrl,
-    required this.parallaxOffset,
-    required this.screenSize,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([ambientCtrl, entryCtrl]),
-      builder: (context, _) {
-        final layerOpacity = CurvedAnimation(
-          parent: entryCtrl,
-          curve: const Interval(0.40, 0.70, curve: Curves.easeIn),
-        ).value;
-
-        return ValueListenableBuilder<Offset>(
-          valueListenable: parallaxOffset,
-          builder: (context, parallax, _) {
-            return Stack(
-              children: floatingIcons.map((fi) {
-                final t = (ambientCtrl.value + fi.phase) % 1.0;
-                final dy = -fi.travelDistance * t;
-                final parallaxDx = -parallax.dx * 0.18;
-                final parallaxDy = -parallax.dy * 0.18;
-
-                return Positioned(
-                  left: screenSize.width * fi.xFraction + parallaxDx,
-                  top: screenSize.height * fi.yStart + dy + parallaxDy,
-                  child: Opacity(
-                    opacity: (fi.opacity * layerOpacity).clamp(0.0, 1.0),
-                    child: Icon(
-                      fi.icon,
-                      size: fi.size,
-                      color: AppColors.onPrimary,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Forme élégante du panier / sac
+                  const Icon(
+                    Icons.shopping_bag_rounded,
+                    size: 52,
+                    color: AppColors.primary,
+                  ),
+                  // Petits points lumineux au-dessus
+                  Positioned(
+                    top: 14,
+                    right: 18,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFB300),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                );
-              }).toList(),
-            );
-          },
-        );
-      },
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          // Titre « Dokan » qui glisse et s'affiche
+          Transform.translate(
+            offset: Offset(0, _textSlide.value),
+            child: Opacity(
+              opacity: _textOpacity.value.clamp(0.0, 1.0),
+              child: const Text(
+                'Dokan',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Slogan Dokan
+          Opacity(
+            opacity: _taglineOpacity.value.clamp(0.0, 1.0),
+            child: const Text(
+              kSplashTagline,
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w400,
+                color: Colors.white70,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ─── Peintre des particules de toucher ─────────────────────────────────────────
+/// Clipper pour le voile blanc montant avec bordure supérieure subtilement courbe
+class _CurvedRisingClipper extends CustomClipper<Path> {
+  final double progress; // 0.0 à 1.0
 
-class _ParticlesPainter extends CustomPainter {
-  final List<_TouchParticle> particles;
+  _CurvedRisingClipper(this.progress);
 
-  _ParticlesPainter({
-    required this.particles,
-    required super.repaint,
-  });
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final clampedP = progress.clamp(0.0, 1.0);
+    final topY = size.height * (1.0 - clampedP);
+    const curveDepth = 40.0;
+
+    path.moveTo(0, topY);
+    // Courbe convexe élégante
+    path.quadraticBezierTo(
+      size.width / 2,
+      topY - (curveDepth * (1.0 - clampedP * 0.5)),
+      size.width,
+      topY,
+    );
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant _CurvedRisingClipper oldClipper) =>
+      oldClipper.progress != progress;
+}
+
+/// Painter original pour le chariot stylisé
+class _StylizedCartPainter extends CustomPainter {
+  final double wheelRotation;
+
+  _StylizedCartPainter({required this.wheelRotation});
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (particles.isEmpty) return;
+    final linePaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
-    final paint = Paint()..style = PaintingStyle.fill;
+    // 1. Cadre du chariot
+    final bodyPath = Path()
+      ..moveTo(size.width * 0.15, size.height * 0.20) // Poignée
+      ..lineTo(size.width * 0.28, size.height * 0.35)
+      ..lineTo(size.width * 0.85, size.height * 0.35) // Bord haut panier
+      ..lineTo(size.width * 0.72, size.height * 0.70) // Fond panier
+      ..lineTo(size.width * 0.30, size.height * 0.70)
+      ..close();
 
-    for (final p in particles) {
-      if (p.isDead) continue;
-      final t = p.progress;
-      final distance = p.speed * t * 60;
-      final dx = math.cos(p.angle) * distance;
-      final dy = math.sin(p.angle) * distance - (t * 22);
-      final currentPos = p.position + Offset(dx, dy);
+    canvas.drawPath(bodyPath, linePaint);
 
-      paint.color = p.color.withValues(alpha: p.opacity * 0.85);
-      canvas.drawCircle(currentPos, p.radius * (1.0 - t * 0.4), paint);
+    // Grillage interne décoratif
+    canvas.drawLine(
+      Offset(size.width * 0.44, size.height * 0.35),
+      Offset(size.width * 0.40, size.height * 0.70),
+      linePaint..strokeWidth = 1.8,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.60, size.height * 0.35),
+      Offset(size.width * 0.55, size.height * 0.70),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.26, size.height * 0.52),
+      Offset(size.width * 0.78, size.height * 0.52),
+      linePaint,
+    );
+
+    // 2. Châssis roues
+    linePaint.strokeWidth = 3.0;
+    canvas.drawLine(
+      Offset(size.width * 0.35, size.height * 0.70),
+      Offset(size.width * 0.35, size.height * 0.82),
+      linePaint,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.68, size.height * 0.70),
+      Offset(size.width * 0.68, size.height * 0.82),
+      linePaint,
+    );
+
+    // 3. Roues stylisées avec rayons qui tournent
+    _drawWheel(canvas, Offset(size.width * 0.35, size.height * 0.85), 8.0);
+    _drawWheel(canvas, Offset(size.width * 0.68, size.height * 0.85), 8.0);
+  }
+
+  void _drawWheel(Canvas canvas, Offset center, double radius) {
+    final ringPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2.2
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(center, radius, ringPaint);
+    canvas.drawCircle(center, 2.5, Paint()..color = Colors.white);
+
+    // Rayons tournants
+    final spokeLength = radius - 1.5;
+    for (int i = 0; i < 4; i++) {
+      final angle = wheelRotation + (i * math.pi / 2);
+      final p2 = Offset(
+        center.dx + math.cos(angle) * spokeLength,
+        center.dy + math.sin(angle) * spokeLength,
+      );
+      canvas.drawLine(center, p2, Paint()..color = Colors.white..strokeWidth = 1.4);
     }
   }
 
   @override
-  bool shouldRepaint(_ParticlesPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _StylizedCartPainter oldDelegate) =>
+      oldDelegate.wheelRotation != wheelRotation;
 }

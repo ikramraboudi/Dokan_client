@@ -15,6 +15,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_dimens.dart';
 import '../ui/quantity_selector.dart';
 import '../utils/product_options.dart';
+import 'animations/cart_fly_animation.dart';
 import '../../data/mock/mock_cart_repository.dart';
 import '../../data/models/cart_item_ui_model.dart';
 import '../../data/models/product_ui_model.dart';
@@ -45,6 +46,7 @@ class _QuickAddButtonState extends ConsumerState<QuickAddButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _bounceController;
   late final Animation<double> _scaleAnimation;
+  final GlobalKey _buttonKey = GlobalKey();
 
   @override
   void initState() {
@@ -89,6 +91,11 @@ class _QuickAddButtonState extends ConsumerState<QuickAddButton>
   /// SCÉNARIO MÉTIER : AJOUT RAPIDE INITIAL (Panier = 0)
   void _onQuickAdd() {
     HapticFeedback.lightImpact();
+    CartFlyAnimation.runFly(
+      context: context,
+      startKey: _buttonKey,
+      imageUrl: widget.product.imageUrls.isNotEmpty ? widget.product.imageUrls.first : null,
+    );
     ref.read(cartProvider.notifier).addProduct(widget.product, quantity: 1);
   }
 
@@ -96,6 +103,11 @@ class _QuickAddButtonState extends ConsumerState<QuickAddButton>
   void _onIncrease(int currentQty) {
     if (currentQty >= 10) return;
     HapticFeedback.lightImpact();
+    CartFlyAnimation.runFly(
+      context: context,
+      startKey: _buttonKey,
+      imageUrl: widget.product.imageUrls.isNotEmpty ? widget.product.imageUrls.first : null,
+    );
     final item = _findCartItem();
     if (item != null) {
       ref.read(cartProvider.notifier).updateQuantity(item.id, currentQty + 1);
@@ -163,27 +175,35 @@ class _QuickAddButtonState extends ConsumerState<QuickAddButton>
 
     // 2. Produit avec variantes : bouton circulaire d'options avec badge de quantité
     if (hasVariants) {
-      return _buildVariantButton(context, cartQuantity);
+      return KeyedSubtree(
+        key: _buttonKey,
+        child: _buildVariantButton(context, cartQuantity),
+      );
     }
 
     // 3. Produit simple sans variante : bouton rond (0) ou pastille compteur (>= 1)
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 220),
-      transitionBuilder: (child, animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.85, end: 1.0).animate(animation),
-            child: child,
-          ),
-        );
-      },
-      child: cartQuantity == 0
-          ? _buildAddCircleButton(key: const ValueKey('circle_add'))
-          : _buildCounterPill(
-              key: const ValueKey('counter_pill'),
-              quantity: cartQuantity,
+    return KeyedSubtree(
+      key: _buttonKey,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOutBack,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.82, end: 1.0).animate(animation),
+              child: child,
             ),
+          );
+        },
+        child: cartQuantity == 0
+            ? _buildAddCircleButton(key: const ValueKey('circle_add'))
+            : _buildCounterPill(
+                key: const ValueKey('counter_pill'),
+                quantity: cartQuantity,
+              ),
+      ),
     );
   }
 
@@ -312,10 +332,12 @@ class _QuickAddButtonState extends ConsumerState<QuickAddButton>
                 child: InkWell(
                   customBorder: const CircleBorder(),
                   onTap: () => _onDecrease(quantity),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 7, vertical: 6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
                     child: Icon(
-                      Icons.remove_rounded,
+                      quantity <= 1
+                          ? Icons.delete_outline_rounded
+                          : Icons.remove_rounded,
                       size: 15,
                       color: AppColors.onPrimary,
                     ),

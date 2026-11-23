@@ -89,6 +89,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         );
   }
 
+  static const double kFreeDeliveryThreshold = 150.0;
+
   @override
   Widget build(BuildContext context) {
     final cartState = ref.watch(cartProvider);
@@ -121,14 +123,22 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   child: ListView(
                     padding: const EdgeInsets.all(AppDimens.space16),
                     children: [
+                      // Grand titre « Votre panier » avec nombre d'articles en petit dessous
+                      _buildCartTitle(cartState),
+                      const SizedBox(height: AppDimens.space16),
+
+                      // Carte verte d'avancement vers la livraison offerte (seuil 150 DT)
+                      _buildFreeDeliveryCard(cartState),
+                      const SizedBox(height: AppDimens.space12),
+
                       // Bannière d'affectation du véhicule (voiture ou camion)
                       _buildVehicleBanner(cartState),
-                      const SizedBox(height: AppDimens.space12),
+                      const SizedBox(height: AppDimens.space16),
 
                       // Liste des articles
                       ...List.generate(cartState.items.length, (index) {
                         final item = cartState.items[index];
-                        return _buildCartItemCard(item, index);
+                        return _buildAnimatedCartItemCard(item, index);
                       }),
                       const SizedBox(height: AppDimens.space16),
 
@@ -154,6 +164,118 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 _buildBottomCheckoutBar(cartState),
               ],
             ),
+    );
+  }
+
+  /// Grand titre « Votre panier » avec sous-titre dynamique
+  Widget _buildCartTitle(CartState cartState) {
+    final count = cartState.totalItemCount;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Votre panier',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          count == 1 ? '1 article sélectionné' : '$count articles sélectionnés',
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Carte verte d'avancement vers la livraison offerte avec jauge animée
+  Widget _buildFreeDeliveryCard(CartState cartState) {
+    final subtotal = cartState.subtotal;
+    final isFree = subtotal >= kFreeDeliveryThreshold;
+    final remaining = (kFreeDeliveryThreshold - subtotal).clamp(0.0, kFreeDeliveryThreshold);
+    final progress = (subtotal / kFreeDeliveryThreshold).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space14),
+      decoration: BoxDecoration(
+        color: isFree ? AppColors.successSoft : AppColors.primarySoft,
+        borderRadius: BorderRadius.circular(AppDimens.radius16),
+        border: Border.all(
+          color: isFree ? AppColors.success : AppColors.primaryLight,
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isFree ? Icons.check_circle_rounded : Icons.local_shipping_outlined,
+                color: isFree ? AppColors.success : AppColors.primary,
+                size: 22,
+              ),
+              const SizedBox(width: AppDimens.space10),
+              Expanded(
+                child: Text(
+                  isFree
+                      ? 'Livraison offerte !'
+                      : 'Plus que ${AppConfig.formatPrice(remaining)} pour la livraison offerte',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: isFree ? AppColors.success : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.space10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.0, end: progress),
+              duration: const Duration(milliseconds: 450),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                return LinearProgressIndicator(
+                  value: value,
+                  minHeight: 7,
+                  backgroundColor: Colors.white,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isFree ? AppColors.success : AppColors.primary,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Wrapper animé pour chaque ligne d'article
+  Widget _buildAnimatedCartItemCard(CartItemUiModel item, int index) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 250 + (index * 40)),
+      curve: Curves.easeOutQuad,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 16 * (1.0 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: _buildCartItemCard(item, index),
     );
   }
 
@@ -516,48 +638,76 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
   Widget _buildBottomCheckoutBar(CartState cartState) {
     return Container(
-      padding: const EdgeInsets.all(AppDimens.space16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.space16,
+        vertical: AppDimens.space12,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.border)),
         boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
-            blurRadius: 8,
-            offset: Offset(0, -2),
+            blurRadius: 10,
+            offset: Offset(0, -3),
           ),
         ],
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+        child: SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppDimens.radiusFull),
+              ),
+            ),
+            onPressed: _onCheckoutPressed,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Total à régler',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-                Text(
-                  AppConfig.formatPrice(cartState.total),
-                  style: const TextStyle(
-                    fontSize: 20,
+                  'Passer la commande',
+                  style: TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
                   ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      AppConfig.formatPrice(cartState.total),
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(width: AppDimens.space8),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(width: AppDimens.space16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _onCheckoutPressed,
-                child: const Text('Continuer la commande'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

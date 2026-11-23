@@ -74,7 +74,7 @@ void main() {
       expect(find.text('Montre Classique'), findsOneWidget);
       expect(find.text('Code promotionnel'), findsOneWidget);
       expect(find.text('Récapitulatif de la commande'), findsOneWidget);
-      expect(find.text('Continuer la commande'), findsOneWidget);
+      expect(find.text('Passer la commande'), findsOneWidget);
     });
   });
 }

@@ -37,6 +37,7 @@ import '../../data/repositories/firestore_addresses_repository.dart';
 import '../../data/repositories/firestore_orders_repository.dart';
 import '../../data/repositories/orders_repository.dart';
 import '../../services/auth_service.dart';
+import 'widgets/slide_to_confirm_button.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -164,17 +165,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── 1. RÉCAPITULATIF DES ARTICLES ───────────────────────────────
+            // ── 1. ADRESSE DE LIVRAISON ─────────────────────────────────────
             _buildSectionHeader(
-              title: 'Articles commandés (${cart.totalItemCount})',
-              icon: Icons.shopping_basket_outlined,
-            ),
-            const SizedBox(height: AppDimens.space8),
-            _buildItemsCard(cart),
-            const SizedBox(height: AppDimens.space20),
-
-            // ── 2. ADRESSE DE LIVRAISON ─────────────────────────────────────
-            _buildSectionHeader(
+              stepNumber: 1,
               title: 'Adresse de livraison',
               icon: Icons.location_on_outlined,
               action: TextButton(
@@ -206,8 +199,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             const SizedBox(height: AppDimens.space20),
 
-            // ── 3. MODE DE LIVRAISON ────────────────────────────────────────
+            // ── 2. MODE DE LIVRAISON ────────────────────────────────────────
             _buildSectionHeader(
+              stepNumber: 2,
               title: 'Mode de livraison',
               icon: Icons.local_shipping_outlined,
             ),
@@ -215,8 +209,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             _buildDeliveryModeCard(),
             const SizedBox(height: AppDimens.space20),
 
-            // ── 4. MODE DE PAIEMENT ─────────────────────────────────────────
+            // ── 3. MODE DE PAIEMENT ─────────────────────────────────────────
             _buildSectionHeader(
+              stepNumber: 3,
               title: 'Mode de paiement',
               icon: Icons.payments_outlined,
             ),
@@ -224,7 +219,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             _buildPaymentMethodCard(),
             const SizedBox(height: AppDimens.space20),
 
-            // ── 5. RÉSUMÉ DU PRIX ───────────────────────────────────────────
+            // ── 4. RÉCAPITULATIF DE COMMANDE ────────────────────────────────
+            _buildSectionHeader(
+              stepNumber: 4,
+              title: 'Récapitulatif de commande (${cart.totalItemCount})',
+              icon: Icons.receipt_long_outlined,
+            ),
+            const SizedBox(height: AppDimens.space8),
+            _buildItemsCard(cart),
+            const SizedBox(height: AppDimens.space16),
             PriceSummary(
               subtotal: cart.subtotal,
               deliveryFee: cart.deliveryFee,
@@ -261,29 +264,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                 ),
-              ElevatedButton(
-                onPressed: (_isSubmitting || _selectedAddress == null)
-                    ? null
-                    : () => _confirmAndSubmitOrder(context),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: AppColors.onPrimary,
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.check_circle_outline, size: 20),
-                          const SizedBox(width: AppDimens.space8),
-                          Text(
-                            'Confirmer la commande (${cart.total.toStringAsFixed(3)} DT)',
-                          ),
-                        ],
-                      ),
+              // Bouton interactif « Glisser pour confirmer »
+              SlideToConfirmButton(
+                total: cart.total,
+                isLoading: _isSubmitting,
+                enabled: _selectedAddress != null,
+                onConfirm: () => _confirmAndSubmitOrder(context),
               ),
             ],
           ),
@@ -293,19 +279,39 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _buildSectionHeader({
+    required int stepNumber,
     required String title,
     required IconData icon,
     Widget? action,
   }) {
     return Row(
       children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: const BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '$stepNumber',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppDimens.space10),
         Icon(icon, size: 20, color: AppColors.primary),
         const SizedBox(width: AppDimens.space8),
         Expanded(
           child: Text(
             title,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 15.5,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
